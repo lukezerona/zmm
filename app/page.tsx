@@ -1,65 +1,121 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect } from "react";
+
+export default function LoginPage() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showCardExpanded, setShowCardExpanded] = useState(false);
+  const [showContent, setShowContent] = useState(false);
+
+  useEffect(() => {
+    const expandTimer = setTimeout(() => setShowCardExpanded(true), 1000);
+    const contentTimer = setTimeout(() => setShowContent(true), 1200);
+
+    return () => {
+      clearTimeout(expandTimer);
+      clearTimeout(contentTimer);
+    };
+  }, []);
+
+  const isDisabled = username.length === 0 || password.length === 0;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main
+      className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden"
+      style={{
+        backgroundImage: "url(/loginBackground.webp)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      <div
+        className={`w-full max-w-sm rounded-xl border border-primary/30 bg-background/95 backdrop-blur px-4 pt-4 pb-6 shadow-lg overflow-hidden transition-all duration-1000 ease-out ${
+          showCardExpanded ? "max-h-[600px]" : "max-h-40"
+        }`}
+      >
+        <div className="flex justify-center mb-6">
+          <img
+            src="/ZMM_Logo.svg"
+            alt="ZMM Logo"
+            className="h-32 w-auto max-w-full"
+          />
+        </div>
+        <div>
+          <h1
+            className={`text-4xl font-bold text-white tracking-tight text-center mb-6 transition-all duration-700 ease-out ${
+              showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+            }`}
+            style={{ transitionDelay: showContent ? "0ms" : "0ms" }}
+          >
+            Welcome Back!
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+          <form className="flex flex-col gap-4" autoComplete="on">
+            <div
+              className={`transition-all duration-700 ease-out ${
+                showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+              }`}
+              style={{ transitionDelay: showContent ? "150ms" : "0ms" }}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              <input
+                id="username"
+                type="text"
+                name="username"
+                autoComplete="username"
+                placeholder="Username"
+                className="w-full rounded-lg border border-primary/40 bg-background px-3 py-2 text-foreground placeholder:text-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+            <div
+              className={`transition-all duration-700 ease-out ${
+                showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+              }`}
+              style={{ transitionDelay: showContent ? "300ms" : "0ms" }}
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <input
+                id="password"
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                placeholder="Password"
+                className="w-full rounded-lg border border-primary/40 bg-background px-3 py-2 text-foreground placeholder:text-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div
+              className={`transition-all duration-700 ease-out ${
+                showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+              }`}
+              style={{ transitionDelay: showContent ? "450ms" : "0ms" }}
+            >
+              <button
+                type="submit"
+                disabled={isDisabled}
+                className={`mt-2 w-full rounded-lg px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background transition-colors duration-500 ease-out ${
+                  isDisabled
+                    ? "bg-primary/40 text-primary-foreground/70 cursor-not-allowed"
+                    : "bg-primary text-primary-foreground hover:opacity-90 focus:ring-primary cursor-pointer"
+                }`}
+              >
+                Log in
+              </button>
+            </div>
+            <button
+              type="button"
+              className={`mt-1 w-full text-center text-xs text-foreground/60 hover:text-foreground/80 underline-offset-2 hover:underline transition-all duration-700 ease-out cursor-pointer ${
+                showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+              }`}
+              style={{ transitionDelay: showContent ? "600ms" : "0ms" }}
+            >
+              Forgot your password?
+            </button>
+          </form>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
