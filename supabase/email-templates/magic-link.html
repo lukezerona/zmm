@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Your ZMM sign-in link</title>
+  </head>
+  <body style="margin:0;padding:0;background:#03080d;color:#f5f8fa;font-family:Arial,Helvetica,sans-serif;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Use this secure one-time link to sign in to Zerona March Madness.</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#03080d;">
+      <tr>
+        <td align="center" style="padding:36px 16px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background:#08141d;border:1px solid #18374a;border-radius:18px;overflow:hidden;">
+            <tr><td style="height:5px;background:#139fe9;font-size:0;line-height:0;">&nbsp;</td></tr>
+            <tr>
+              <td align="center" style="padding:32px 32px 8px;">
+                <img src="{{ .SiteURL }}/zmm-logo.png" width="190" alt="ZMM — Zerona March Madness" style="display:block;width:190px;max-width:70%;height:auto;border:0;">
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:22px 38px 38px;">
+                <p style="margin:0 0 10px;color:#32b7ff;font-size:11px;font-weight:bold;letter-spacing:2px;text-align:center;">ONE-TIME SIGN IN</p>
+                <h1 style="margin:0 0 14px;color:#f7fbfd;font-size:28px;line-height:1.2;text-align:center;">Your bracket is waiting</h1>
+                <p style="margin:0 0 24px;color:#8da3b2;font-size:15px;line-height:1.65;text-align:center;">Use this secure link to sign in to ZMM as <strong style="color:#dce8ef;">{{ .Email }}</strong>. The link can only be used once.</p>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td align="center">
+                      <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:15px 29px;background:#139fe9;color:#ffffff;text-decoration:none;font-size:14px;font-weight:bold;border-radius:9px;">Enter the tournament</a>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:26px 0 0;color:#607989;font-size:12px;line-height:1.6;text-align:center;">If you didn’t request this sign-in link, you can safely ignore this email.</p>
+              </td>
+            </tr>
+          </table>
+          <p style="margin:18px 0 0;color:#405766;font-size:11px;">Zerona March Madness &nbsp;•&nbsp; One family. One bracket champion.</p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
