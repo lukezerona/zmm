@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, Trophy, X } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, X } from "lucide-react";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import styles from "./page.module.css";
 
@@ -22,7 +22,7 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
-    const revealTimer = window.setTimeout(() => setRevealed(true), 700);
+    const revealTimer = window.setTimeout(() => setRevealed(true), 1250);
 
     async function restoreSession() {
       if (!supabase) {
@@ -47,7 +47,7 @@ export default function LoginPage() {
     setError("");
 
     if (!supabase) {
-      setError("Supabase is not connected yet. Follow the setup guide in README.md, then try again.");
+      setError("We’re having trouble signing you in right now. Please come back and try again later.");
       return;
     }
 
@@ -56,7 +56,11 @@ export default function LoginPage() {
     setLoading(false);
 
     if (loginError) {
-      setError(loginError.message === "Invalid login credentials" ? "That email or password doesn’t match our records." : loginError.message);
+      setError(
+        loginError.message === "Invalid login credentials"
+          ? "That email or password doesn’t match our records."
+          : "We’re having trouble signing you in right now. Please try again later.",
+      );
       return;
     }
 
@@ -69,7 +73,7 @@ export default function LoginPage() {
     setError("");
 
     if (!supabase) {
-      setError("Connect Supabase before sending a password reset email.");
+      setError("Password recovery is temporarily unavailable. Please try again later.");
       setForgotOpen(false);
       return;
     }
@@ -81,7 +85,7 @@ export default function LoginPage() {
     setResetLoading(false);
 
     if (resetError) {
-      setError(resetError.message);
+      setError("Password recovery is temporarily unavailable. Please try again later.");
       setForgotOpen(false);
       return;
     }
@@ -91,10 +95,8 @@ export default function LoginPage() {
 
   if (checkingSession && isSupabaseConfigured) {
     return (
-      <main className={styles.sessionCheck}>
+      <main className={styles.sessionCheck} aria-label="Loading Zerona March Madness">
         <Image src="/zmm-logo.png" alt="Zerona March Madness" width={855} height={483} priority />
-        <LoaderCircle className={styles.spinner} aria-hidden="true" />
-        <p>Checking your bracket pass…</p>
       </main>
     );
   }
@@ -103,25 +105,14 @@ export default function LoginPage() {
     <main className={styles.page}>
       <div className={styles.ambientOne} />
       <div className={styles.ambientTwo} />
-      <section className={`${styles.shell} ${revealed ? styles.revealed : ""}`}>
+      <section className={`${styles.shell} ${revealed ? styles.revealed : ""}`} aria-label={revealed ? "ZMM sign in" : "Zerona March Madness"}>
         <div className={styles.brandPanel}>
-          <span className={styles.seasonPill}>2026 FAMILY TOURNAMENT</span>
           <Image className={styles.logo} src="/zmm-logo.png" alt="ZMM — Zerona March Madness" width={855} height={483} priority />
-          <div className={styles.brandCopy}>
-            <h1>Welcome back to the madness.</h1>
-            <p>Sign in, make your picks, and chase family bragging rights.</p>
-          </div>
-          <div className={styles.brandFooter}>
-            <Trophy size={17} aria-hidden="true" />
-            <span>One family. One bracket champion.</span>
-          </div>
         </div>
 
-        <div className={styles.formPanel}>
+        <div className={styles.formPanel} aria-hidden={!revealed}>
           <div className={styles.formIntro}>
-            <span className={styles.eyebrow}>YOUR BRACKET AWAITS</span>
-            <h2>Sign in to ZMM</h2>
-            <p>Use the email and password connected to your family account.</p>
+            <h2>Sign in</h2>
           </div>
 
           <form onSubmit={handleLogin} className={styles.form}>
@@ -148,16 +139,11 @@ export default function LoginPage() {
             {error && <p className={styles.error} role="alert">{error}</p>}
 
             <button className={styles.submitButton} type="submit" disabled={loading}>
-              {loading ? <><LoaderCircle className={styles.spinner} size={19} /> Checking your picks…</> : <>Enter the tournament <ArrowRight size={19} /></>}
+              {loading ? <><LoaderCircle className={styles.spinner} size={19} /> Signing in…</> : "Sign in"}
             </button>
           </form>
-
-          <p className={styles.helpText}>Need an account? Ask the ZMM commissioner to add you.</p>
-          {!isSupabaseConfigured && <div className={styles.setupNote}><span>Setup mode</span> Add your Supabase keys to enable sign in.</div>}
         </div>
       </section>
-
-      <p className={styles.copyright}>© 2026 Zerona March Madness · Built for the family</p>
 
       {forgotOpen && (
         <div className={styles.modalBackdrop} role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) setForgotOpen(false); }}>
@@ -167,7 +153,7 @@ export default function LoginPage() {
               <div className={styles.successState}>
                 <CheckCircle2 size={42} />
                 <h2 id="reset-title">Check your inbox</h2>
-                <p>If an account exists for <strong>{resetEmail}</strong>, Supabase will send a secure reset link.</p>
+                <p>If an account exists for <strong>{resetEmail}</strong>, we’ll send a secure reset link.</p>
                 <button type="button" onClick={() => setForgotOpen(false)}>Back to sign in</button>
               </div>
             ) : (

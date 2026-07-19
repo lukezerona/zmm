@@ -14,7 +14,7 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [complete, setComplete] = useState(false);
-  const [message, setMessage] = useState(supabase ? "" : "Supabase is not connected.");
+  const [message, setMessage] = useState(supabase ? "" : "Password recovery is temporarily unavailable. Please try again later.");
 
   useEffect(() => {
     if (!supabase) return;
@@ -32,7 +32,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
     const { error } = await supabase!.auth.updateUser({ password });
     setLoading(false);
-    if (error) { setMessage(error.message); return; }
+    if (error) { setMessage("We couldn’t update your password right now. Please try again later."); return; }
     setComplete(true);
   }
 

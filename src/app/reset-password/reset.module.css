@@ -8,6 +8,9 @@
 .card label { color: #c3d1da; font-size: 12px; font-weight: 700; margin: 14px 0 8px; }
 .card input { height: 48px; padding: 0 13px; outline: none; color: white; background: #040c12; border: 1px solid #1c3a4d; border-radius: 9px; }
 .card input:focus { border-color: #1b9ee4; box-shadow: 0 0 0 3px rgba(27,158,228,.12); }
+.card input:-webkit-autofill,
+.card input:-webkit-autofill:hover,
+.card input:-webkit-autofill:focus { -webkit-text-fill-color: #fff; caret-color: #fff; -webkit-box-shadow: 0 0 0 1000px #040c12 inset; box-shadow: 0 0 0 1000px #040c12 inset; transition: background-color 9999s ease-out 0s; }
 .card button { height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 22px; color: white; background: #129ee8; border: 0; border-radius: 9px; font-weight: 800; cursor: pointer; }
 .card button:disabled { opacity: .45; cursor: not-allowed; }
 .card button svg { animation: spin .8s linear infinite; }
