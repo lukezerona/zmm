@@ -25,8 +25,18 @@ export default function BracketPage() {
         return;
       }
 
-      const displayName = data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split("@")[0] || "Bracket Builder";
-      setName(displayName);
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+
+      if (error || !profile) {
+        router.replace("/accept-invite");
+        return;
+      }
+
+      setName(profile.display_name);
       setLoading(false);
     }
 

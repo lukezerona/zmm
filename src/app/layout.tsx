@@ -4,7 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ZMM | Zerona March Madness",
   description: "The Zerona family March Madness bracket challenge.",
-  icons: { icon: "/zmm-logo.png" },
+  icons: {
+    icon: "/zmm-logo.png",
+    shortcut: "/zmm-logo.png",
+    apple: "/zmm-logo.png",
+  },
 };
 
 export default function RootLayout({

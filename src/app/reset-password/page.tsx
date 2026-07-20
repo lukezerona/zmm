@@ -14,7 +14,7 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [complete, setComplete] = useState(false);
-  const [message, setMessage] = useState(supabase ? "" : "Supabase is not connected.");
+  const [message, setMessage] = useState(supabase ? "" : "Password recovery is temporarily unavailable. Please try again later.");
 
   useEffect(() => {
     if (!supabase) return;
@@ -32,7 +32,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
     const { error } = await supabase!.auth.updateUser({ password });
     setLoading(false);
-    if (error) { setMessage(error.message); return; }
+    if (error) { setMessage("We couldn’t update your password right now. Please try again later."); return; }
     setComplete(true);
   }
 
@@ -41,7 +41,7 @@ export default function ResetPasswordPage() {
       <section className={styles.card}>
         <Image src="/zmm-logo.png" alt="ZMM" width={855} height={483} priority />
         {complete ? (
-          <div className={styles.complete}><CheckCircle2 size={44} /><h1>Password updated</h1><p>You’re all set. Return to ZMM and sign in with your new password.</p><button onClick={() => router.push("/")}>Return to sign in</button></div>
+          <div className={styles.complete}><CheckCircle2 size={44} /><h1>Password updated</h1><p>You’re all set. Return to ZMM and sign in with your new password.</p><button type="button" onClick={() => router.push("/")}>Return to sign in</button></div>
         ) : (
           <><div className={styles.icon}><LockKeyhole size={24} /></div><h1>Choose a new password</h1><p>Make it something memorable and at least 8 characters long.</p><form onSubmit={updatePassword}><label htmlFor="password">New password</label><input id="password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required /><label htmlFor="confirm">Confirm password</label><input id="confirm" type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />{message && <span className={styles.message}>{message}</span>}<button type="submit" disabled={!ready || loading}>{loading ? <><LoaderCircle size={17} /> Updating…</> : "Update password"}</button></form></>
         )}

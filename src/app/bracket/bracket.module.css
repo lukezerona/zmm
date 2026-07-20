@@ -1,6 +1,6 @@
 .page, .loading { min-height: 100vh; color: #f5f8fa; background: radial-gradient(circle at 15% 15%,rgba(0,133,214,.12),transparent 30%),#03080d; }
 .page::before { content: ""; position: fixed; inset: 0; opacity: .12; pointer-events: none; background-image: linear-gradient(rgba(32,145,211,.2) 1px,transparent 1px),linear-gradient(90deg,rgba(32,145,211,.2) 1px,transparent 1px); background-size: 44px 44px; mask-image: linear-gradient(black,transparent 80%); }
-.header { position: relative; z-index: 1; height: 82px; display: flex; align-items: center; justify-content: space-between; padding: 0 max(24px,5vw); border-bottom: 1px solid rgba(87,169,218,.15); background: rgba(3,9,14,.78); backdrop-filter: blur(14px); }
+.header { position: relative; z-index: 1; height: 82px; display: flex; align-items: center; justify-content: space-between; padding: 0 max(24px,5vw); border-bottom: 1px solid rgba(87,169,218,.15); background: #040b11; }
 .header img { width: 116px; height: auto; }
 .header button { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid #1d3d50; border-radius: 8px; color: #9ab0bf; background: #07121a; cursor: pointer; }
 .header button:hover { color: white; border-color: #2c6688; }
