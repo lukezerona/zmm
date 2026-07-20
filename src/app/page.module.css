@@ -36,7 +36,7 @@
 .submitButton:disabled { opacity: .75; cursor: wait; }
 .spinner { animation: spin .8s linear infinite; }
 .error { margin-top: 13px; padding: 10px 12px; border: 1px solid rgba(255,89,110,.25); background: rgba(255,58,83,.08); color: #ff9dab; border-radius: 8px; font-size: 12px; line-height: 1.4; }
-.sessionCheck { display: flex; align-items: center; justify-content: center; }
+.sessionCheck { display: flex; align-items: center; justify-content: center; background: #040b11; }
 .sessionCheck img { width: min(430px,78vw); height: auto; animation: logoBreathe 1.4s ease-in-out infinite alternate; }
 .modalBackdrop { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(0,5,9,.8); backdrop-filter: blur(9px); animation: fadeIn .2s ease; }
 .modal { position: relative; width: min(100%,430px); padding: 34px; border: 1px solid #1b3c51; border-radius: 18px; background: #08141d; box-shadow: 0 30px 90px rgba(0,0,0,.65); }
@@ -54,6 +54,7 @@
 .successState { text-align: center; }
 .successState > svg { color: #41d19f; margin-bottom: 16px; }
 .successState strong { color: #d8e6ee; }
+.successState button { width: min(100%,220px); margin: 20px auto 0; padding: 0 24px; white-space: nowrap; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeIn { from { opacity: 0; } }
 @keyframes logoBreathe { from { opacity: .82; transform: scale(.98); } to { opacity: 1; transform: scale(1); } }

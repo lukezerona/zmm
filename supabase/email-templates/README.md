@@ -17,24 +17,26 @@ Open each HTML file, copy its complete contents, and paste it into the template'
 
 ## Important logo setup
 
-The templates load the existing logo from:
+The templates load the existing logo from the stable public production URL:
 
 ```text
-{{ .SiteURL }}/zmm-logo.png
+https://zmm-eta.vercel.app/zmm-logo.png
 ```
 
-This works after **Authentication → URL Configuration → Site URL** is set to the deployed Vercel address. During local testing, email clients cannot load an image from `localhost`; the email text and button will still work.
+Using an absolute public URL keeps the logo working when the development project's **Site URL** is `localhost`. If the production domain changes, update this URL in all four templates.
 
 ## Test before inviting the family
 
 1. Confirm that your deployed Vercel URL is the Supabase Site URL.
 2. Confirm that `https://YOUR-VERCEL-DOMAIN.vercel.app/reset-password` is in the redirect allow list.
-3. Send a password reset to your own email from the ZMM login page.
-4. Check the message on both a phone and desktop email client.
-5. Click the button and confirm that it opens the ZMM new-password page.
-6. Use **Authentication → Users → Invite user** to test the invitation template.
+3. Confirm that `https://YOUR-VERCEL-DOMAIN.vercel.app/accept-invite` is in the redirect allow list.
+4. Send a password reset to your own username from the ZMM login page.
+5. Check the message on both a phone and desktop email client.
+6. Click the button and confirm that it opens the ZMM new-password page.
+7. Use **Authentication → Users → Invite user** with a real `+` email alias.
+8. Accept the invite and confirm that ZMM opens the username, display name, and password setup page.
 
-The `{{ .ConfirmationURL }}`, `{{ .SiteURL }}`, and `{{ .Email }}` placeholders are Supabase template variables. Do not replace them with fixed values.
+The `{{ .ConfirmationURL }}` placeholder is a Supabase template variable. Do not replace it with a fixed value.
 
 ## Let Supabase email the whole family for free
 

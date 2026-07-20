@@ -3,23 +3,42 @@
 import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, X } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, LoaderCircle, LockKeyhole, UserRound, X } from "lucide-react";
+import { RETURN_TO_SIGN_IN_SESSION_KEY } from "@/lib/auth-navigation";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import styles from "./page.module.css";
+
+type LoginResponse = {
+  accessToken?: string;
+  refreshToken?: string;
+};
 
 export default function LoginPage() {
   const router = useRouter();
   const [revealed, setRevealed] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [forgotOpen, setForgotOpen] = useState(false);
-  const [resetEmail, setResetEmail] = useState("");
+  const [resetUsername, setResetUsername] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+
+  async function destinationForUser(userId: string) {
+    if (!supabase) return "/";
+
+    const { data, error: profileError } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (profileError) throw profileError;
+    return data ? "/bracket" : "/accept-invite";
+  }
 
   useEffect(() => {
     const revealTimer = window.setTimeout(() => setRevealed(true), 1250);
@@ -31,9 +50,23 @@ export default function LoginPage() {
       }
 
       const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        router.replace("/bracket");
+      const returningToSignIn =
+        window.sessionStorage.getItem(RETURN_TO_SIGN_IN_SESSION_KEY) === "true";
+
+      if (data.session && returningToSignIn) {
+        setCheckingSession(false);
         return;
+      }
+
+      window.sessionStorage.removeItem(RETURN_TO_SIGN_IN_SESSION_KEY);
+
+      if (data.session) {
+        try {
+          router.replace(await destinationForUser(data.session.user.id));
+          return;
+        } catch {
+          setError("We’re having trouble opening your account right now. Please try again later.");
+        }
       }
       setCheckingSession(false);
     }
@@ -52,20 +85,46 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-    if (loginError) {
-      setError(
-        loginError.message === "Invalid login credentials"
-          ? "That email or password doesn’t match our records."
-          : "We’re having trouble signing you in right now. Please try again later.",
-      );
-      return;
+      if (!response.ok) {
+        setError(
+          response.status === 401
+            ? "That username or password doesn’t match our records."
+            : "We’re having trouble signing you in right now. Please try again later.",
+        );
+        return;
+      }
+
+      const result = (await response.json()) as LoginResponse;
+      if (!result.accessToken || !result.refreshToken) {
+        setError("We’re having trouble signing you in right now. Please try again later.");
+        return;
+      }
+
+      const { data, error: sessionError } = await supabase.auth.setSession({
+        access_token: result.accessToken,
+        refresh_token: result.refreshToken,
+      });
+
+      if (sessionError || !data.user) {
+        setError("We’re having trouble signing you in right now. Please try again later.");
+        return;
+      }
+
+      window.sessionStorage.removeItem(RETURN_TO_SIGN_IN_SESSION_KEY);
+      router.push(await destinationForUser(data.user.id));
+      router.refresh();
+    } catch {
+      setError("We’re having trouble signing you in right now. Please try again later.");
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/bracket");
-    router.refresh();
   }
 
   async function handleReset(event: FormEvent<HTMLFormElement>) {
@@ -79,18 +138,26 @@ export default function LoginPage() {
     }
 
     setResetLoading(true);
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setResetLoading(false);
+    try {
+      const response = await fetch("/api/auth/recover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: resetUsername }),
+      });
 
-    if (resetError) {
+      if (!response.ok) {
+        setError("Password recovery is temporarily unavailable. Please try again later.");
+        setForgotOpen(false);
+        return;
+      }
+
+      setResetSent(true);
+    } catch {
       setError("Password recovery is temporarily unavailable. Please try again later.");
       setForgotOpen(false);
-      return;
+    } finally {
+      setResetLoading(false);
     }
-
-    setResetSent(true);
   }
 
   if (checkingSession && isSupabaseConfigured) {
@@ -116,21 +183,42 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleLogin} className={styles.form}>
-            <label htmlFor="email">Email address</label>
+            <label htmlFor="username">Username</label>
             <div className={styles.inputWrap}>
-              <Mail size={18} aria-hidden="true" />
-              <input id="email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required />
+              <UserRound size={18} aria-hidden="true" />
+              <input
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                placeholder="Enter your username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                required
+              />
             </div>
 
             <div className={styles.labelRow}>
               <label htmlFor="password">Password</label>
-              <button type="button" className={styles.forgotButton} onClick={() => { setForgotOpen(true); setResetSent(false); setResetEmail(email); }}>
+              <button type="button" className={styles.forgotButton} onClick={() => { setForgotOpen(true); setResetSent(false); setResetUsername(username); }}>
                 Forgot password?
               </button>
             </div>
             <div className={styles.inputWrap}>
               <LockKeyhole size={18} aria-hidden="true" />
-              <input id="password" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Enter your password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
               <button type="button" className={styles.eyeButton} onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Hide password" : "Show password"}>
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -153,17 +241,30 @@ export default function LoginPage() {
               <div className={styles.successState}>
                 <CheckCircle2 size={42} />
                 <h2 id="reset-title">Check your inbox</h2>
-                <p>If an account exists for <strong>{resetEmail}</strong>, we’ll send a secure reset link.</p>
+                <p>If an account exists for <strong>{resetUsername}</strong>, we’ll send a secure reset link.</p>
                 <button type="button" onClick={() => setForgotOpen(false)}>Back to sign in</button>
               </div>
             ) : (
               <>
-                <div className={styles.modalIcon}><Mail size={23} /></div>
+                <div className={styles.modalIcon}><UserRound size={23} /></div>
                 <h2 id="reset-title">Reset your password</h2>
-                <p>Enter your email and we’ll send you a secure link to choose a new password.</p>
+                <p>Enter your username and we’ll send a secure link to the email on that account.</p>
                 <form onSubmit={handleReset} className={styles.resetForm}>
-                  <label htmlFor="reset-email">Email address</label>
-                  <input id="reset-email" type="email" autoComplete="email" placeholder="you@example.com" value={resetEmail} onChange={(event) => setResetEmail(event.target.value)} autoFocus required />
+                  <label htmlFor="reset-username">Username</label>
+                  <input
+                    id="reset-username"
+                    name="username"
+                    type="text"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    placeholder="Enter your username"
+                    value={resetUsername}
+                    onChange={(event) => setResetUsername(event.target.value)}
+                    autoFocus
+                    required
+                  />
                   <button type="submit" disabled={resetLoading}>{resetLoading ? <><LoaderCircle className={styles.spinner} size={18} /> Sending…</> : "Send reset link"}</button>
                 </form>
               </>
