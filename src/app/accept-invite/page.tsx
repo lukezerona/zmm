@@ -23,6 +23,7 @@ export default function AcceptInvitePage() {
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordSaved, setPasswordSaved] = useState(false);
   const [checking, setChecking] = useState(true);
   const [loading, setLoading] = useState(false);
   const [complete, setComplete] = useState(false);
@@ -103,14 +104,18 @@ export default function AcceptInvitePage() {
 
     setLoading(true);
 
-    const { error: passwordError } = await supabase.auth.updateUser({
-      password,
-    });
+    if (!passwordSaved) {
+      const { error: passwordError } = await supabase.auth.updateUser({
+        password,
+      });
 
-    if (passwordError) {
-      setLoading(false);
-      setMessage("We couldn’t save your password. Please try again.");
-      return;
+      if (passwordError && passwordError.code !== "same_password") {
+        setLoading(false);
+        setMessage("We couldn’t save your password. Please try again.");
+        return;
+      }
+
+      setPasswordSaved(true);
     }
 
     const { error: profileError } = await supabase.from("profiles").insert({
@@ -124,7 +129,7 @@ export default function AcceptInvitePage() {
     if (profileError) {
       setMessage(
         profileError.code === "23505"
-          ? "That username is already taken. Choose another one."
+          ? "That username is already taken. Choose another one. Your password has been saved."
           : "We couldn’t finish setting up your account. Please try again.",
       );
       return;
@@ -227,7 +232,10 @@ export default function AcceptInvitePage() {
                   type="password"
                   autoComplete="new-password"
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    setPasswordSaved(false);
+                  }}
                   minLength={8}
                   required
                 />
