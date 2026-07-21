@@ -13,8 +13,14 @@ website UI.
 
 The function requires a Supabase secret API key in the `apikey` request header.
 It filters ESPN events to headlines beginning with
-`NCAA Men's Basketball Championship`, maps all seven tournament round types,
+`NCAA Men's Basketball Championship`, normalizes known tournament round names,
 and writes only new or changed game rows.
+
+The importer does not assume a fixed tournament size. Known historical round
+names are normalized, opening/play-in games are marked with `is_play_in`, and
+an unfamiliar future round is retained as `UNCLASSIFIED` with its original ESPN
+headline. Seeds are not capped at 16. This lets format changes arrive in the
+database without silently dropping games.
 
 ## Seasonal activation
 

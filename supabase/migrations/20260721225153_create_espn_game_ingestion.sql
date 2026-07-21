@@ -22,8 +22,8 @@ create table if not exists public.espn_games (
   tournament_headline text not null,
   region text,
   round_code text not null,
-  round_number smallint not null,
-  counts_for_bracket boolean not null,
+  round_number smallint,
+  is_play_in boolean not null default false,
   venue_name text,
   venue_city text,
   venue_state text,
@@ -58,23 +58,17 @@ create table if not exists public.espn_games (
     region is null or region in ('east', 'midwest', 'south', 'west')
   ),
   constraint espn_games_round_code check (
-    round_code in (
-      'FIRST_FOUR',
-      'ROUND_OF_64',
-      'ROUND_OF_32',
-      'SWEET_16',
-      'ELITE_8',
-      'FINAL_FOUR',
-      'CHAMPIONSHIP'
-    )
+    round_code ~ '^[A-Z0-9_]{2,40}$'
   ),
-  constraint espn_games_round_number check (round_number between 0 and 6),
+  constraint espn_games_round_number check (
+    round_number is null or round_number >= 0
+  ),
   constraint espn_games_period check (period is null or period >= 0),
   constraint espn_games_home_seed check (
-    home_team_seed is null or home_team_seed between 1 and 16
+    home_team_seed is null or home_team_seed >= 1
   ),
   constraint espn_games_away_seed check (
-    away_team_seed is null or away_team_seed between 1 and 16
+    away_team_seed is null or away_team_seed >= 1
   ),
   constraint espn_games_home_score check (home_score is null or home_score >= 0),
   constraint espn_games_away_score check (away_score is null or away_score >= 0),

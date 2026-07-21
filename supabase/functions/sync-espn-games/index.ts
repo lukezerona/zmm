@@ -17,16 +17,10 @@ type SyncRequest = {
 type JsonRecord = Record<string, unknown>;
 
 type RoundDetails = {
-  code:
-    | "FIRST_FOUR"
-    | "ROUND_OF_64"
-    | "ROUND_OF_32"
-    | "SWEET_16"
-    | "ELITE_8"
-    | "FINAL_FOUR"
-    | "CHAMPIONSHIP";
-  number: number;
+  code: string;
+  number: number | null;
   region: "east" | "midwest" | "south" | "west" | null;
+  isPlayIn: boolean;
 };
 
 function isRecord(value: unknown): value is JsonRecord {
@@ -134,35 +128,47 @@ function requestScope(body: SyncRequest): string {
   throw new Error("mode must be auto, date, or range.");
 }
 
-function parseRound(headline: string): RoundDetails | null {
+function parseRound(headline: string): RoundDetails {
   const regionMatch = headline.match(/ - (East|Midwest|South|West) Region(?: -|$)/);
   const region = regionMatch
     ? (regionMatch[1].toLowerCase() as RoundDetails["region"])
     : null;
 
-  if (headline.endsWith("National Championship")) {
-    return { code: "CHAMPIONSHIP", number: 6, region: null };
+  if (/National Championship$/i.test(headline)) {
+    return { code: "CHAMPIONSHIP", number: 6, region: null, isPlayIn: false };
   }
-  if (headline.endsWith("Final Four")) {
-    return { code: "FINAL_FOUR", number: 5, region: null };
+  if (/(Final Four|National Semifinal)$/i.test(headline)) {
+    return { code: "FINAL_FOUR", number: 5, region: null, isPlayIn: false };
   }
-  if (headline.endsWith("Elite 8")) {
-    return { code: "ELITE_8", number: 4, region };
+  if (/(Elite 8|Regional Final)$/i.test(headline)) {
+    return { code: "ELITE_8", number: 4, region, isPlayIn: false };
   }
-  if (headline.endsWith("Sweet 16")) {
-    return { code: "SWEET_16", number: 3, region };
+  if (/(Sweet 16|Regional Semifinal)$/i.test(headline)) {
+    return { code: "SWEET_16", number: 3, region, isPlayIn: false };
   }
-  if (headline.endsWith("2nd Round")) {
-    return { code: "ROUND_OF_32", number: 2, region };
+  if (/(2nd Round|Round of 32)$/i.test(headline)) {
+    return { code: "ROUND_OF_32", number: 2, region, isPlayIn: false };
   }
-  if (headline.endsWith("1st Round")) {
-    return { code: "ROUND_OF_64", number: 1, region };
+  if (/(1st Round|Round of 64)$/i.test(headline)) {
+    return { code: "ROUND_OF_64", number: 1, region, isPlayIn: false };
   }
-  if (headline.endsWith("First Four")) {
-    return { code: "FIRST_FOUR", number: 0, region };
+  const namedOpeningRound = headline.match(
+    /First (Four|Eight|Twelve|Sixteen|\d+)$/i,
+  );
+  if (namedOpeningRound) {
+    const participantLabel = namedOpeningRound[1].toUpperCase();
+    return {
+      code: `FIRST_${participantLabel}`,
+      number: 0,
+      region,
+      isPlayIn: true,
+    };
+  }
+  if (/(Opening Round|Play[ -]?In)$/i.test(headline)) {
+    return { code: "OPENING_ROUND", number: 0, region, isPlayIn: true };
   }
 
-  return null;
+  return { code: "UNCLASSIFIED", number: null, region, isPlayIn: false };
 }
 
 function tournamentHeadline(competition: JsonRecord): string | null {
@@ -222,7 +228,7 @@ async function normalizeEvent(eventValue: unknown, syncedAt: string) {
   const eventId = asString(event.id);
   const startsAt = asString(event.date);
 
-  if (!round || !homeValue || !awayValue || !eventId || !startsAt) {
+  if (!homeValue || !awayValue || !eventId || !startsAt) {
     return null;
   }
 
@@ -253,7 +259,7 @@ async function normalizeEvent(eventValue: unknown, syncedAt: string) {
     region: round.region,
     round_code: round.code,
     round_number: round.number,
-    counts_for_bracket: round.code !== "FIRST_FOUR",
+    is_play_in: round.isPlayIn,
     venue_name: asString(venue.fullName),
     venue_city: asString(address.city),
     venue_state: asString(address.state),
