@@ -546,7 +546,9 @@ const handler = {
       }
 
       const reminderBucket = Math.floor(Date.now() / ALERT_REMINDER_MS);
-      const idempotencyKey = `zmm-${signature.slice(0, 36)}-${reminderBucket}`;
+      const idempotencyKey = force
+        ? `zmm-test-${crypto.randomUUID()}`
+        : `zmm-${signature.slice(0, 36)}-${reminderBucket}`;
 
       try {
         const messageId = await sendBrevoAlert(context, idempotencyKey);
