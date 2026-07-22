@@ -65,7 +65,6 @@
 .bracketIntro,
 .regionsGrid,
 .finalStage,
-.tiebreaker,
 .saveFooter,
 .statusMessage {
   position: relative;
@@ -84,9 +83,7 @@
 
 .kicker,
 .identityCard > span,
-.bracketIntro > span,
-.finalHeading > span,
-.tiebreaker > div > span {
+.bracketIntro > span {
   color: #31baff;
   font-size: 10px;
   font-weight: 900;
@@ -187,7 +184,8 @@
 
 .bracketToolbar {
   display: grid;
-  grid-template-columns: minmax(210px, 310px) minmax(280px, 1fr) auto;
+  grid-template-columns: minmax(210px, 310px) auto;
+  justify-content: space-between;
   align-items: center;
   gap: 24px;
   padding: 17px 19px;
@@ -217,12 +215,6 @@
   border-radius: inherit;
   background: linear-gradient(90deg, #078fd7, #35c0ff);
   transition: width 180ms ease;
-}
-
-.bracketToolbar > p {
-  color: #76909f;
-  font-size: 12px;
-  line-height: 1.5;
 }
 
 .bracketToolbar > button,
@@ -260,26 +252,21 @@
   font-size: 12px;
 }
 
+.warningMessage {
+  border-color: rgba(255, 181, 71, 0.45);
+  color: #ffd18b;
+  background: rgba(164, 100, 12, 0.16);
+}
+
 .bracketIntro {
   padding: 66px 0 24px;
 }
 
 .bracketIntro h2,
-.finalHeading h2,
-.tiebreaker h2 {
+.finalHeading h2 {
   margin-top: 7px;
   font-size: clamp(27px, 3vw, 42px);
   letter-spacing: -0.04em;
-}
-
-.bracketIntro p,
-.finalHeading p,
-.tiebreaker p {
-  max-width: 700px;
-  margin-top: 9px;
-  color: #77909f;
-  font-size: 13px;
-  line-height: 1.6;
 }
 
 .regionsGrid {
@@ -302,16 +289,7 @@
   border-bottom: 1px solid rgba(61, 145, 190, 0.15);
 }
 
-.regionHeading > span {
-  color: #2fb9ff;
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
 .regionHeading h2 {
-  margin-top: 4px;
   font-size: 19px;
   letter-spacing: -0.025em;
 }
@@ -334,14 +312,28 @@
   min-width: 0;
 }
 
-.roundColumn h3 {
-  height: 25px;
+.roundHeading {
+  height: 38px;
+  text-align: center;
+}
+
+.roundHeading h3 {
   color: #668596;
   font-size: 9px;
   font-weight: 850;
   letter-spacing: 0.12em;
-  text-align: center;
   text-transform: uppercase;
+}
+
+.roundHeading span,
+.finalDate {
+  display: block;
+  margin-top: 3px;
+  color: #3caee8;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-align: center;
 }
 
 .matchupStack {
@@ -475,6 +467,10 @@
   text-transform: uppercase;
 }
 
+.finalDate {
+  margin-top: -5px;
+}
+
 .compactMatchup .teamButton,
 .compactMatchup .awaitingTeam {
   min-height: 40px;
@@ -501,6 +497,47 @@
   background: linear-gradient(135deg, rgba(17, 121, 174, 0.24), rgba(5, 23, 33, 0.75));
 }
 
+.championResultRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  align-items: stretch;
+  gap: 9px;
+}
+
+.totalPoints {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.totalPoints > span {
+  color: #67a7c8;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.totalPoints input {
+  width: 100%;
+  min-height: 68px;
+  flex: 1;
+  padding: 0 8px;
+  border: 1px solid rgba(57, 190, 250, 0.35);
+  border-radius: 12px;
+  color: white;
+  background: #06131b;
+  font-size: 21px;
+  font-weight: 850;
+  text-align: center;
+}
+
+.totalPoints input:focus {
+  border-color: #3bc2ff;
+  outline: 2px solid rgba(59, 194, 255, 0.18);
+}
+
 .championCard svg {
   grid-row: 1 / 3;
   color: #3bc2ff;
@@ -519,45 +556,6 @@
   font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.tiebreaker {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 210px;
-  align-items: center;
-  gap: 34px;
-  margin-top: 20px;
-  padding: 27px 30px;
-  border: 1px solid #173b50;
-  border-radius: 16px;
-  background: rgba(7, 20, 29, 0.94);
-}
-
-.tiebreaker h2 {
-  font-size: clamp(24px, 2.5vw, 34px);
-}
-
-.tiebreaker label > span {
-  display: block;
-  margin-bottom: 7px;
-  color: #7892a1;
-  font-size: 10px;
-  font-weight: 850;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.tiebreaker input {
-  width: 100%;
-  height: 58px;
-  padding: 0 15px;
-  border: 1px solid #286684;
-  border-radius: 10px;
-  color: white;
-  background: #06131b;
-  font-size: 24px;
-  font-weight: 850;
-  text-align: center;
 }
 
 .saveFooter {
@@ -644,8 +642,7 @@
   }
 
   .hero,
-  .bracketToolbar,
-  .tiebreaker {
+  .bracketToolbar {
     grid-template-columns: 1fr;
   }
 
@@ -686,11 +683,6 @@
     order: 3;
   }
 
-  .tiebreaker {
-    gap: 22px;
-    padding: 24px 20px;
-  }
-
   .saveFooter {
     align-items: stretch;
     flex-direction: column;
@@ -707,7 +699,6 @@
   .bracketIntro,
   .regionsGrid,
   .finalStage,
-  .tiebreaker,
   .saveFooter,
   .statusMessage {
     width: min(calc(100% - 24px), 1680px);

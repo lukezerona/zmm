@@ -6,6 +6,7 @@ import {
   DerivedBracket,
   PickMap,
   Region,
+  TournamentModel,
 } from "./bracket-types";
 import styles from "./bracket.module.css";
 
@@ -71,6 +72,7 @@ type RegionBracketProps = {
   picks: PickMap;
   onPick: (matchupId: string, entryId: string) => void;
   flow: "left" | "right";
+  roundDates: TournamentModel["roundDates"];
 };
 
 function RegionBracket({
@@ -79,27 +81,46 @@ function RegionBracket({
   picks,
   onPick,
   flow,
+  roundDates,
 }: RegionBracketProps) {
   const rounds = bracket.regions[region];
   const columns = [
-    { label: "Round of 64", matchups: rounds.roundOf64 },
-    { label: "Round of 32", matchups: rounds.roundOf32 },
-    { label: "Sweet 16", matchups: rounds.sweet16 },
-    { label: "Elite 8", matchups: rounds.elite8 },
+    {
+      label: "Round of 64",
+      date: roundDates.roundOf64,
+      matchups: rounds.roundOf64,
+    },
+    {
+      label: "Round of 32",
+      date: roundDates.roundOf32,
+      matchups: rounds.roundOf32,
+    },
+    {
+      label: "Sweet 16",
+      date: roundDates.sweet16,
+      matchups: rounds.sweet16,
+    },
+    {
+      label: "Elite 8",
+      date: roundDates.elite8,
+      matchups: rounds.elite8,
+    },
   ];
   const displayedColumns = flow === "right" ? columns : [...columns].reverse();
 
   return (
     <section className={styles.regionCard} aria-labelledby={`${region}-title`}>
       <div className={styles.regionHeading}>
-        <span>{REGION_NAMES[region]} Region</span>
-        <h2 id={`${region}-title`}>{REGION_NAMES[region]} road to Phoenix</h2>
+        <h2 id={`${region}-title`}>{REGION_NAMES[region]} Region</h2>
       </div>
       <div className={styles.regionScroll}>
         <div className={styles.regionBracket}>
           {displayedColumns.map((column) => (
             <div className={styles.roundColumn} key={column.label}>
-              <h3>{column.label}</h3>
+              <div className={styles.roundHeading}>
+                <h3>{column.label}</h3>
+                <span>{column.date}</span>
+              </div>
               <div
                 className={styles.matchupStack}
                 data-count={column.matchups.length}
@@ -125,9 +146,19 @@ type BracketBoardProps = {
   bracket: DerivedBracket;
   picks: PickMap;
   onPick: (matchupId: string, entryId: string) => void;
+  roundDates: TournamentModel["roundDates"];
+  tiebreaker: string;
+  onTiebreakerChange: (value: string) => void;
 };
 
-export function BracketBoard({ bracket, picks, onPick }: BracketBoardProps) {
+export function BracketBoard({
+  bracket,
+  picks,
+  onPick,
+  roundDates,
+  tiebreaker,
+  onTiebreakerChange,
+}: BracketBoardProps) {
   return (
     <>
       <div className={styles.regionsGrid}>
@@ -137,6 +168,7 @@ export function BracketBoard({ bracket, picks, onPick }: BracketBoardProps) {
           picks={picks}
           onPick={onPick}
           flow="right"
+          roundDates={roundDates}
         />
         <RegionBracket
           region="west"
@@ -144,6 +176,7 @@ export function BracketBoard({ bracket, picks, onPick }: BracketBoardProps) {
           picks={picks}
           onPick={onPick}
           flow="left"
+          roundDates={roundDates}
         />
         <RegionBracket
           region="south"
@@ -151,6 +184,7 @@ export function BracketBoard({ bracket, picks, onPick }: BracketBoardProps) {
           picks={picks}
           onPick={onPick}
           flow="right"
+          roundDates={roundDates}
         />
         <RegionBracket
           region="midwest"
@@ -158,18 +192,18 @@ export function BracketBoard({ bracket, picks, onPick }: BracketBoardProps) {
           picks={picks}
           onPick={onPick}
           flow="left"
+          roundDates={roundDates}
         />
       </div>
 
       <section className={styles.finalStage} aria-labelledby="final-four-title">
         <div className={styles.finalHeading}>
-          <span>THE ROAD ENDS HERE</span>
           <h2 id="final-four-title">Final Four &amp; Championship</h2>
-          <p>Regional champions meet for one last weekend in Phoenix.</p>
         </div>
         <div className={styles.finalBracket}>
           <div className={styles.finalColumn}>
             <span className={styles.finalLabel}>East vs. South</span>
+            <span className={styles.finalDate}>{roundDates.finalFour}</span>
             <MatchCard
               matchup={bracket.finalFour[0]}
               pickedId={picks[bracket.finalFour[0].id]}
@@ -180,25 +214,41 @@ export function BracketBoard({ bracket, picks, onPick }: BracketBoardProps) {
 
           <div className={styles.championshipColumn}>
             <span className={styles.finalLabel}>National Championship</span>
+            <span className={styles.finalDate}>{roundDates.championship}</span>
             <MatchCard
               matchup={bracket.championship}
               pickedId={picks[bracket.championship.id]}
               onPick={onPick}
               compact
             />
-            <div className={styles.championCard} aria-live="polite">
-              <Trophy size={26} aria-hidden="true" />
-              <span>National Champion</span>
-              <strong>
-                {bracket.champion
-                  ? `#${bracket.champion.seed} ${bracket.champion.name}`
-                  : "Make your final pick"}
-              </strong>
+            <div className={styles.championResultRow}>
+              <div className={styles.championCard} aria-live="polite">
+                <Trophy size={26} aria-hidden="true" />
+                <span>National Champion</span>
+                <strong>
+                  {bracket.champion
+                    ? `#${bracket.champion.seed} ${bracket.champion.name}`
+                    : "Make your final pick"}
+                </strong>
+              </div>
+              <label className={styles.totalPoints}>
+                <span>Total points</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="400"
+                  inputMode="numeric"
+                  value={tiebreaker}
+                  onChange={(event) => onTiebreakerChange(event.target.value)}
+                  placeholder="142"
+                />
+              </label>
             </div>
           </div>
 
           <div className={styles.finalColumn}>
             <span className={styles.finalLabel}>West vs. Midwest</span>
+            <span className={styles.finalDate}>{roundDates.finalFour}</span>
             <MatchCard
               matchup={bracket.finalFour[1]}
               pickedId={picks[bracket.finalFour[1].id]}

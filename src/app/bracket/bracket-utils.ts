@@ -21,6 +21,29 @@ const FIRST_ROUND_SEED_PAIRS = [
   [2, 15],
 ] as const;
 
+const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "America/New_York",
+});
+
+function roundDateLabel(games: EspnGameRow[], roundCode: string) {
+  const dates = games
+    .filter((game) => game.round_code === roundCode)
+    .map((game) => ({
+      timestamp: new Date(game.starts_at).getTime(),
+      label: DATE_FORMATTER.format(new Date(game.starts_at)),
+    }))
+    .filter((date) => Number.isFinite(date.timestamp))
+    .sort((a, b) => a.timestamp - b.timestamp);
+
+  if (dates.length === 0) return "Date TBD";
+
+  const first = dates[0].label;
+  const last = dates[dates.length - 1].label;
+  return first === last ? first : `${first}\u2013${last}`;
+}
+
 function isRegion(value: string | null): value is Region {
   return REGIONS.some((region) => region === value);
 }
@@ -154,7 +177,18 @@ export function buildTournamentModel(
     );
   }
 
-  return { seasonYear, firstRoundByRegion };
+  return {
+    seasonYear,
+    firstRoundByRegion,
+    roundDates: {
+      roundOf64: roundDateLabel(games, "ROUND_OF_64"),
+      roundOf32: roundDateLabel(games, "ROUND_OF_32"),
+      sweet16: roundDateLabel(games, "SWEET_16"),
+      elite8: roundDateLabel(games, "ELITE_8"),
+      finalFour: roundDateLabel(games, "FINAL_FOUR"),
+      championship: roundDateLabel(games, "CHAMPIONSHIP"),
+    },
+  };
 }
 
 function selectedEntry(matchup: BracketMatchup, picks: PickMap) {

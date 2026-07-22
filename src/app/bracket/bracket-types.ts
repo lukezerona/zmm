@@ -41,6 +41,14 @@ export type RegionRounds = {
 export type TournamentModel = {
   seasonYear: number;
   firstRoundByRegion: Record<Region, BracketMatchup[]>;
+  roundDates: {
+    roundOf64: string;
+    roundOf32: string;
+    sweet16: string;
+    elite8: string;
+    finalFour: string;
+    championship: string;
+  };
 };
 
 export type DerivedBracket = {

@@ -91,7 +91,15 @@ export default function BracketPage() {
             "espn_event_id, region, round_code, starts_at, home_team_id, home_team_name, home_team_seed, away_team_id, away_team_name, away_team_seed",
           )
           .eq("season_year", SEASON_YEAR)
-          .in("round_code", ["PLAY_IN", "ROUND_OF_64"]),
+          .in("round_code", [
+            "PLAY_IN",
+            "ROUND_OF_64",
+            "ROUND_OF_32",
+            "SWEET_16",
+            "ELITE_8",
+            "FINAL_FOUR",
+            "CHAMPIONSHIP",
+          ]),
         client
           .from("brackets")
           .select("picks, tiebreaker_total")
@@ -227,11 +235,19 @@ export default function BracketPage() {
     }
 
     setDirty(false);
-    setMessage(
-      completedPicks === TOTAL_PICKS && total !== null
-        ? "Bracket saved—your champion and tiebreaker are set."
-        : "Draft saved. Keep making picks when you’re ready.",
-    );
+    const remainingPicks = TOTAL_PICKS - completedPicks;
+    if (remainingPicks === 0 && total !== null) {
+      setMessage("Bracket saved—your champion and tiebreaker are set.");
+      return;
+    }
+
+    const missing = [
+      remainingPicks > 0
+        ? `${remainingPicks} ${remainingPicks === 1 ? "pick is" : "picks are"} still missing`
+        : "",
+      total === null ? "a total-points tiebreaker is required" : "",
+    ].filter(Boolean);
+    setMessage(`Warning: Your bracket was saved, but ${missing.join(" and ")}.`);
   }
 
   async function signOut() {
@@ -281,10 +297,6 @@ export default function BracketPage() {
         <div>
           <span className={styles.kicker}>{SEASON_YEAR} FAMILY TOURNAMENT</span>
           <h1>Build your bracket, <em>@{username}</em>.</h1>
-          <p>
-            The field is set. Choose every winner from the Round of 64 through
-            your national champion.
-          </p>
         </div>
 
         <div className={styles.identityCard}>
@@ -334,7 +346,6 @@ export default function BracketPage() {
             <i style={{ width: `${(completedPicks / TOTAL_PICKS) * 100}%` }} />
           </div>
         </div>
-        <p>Round-of-64 teams are fixed. Every later team stays anchored to its original top or bottom path.</p>
         <button type="button" onClick={saveBracket} disabled={saving || !dirty}>
           {saving ? <LoaderCircle className={styles.spinner} size={18} /> : <Save size={18} />}
           {saving ? "Saving…" : dirty ? "Save bracket" : "Saved"}
@@ -342,7 +353,12 @@ export default function BracketPage() {
       </section>
 
       {message && (
-        <p className={styles.statusMessage} role="status">
+        <p
+          className={`${styles.statusMessage} ${
+            message.startsWith("Warning:") ? styles.warningMessage : ""
+          }`}
+          role={message.startsWith("Warning:") ? "alert" : "status"}
+        >
           {message}
         </p>
       )}
@@ -350,43 +366,25 @@ export default function BracketPage() {
       <section className={styles.bracketIntro}>
         <span>MAKE YOUR PICKS</span>
         <h2>The complete {SEASON_YEAR} bracket</h2>
-        <p>
-          Play-in teams share one first-round seed line. You may advance a team
-          before its opponent is known; changing an earlier winner clears only
-          the picks that no longer make sense.
-        </p>
       </section>
 
-      <BracketBoard bracket={bracket} picks={picks} onPick={chooseWinner} />
-
-      <section className={styles.tiebreaker} aria-labelledby="tiebreaker-title">
-        <div>
-          <span>ONE LAST PREDICTION</span>
-          <h2 id="tiebreaker-title">Championship total points</h2>
-          <p>Enter the combined final score of both teams for the tiebreaker.</p>
-        </div>
-        <label>
-          <span>Total points</span>
-          <input
-            type="number"
-            min="0"
-            max="400"
-            inputMode="numeric"
-            value={tiebreaker}
-            onChange={(event) => {
-              setTiebreaker(event.target.value);
-              setDirty(true);
-              setMessage("");
-            }}
-            placeholder="142"
-          />
-        </label>
-      </section>
+      <BracketBoard
+        bracket={bracket}
+        picks={picks}
+        onPick={chooseWinner}
+        roundDates={model.roundDates}
+        tiebreaker={tiebreaker}
+        onTiebreakerChange={(value) => {
+          setTiebreaker(value);
+          setDirty(true);
+          setMessage("");
+        }}
+      />
 
       <footer className={styles.saveFooter}>
         <div>
           <strong>{completedPicks === TOTAL_PICKS ? "Your bracket is complete." : `${TOTAL_PICKS - completedPicks} picks remaining.`}</strong>
-          <span>{dirty ? "You have unsaved changes." : "Your latest changes are saved."}</span>
+          {dirty && <span>You have unsaved changes.</span>}
         </div>
         <button type="button" onClick={saveBracket} disabled={saving || !dirty}>
           {saving ? <LoaderCircle className={styles.spinner} size={18} /> : <Save size={18} />}
