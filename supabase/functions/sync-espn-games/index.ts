@@ -5,13 +5,42 @@ const SOURCE = "mens-college-basketball";
 const TOURNAMENT_PREFIX = "NCAA Men's Basketball Championship";
 const ESPN_SCOREBOARD_URL =
   "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard";
+const BREVO_EMAIL_URL = "https://api.brevo.com/v3/smtp/email";
+const DEFAULT_ALERT_EMAIL = "luke.zerona@gmail.com";
+const DEFAULT_ALERT_SENDER = "luke.zerona@11697146.brevosend.com";
+const ALERT_REMINDER_MS = 6 * 60 * 60 * 1_000;
 const MAX_RANGE_DAYS = 45;
 
 type SyncRequest = {
-  mode?: "auto" | "date" | "range";
+  mode?: "auto" | "date" | "range" | "test-alert";
   date?: string;
   startDate?: string;
   endDate?: string;
+};
+
+type SyncStage =
+  | "request"
+  | "espn-request"
+  | "espn-response"
+  | "database-read"
+  | "database-write"
+  | "sync-state"
+  | "validation"
+  | "test";
+
+type AlertContext = {
+  severity: "error" | "warning" | "test";
+  stage: SyncStage;
+  message: string;
+  cause: string;
+  action: string;
+  attemptedAt: string;
+  scope: string | null;
+};
+
+type AlertResult = {
+  status: "sent" | "suppressed" | "failed";
+  detail?: string;
 };
 
 type JsonRecord = Record<string, unknown>;
@@ -53,6 +82,181 @@ function asInteger(value: unknown): number | null {
   }
 
   return null;
+}
+
+function env(name: string): string {
+  return Deno.env.get(name)?.trim() ?? "";
+}
+
+function truncate(value: string, length = 2_000): string {
+  return value.length > length ? `${value.slice(0, length)}...` : value;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function projectDashboardUrl(): string {
+  try {
+    const projectRef = new URL(env("SUPABASE_URL")).hostname.split(".")[0];
+    return `https://supabase.com/dashboard/project/${projectRef}/functions/sync-espn-games/logs`;
+  } catch {
+    return "https://supabase.com/dashboard";
+  }
+}
+
+function diagnoseError(stage: SyncStage, message: string) {
+  if (/ESPN returned HTTP 429/i.test(message)) {
+    return {
+      cause: "ESPN temporarily rate-limited the scoreboard request.",
+      action: "Wait a few minutes, then run the sync again. If it continues, reduce the polling frequency.",
+    };
+  }
+
+  if (/ESPN returned HTTP 5\d\d/i.test(message)) {
+    return {
+      cause: "ESPN's scoreboard service returned a server error.",
+      action: "Check the ESPN scoreboard URL and retry after ESPN recovers.",
+    };
+  }
+
+  if (stage === "espn-request") {
+    return {
+      cause: "The Edge Function could not complete its request to ESPN. The request may have timed out or ESPN may be unreachable.",
+      action: "Open the ESPN scoreboard URL, confirm it responds, and review the Edge Function logs before retrying.",
+    };
+  }
+
+  if (stage === "espn-response" || stage === "validation") {
+    return {
+      cause: "ESPN returned tournament data that no longer matches the fields or round names ZMM expects.",
+      action: "Inspect the affected ESPN event and update the tournament parser or bracket configuration before opening picks.",
+    };
+  }
+
+  if (stage === "database-read" || stage === "database-write" || stage === "sync-state") {
+    return {
+      cause: "Supabase could not read or save the synchronized tournament data.",
+      action: "Review the database and Edge Function logs, confirm the latest migrations exist, and retry the sync.",
+    };
+  }
+
+  if (stage === "request") {
+    return {
+      cause: "The sync invocation contained an invalid request mode or date range.",
+      action: "Correct the request body or Cron configuration and invoke the function again.",
+    };
+  }
+
+  return {
+    cause: "The synchronization failed for an unexpected reason.",
+    action: "Review the Edge Function logs and the saved sync state, correct the problem, and run the sync again.",
+  };
+}
+
+async function sendBrevoAlert(
+  context: AlertContext,
+  idempotencyKey: string,
+): Promise<string> {
+  const apiKey = env("BREVO_API_KEY");
+  if (!apiKey) {
+    throw new Error("BREVO_API_KEY is not configured in Supabase Edge Function secrets.");
+  }
+
+  const toEmail = env("ZMM_ALERT_EMAIL_TO") || DEFAULT_ALERT_EMAIL;
+  const fromEmail = env("ZMM_ALERT_FROM_EMAIL") || DEFAULT_ALERT_SENDER;
+  const fromName = env("ZMM_ALERT_FROM_NAME") || "ZMM Tournament Monitor";
+  const severityLabel = context.severity === "error"
+    ? "SYNC ERROR"
+    : context.severity === "warning"
+    ? "DATA WARNING"
+    : "TEST ALERT";
+  const subject = `[ZMM ${severityLabel}] ${context.message}`;
+  const dashboardUrl = projectDashboardUrl();
+  const errorText = truncate(context.message);
+  const causeText = truncate(context.cause);
+  const actionText = truncate(context.action);
+  const scopeText = context.scope ?? "Not available";
+  const textContent = [
+    `ZMM ${severityLabel}`,
+    "",
+    `Error: ${errorText}`,
+    `Likely cause: ${causeText}`,
+    `What to do: ${actionText}`,
+    `Stage: ${context.stage}`,
+    `ESPN request scope: ${scopeText}`,
+    `Detected at: ${context.attemptedAt}`,
+    "",
+    `Review logs: ${dashboardUrl}`,
+  ].join("\n");
+  const htmlContent = `<!doctype html>
+<html>
+  <body style="margin:0;background:#02070b;color:#f7fbfd;font-family:Arial,sans-serif;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">ZMM needs manual review: ${escapeHtml(errorText)}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#02070b;padding:30px 12px;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background:#061722;border:1px solid #16445f;border-top:5px solid #16a9eb;border-radius:18px;">
+          <tr><td style="padding:34px;">
+            <div style="color:#16a9eb;font-size:12px;font-weight:700;letter-spacing:2px;">${severityLabel}</div>
+            <h1 style="margin:12px 0 8px;font-size:26px;color:#f7fbfd;">ZMM needs your attention</h1>
+            <p style="margin:0 0 24px;color:#9ab0be;line-height:1.6;">The tournament sync found a problem that may require a manual correction.</p>
+            <div style="margin:0 0 16px;padding:18px;background:#020d14;border:1px solid #1c4d68;border-radius:12px;">
+              <div style="margin-bottom:7px;color:#16a9eb;font-size:11px;font-weight:700;letter-spacing:1.4px;">ERROR</div>
+              <div style="color:#f7fbfd;font-size:15px;line-height:1.6;word-break:break-word;">${escapeHtml(errorText)}</div>
+            </div>
+            <div style="margin:0 0 16px;padding:18px;background:#020d14;border:1px solid #1c4d68;border-radius:12px;">
+              <div style="margin-bottom:7px;color:#16a9eb;font-size:11px;font-weight:700;letter-spacing:1.4px;">LIKELY CAUSE</div>
+              <div style="color:#c8d7df;font-size:15px;line-height:1.6;">${escapeHtml(causeText)}</div>
+            </div>
+            <div style="margin:0 0 24px;padding:18px;background:#020d14;border:1px solid #1c4d68;border-radius:12px;">
+              <div style="margin-bottom:7px;color:#16a9eb;font-size:11px;font-weight:700;letter-spacing:1.4px;">WHAT TO CHECK</div>
+              <div style="color:#c8d7df;font-size:15px;line-height:1.6;">${escapeHtml(actionText)}</div>
+            </div>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;color:#7893a4;font-size:12px;line-height:1.7;">
+              <tr><td><strong style="color:#9ab0be;">Stage:</strong> ${escapeHtml(context.stage)}</td></tr>
+              <tr><td><strong style="color:#9ab0be;">ESPN scope:</strong> ${escapeHtml(scopeText)}</td></tr>
+              <tr><td><strong style="color:#9ab0be;">Detected:</strong> ${escapeHtml(context.attemptedAt)}</td></tr>
+            </table>
+            <div style="text-align:center;"><a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;padding:13px 22px;background:#16a9eb;color:#001018;text-decoration:none;font-weight:700;border-radius:9px;">Review Supabase logs</a></div>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const response = await fetch(BREVO_EMAIL_URL, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "api-key": apiKey,
+    },
+    body: JSON.stringify({
+      sender: { email: fromEmail, name: fromName },
+      to: [{ email: toEmail, name: "Luke Zerona" }],
+      replyTo: { email: toEmail, name: "Luke Zerona" },
+      subject: truncate(subject, 180),
+      textContent,
+      htmlContent,
+      headers: { "Idempotency-Key": idempotencyKey },
+      tags: ["zmm", "sync-alert"],
+    }),
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  const responseText = await response.text();
+  if (!response.ok) {
+    throw new Error(`Brevo returned HTTP ${response.status}: ${truncate(responseText, 500)}`);
+  }
+
+  const responseBody = responseText ? asRecord(JSON.parse(responseText)) : {};
+  return asString(responseBody.messageId) ?? "accepted";
 }
 
 function easternDate(): string {
@@ -310,10 +514,97 @@ const handler = {
     const startedAt = Date.now();
     const attemptedAt = new Date().toISOString();
     let scope: string | null = null;
+    let stage: SyncStage = "request";
+
+    async function deliverAlert(
+      context: AlertContext,
+      force = false,
+    ): Promise<AlertResult> {
+      const signature = await sha256({
+        severity: context.severity,
+        stage: context.stage,
+        message: context.message,
+        cause: context.cause,
+      });
+      const { data: alertState, error: alertStateError } = await ctx.supabaseAdmin
+        .from("espn_sync_state")
+        .select("last_alert_at, last_alert_signature")
+        .eq("source", SOURCE)
+        .maybeSingle();
+      const lastAlertAt = alertState?.last_alert_at
+        ? new Date(alertState.last_alert_at).getTime()
+        : 0;
+      const recentlySent = Date.now() - lastAlertAt < ALERT_REMINDER_MS;
+
+      if (
+        !force &&
+        !alertStateError &&
+        alertState?.last_alert_signature === signature &&
+        recentlySent
+      ) {
+        return { status: "suppressed", detail: "The same alert was already sent within six hours." };
+      }
+
+      const reminderBucket = Math.floor(Date.now() / ALERT_REMINDER_MS);
+      const idempotencyKey = `zmm-${signature.slice(0, 36)}-${reminderBucket}`;
+
+      try {
+        const messageId = await sendBrevoAlert(context, idempotencyKey);
+        const { error: saveAlertError } = await ctx.supabaseAdmin
+          .from("espn_sync_state")
+          .upsert({
+            source: SOURCE,
+            last_attempt_at: attemptedAt,
+            last_alert_at: new Date().toISOString(),
+            last_alert_signature: signature,
+            last_alert_delivery_error: null,
+          }, { onConflict: "source" });
+
+        if (saveAlertError) {
+          console.error("[sync-alert] Email sent but alert state could not be saved", saveAlertError.message);
+        }
+
+        return { status: "sent", detail: messageId };
+      } catch (alertError) {
+        const detail = alertError instanceof Error
+          ? truncate(alertError.message, 1_000)
+          : "Unknown alert delivery error.";
+        console.error("[sync-alert] Could not deliver alert email", detail);
+
+        await ctx.supabaseAdmin
+          .from("espn_sync_state")
+          .upsert({
+            source: SOURCE,
+            last_attempt_at: attemptedAt,
+            last_alert_delivery_error: detail,
+          }, { onConflict: "source" });
+
+        return { status: "failed", detail };
+      }
+    }
 
     try {
       const body = await parseBody(req);
+
+      if (body.mode === "test-alert") {
+        const alert = await deliverAlert({
+          severity: "test",
+          stage: "test",
+          message: "The ZMM tournament monitor email is configured correctly.",
+          cause: "This is a requested test. No synchronization error occurred.",
+          action: "No action is required. Future sync errors and data warnings will be sent to this address.",
+          attemptedAt,
+          scope: null,
+        }, true);
+
+        return Response.json(
+          { alert },
+          { status: alert.status === "failed" ? 500 : 200 },
+        );
+      }
+
       scope = requestScope(body);
+      stage = "espn-request";
       const url = new URL(ESPN_SCOREBOARD_URL);
       url.searchParams.set("groups", "50");
       url.searchParams.set("limit", "200");
@@ -328,6 +619,7 @@ const handler = {
         throw new Error(`ESPN returned HTTP ${response.status}.`);
       }
 
+      stage = "espn-response";
       const payload: unknown = await response.json();
       const sourceEvents = asArray(asRecord(payload).events);
       const normalized = await Promise.all(
@@ -338,9 +630,15 @@ const handler = {
         const competition = asRecord(asArray(asRecord(event).competitions)[0]);
         return Boolean(tournamentHeadline(competition));
       }).length - games.length;
+      const unclassifiedHeadlines = [...new Set(
+        games
+          .filter((game) => game.round_code === "UNCLASSIFIED")
+          .map((game) => game.tournament_headline),
+      )];
 
       const existingHashes = new Map<string, string>();
       if (games.length > 0) {
+        stage = "database-read";
         const { data, error } = await ctx.supabaseAdmin
           .from("espn_games")
           .select("espn_event_id, source_hash")
@@ -360,6 +658,7 @@ const handler = {
       );
 
       if (changedGames.length > 0) {
+        stage = "database-write";
         const { error } = await ctx.supabaseAdmin
           .from("espn_games")
           .upsert(changedGames, { onConflict: "espn_event_id" });
@@ -370,6 +669,7 @@ const handler = {
       }
 
       const durationMs = Date.now() - startedAt;
+      stage = "sync-state";
       const { error: stateError } = await ctx.supabaseAdmin
         .from("espn_sync_state")
         .upsert({
@@ -389,6 +689,32 @@ const handler = {
         throw new Error(`Could not save sync state: ${stateError.message}`);
       }
 
+      let alert: AlertResult | null = null;
+      if (skippedGameCount > 0 || unclassifiedHeadlines.length > 0) {
+        stage = "validation";
+        const warningParts = [];
+        if (skippedGameCount > 0) {
+          warningParts.push(
+            `${skippedGameCount} NCAA tournament event(s) were skipped because required game or team fields were missing.`,
+          );
+        }
+        if (unclassifiedHeadlines.length > 0) {
+          warningParts.push(
+            `Unrecognized round headline(s): ${unclassifiedHeadlines.join(" | ")}`,
+          );
+        }
+
+        alert = await deliverAlert({
+          severity: "warning",
+          stage,
+          message: warningParts.join(" "),
+          cause: "ESPN's tournament format or response fields may have changed, so ZMM kept the known games but could not safely classify everything.",
+          action: "Compare ESPN with the official NCAA bracket, then update the parser or tournament configuration before letting the family submit brackets.",
+          attemptedAt,
+          scope,
+        });
+      }
+
       return Response.json({
         scope,
         sourceEvents: sourceEvents.length,
@@ -397,9 +723,11 @@ const handler = {
         unchangedGames: games.length - changedGames.length,
         skippedGames: Math.max(0, skippedGameCount),
         durationMs,
+        alert,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown synchronization error.";
+      const diagnosis = diagnoseError(stage, message);
 
       await ctx.supabaseAdmin.from("espn_sync_state").upsert({
         source: SOURCE,
@@ -409,7 +737,17 @@ const handler = {
         duration_ms: Date.now() - startedAt,
       }, { onConflict: "source" });
 
-      return Response.json({ error: message }, { status: 500 });
+      const alert = await deliverAlert({
+        severity: "error",
+        stage,
+        message,
+        cause: diagnosis.cause,
+        action: diagnosis.action,
+        attemptedAt,
+        scope,
+      });
+
+      return Response.json({ error: message, alert }, { status: 500 });
     }
   }),
 };
