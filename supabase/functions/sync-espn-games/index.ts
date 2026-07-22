@@ -152,20 +152,11 @@ function parseRound(headline: string): RoundDetails {
   if (/(1st Round|Round of 64)$/i.test(headline)) {
     return { code: "ROUND_OF_64", number: 1, region, isPlayIn: false };
   }
-  const namedOpeningRound = headline.match(
-    /First (Four|Eight|Twelve|Sixteen|\d+)$/i,
-  );
-  if (namedOpeningRound) {
-    const participantLabel = namedOpeningRound[1].toUpperCase();
-    return {
-      code: `FIRST_${participantLabel}`,
-      number: 0,
-      region,
-      isPlayIn: true,
-    };
+  if (/First (Four|Eight|Twelve|Sixteen|\d+)$/i.test(headline)) {
+    return { code: "PLAY_IN", number: 0, region, isPlayIn: true };
   }
   if (/(Opening Round|Play[ -]?In)$/i.test(headline)) {
-    return { code: "OPENING_ROUND", number: 0, region, isPlayIn: true };
+    return { code: "PLAY_IN", number: 0, region, isPlayIn: true };
   }
 
   return { code: "UNCLASSIFIED", number: null, region, isPlayIn: false };

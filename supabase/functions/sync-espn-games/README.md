@@ -17,10 +17,10 @@ It filters ESPN events to headlines beginning with
 and writes only new or changed game rows.
 
 The importer does not assume a fixed tournament size. Known historical round
-names are normalized, opening/play-in games are marked with `is_play_in`, and
-an unfamiliar future round is retained as `UNCLASSIFIED` with its original ESPN
-headline. Seeds are not capped at 16. This lets format changes arrive in the
-database without silently dropping games.
+names are normalized, every opening/play-in format uses `round_code = PLAY_IN`
+and `is_play_in = true`, and an unfamiliar future round is retained as
+`UNCLASSIFIED` with its original ESPN headline. Seeds are not capped at 16.
+This lets format changes arrive in the database without silently dropping games.
 
 ## Seasonal activation
 
