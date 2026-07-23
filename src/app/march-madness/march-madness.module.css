@@ -340,9 +340,9 @@
 
 .masterRegion > h3,
 .masterFinals > h3 {
-  padding: 17px 19px 13px;
+  padding: 20px 22px 16px;
   border-bottom: 1px solid rgba(61, 145, 190, 0.15);
-  font-size: 18px;
+  font-size: 22px;
   letter-spacing: -0.025em;
 }
 
@@ -353,7 +353,7 @@
 }
 
 .masterRegionGrid {
-  min-width: 900px;
+  min-width: 1120px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 9px;
@@ -365,14 +365,14 @@
 }
 
 .masterRoundHeading {
-  min-height: 36px;
+  min-height: 46px;
   text-align: center;
 }
 
 .masterRoundHeading strong {
   display: block;
   color: #6f8d9d;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -380,14 +380,14 @@
 
 .masterRoundHeading span {
   display: block;
-  margin-top: 3px;
+  margin-top: 4px;
   color: #39afe9;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 750;
 }
 
 .masterMatchups {
-  height: 900px;
+  height: 1040px;
   display: flex;
   flex-direction: column;
   justify-content: space-around;
@@ -403,15 +403,15 @@
 }
 
 .gameMeta {
-  min-height: 25px;
+  min-height: 31px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 5px 8px;
+  padding: 6px 9px;
   border-bottom: 1px solid #133040;
   color: #6d8b9c;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 800;
 }
 
@@ -426,12 +426,12 @@
 }
 
 .scoreRow {
-  min-height: 30px;
+  min-height: 36px;
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) 25px;
+  grid-template-columns: 30px minmax(0, 1fr) 32px;
   align-items: center;
   gap: 5px;
-  padding: 3px 7px;
+  padding: 5px 9px;
   color: #8fa6b4;
 }
 
@@ -441,20 +441,20 @@
 
 .scoreRow strong {
   overflow: hidden;
-  font-size: 10px;
+  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .scoreRow b {
   color: #c9d7df;
-  font-size: 12px;
+  font-size: 15px;
   text-align: right;
 }
 
 .seed {
   color: #3dbbf4;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 850;
 }
 
@@ -483,11 +483,11 @@
 }
 
 .awaitingGame {
-  min-height: 82px;
+  min-height: 103px;
   display: grid;
   place-items: center;
   color: #415e6d;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
 }
 
@@ -533,14 +533,14 @@
 
 .masterChampion span {
   color: #67a7c8;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .masterChampion strong {
-  font-size: 14px;
+  font-size: 17px;
 }
 
 .familySection {
@@ -644,7 +644,7 @@
   }
 
   .masterRegionGrid {
-    min-width: 960px;
+    min-width: 1120px;
   }
 }
 
