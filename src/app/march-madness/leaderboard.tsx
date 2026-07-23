@@ -1,4 +1,4 @@
-import { Crown, Medal } from "lucide-react";
+import { Crown, Medal, Trophy } from "lucide-react";
 import { LeaderboardEntry } from "./tournament-types";
 import styles from "./march-madness.module.css";
 
@@ -51,7 +51,12 @@ export function Leaderboard({
               </td>
               <td className={styles.points}>{entry.points}</td>
               <td>{entry.possiblePointsRemaining}</td>
-              <td>{entry.champion}</td>
+              <td>
+                <span className={styles.championPick}>
+                  <Trophy size={15} aria-hidden="true" />
+                  {entry.champion}
+                </span>
+              </td>
               <td>{entry.tiebreaker ?? "—"}</td>
               <td>
                 <strong>{entry.correctPercentage.toFixed(1)}%</strong>

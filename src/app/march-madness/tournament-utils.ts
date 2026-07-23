@@ -320,7 +320,7 @@ export function buildLeaderboard(
         }
       }
 
-      const champion = entries.get(bracket.picks.championship)?.name;
+      const champion = entries.get(bracket.picks.championship);
       const tiebreakerDistance =
         championshipTotal !== null && bracket.tiebreaker_total !== null
           ? Math.abs(bracket.tiebreaker_total - championshipTotal)
@@ -333,7 +333,9 @@ export function buildLeaderboard(
         rank: 0,
         points,
         possiblePointsRemaining,
-        champion: champion ?? "No champion selected",
+        champion: champion
+          ? `#${champion.seed} ${champion.name}`
+          : "No champion selected",
         tiebreaker: bracket.tiebreaker_total,
         correctPicks,
         completedGames: results.length,
