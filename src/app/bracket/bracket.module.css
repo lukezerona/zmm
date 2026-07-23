@@ -263,10 +263,9 @@
 }
 
 .bracketIntro {
-  padding: 66px 0 24px;
+  padding: 48px 0 18px;
 }
 
-.bracketIntro h2,
 .finalHeading h2 {
   margin-top: 7px;
   font-size: clamp(27px, 3vw, 42px);
@@ -668,7 +667,7 @@
   }
 
   .bracketIntro {
-    padding-top: 48px;
+    padding-top: 36px;
   }
 
   .finalStage {

@@ -366,7 +366,6 @@ export default function BracketPage() {
 
       <section className={styles.bracketIntro}>
         <span>MAKE YOUR PICKS</span>
-        <h2>The complete {SEASON_YEAR} bracket</h2>
       </section>
 
       <BracketBoard
