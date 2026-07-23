@@ -258,6 +258,10 @@
   background: rgba(164, 100, 12, 0.16);
 }
 
+.bottomWarning {
+  margin-top: 20px;
+}
+
 .bracketIntro {
   padding: 66px 0 24px;
 }

@@ -165,6 +165,7 @@ export default function BracketPage() {
     [model, picks],
   );
   const completedPicks = pickCount(picks);
+  const isWarning = message.startsWith("Warning:");
 
   function chooseWinner(matchupId: string, entryId: string) {
     if (!model) return;
@@ -355,9 +356,9 @@ export default function BracketPage() {
       {message && (
         <p
           className={`${styles.statusMessage} ${
-            message.startsWith("Warning:") ? styles.warningMessage : ""
+            isWarning ? styles.warningMessage : ""
           }`}
-          role={message.startsWith("Warning:") ? "alert" : "status"}
+          role={isWarning ? "alert" : "status"}
         >
           {message}
         </p>
@@ -380,6 +381,15 @@ export default function BracketPage() {
           setMessage("");
         }}
       />
+
+      {isWarning && (
+        <p
+          className={`${styles.statusMessage} ${styles.warningMessage} ${styles.bottomWarning}`}
+          aria-hidden="true"
+        >
+          {message}
+        </p>
+      )}
 
       <footer className={styles.saveFooter}>
         <div>
