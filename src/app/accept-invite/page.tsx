@@ -57,7 +57,7 @@ export default function AcceptInvitePage() {
       }
 
       if (profile) {
-        router.replace("/bracket");
+        router.replace("/march-madness");
         return;
       }
 
@@ -179,8 +179,8 @@ export default function AcceptInvitePage() {
             <CheckCircle2 size={46} />
             <h1>You’re on the roster</h1>
             <p>Your ZMM account is ready. Sign in next time with the username <strong>{username.trim().toLowerCase()}</strong>.</p>
-            <button type="button" onClick={() => router.replace("/bracket")}>
-              Start your bracket
+            <button type="button" onClick={() => router.replace("/march-madness")}>
+              Enter Tournament Central
             </button>
           </div>
         ) : (

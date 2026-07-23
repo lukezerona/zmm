@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:practice": "node --env-file=.env.local scripts/seed-practice-pool.mjs",
+    "verify:tournament": "node --env-file=.env.local scripts/verify-tournament.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",

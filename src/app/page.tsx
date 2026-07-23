@@ -37,7 +37,7 @@ export default function LoginPage() {
       .maybeSingle();
 
     if (profileError) throw profileError;
-    return data ? "/bracket" : "/accept-invite";
+    return data ? "/march-madness" : "/accept-invite";
   }
 
   useEffect(() => {

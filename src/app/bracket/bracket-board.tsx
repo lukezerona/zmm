@@ -22,6 +22,7 @@ type MatchCardProps = {
   pickedId?: string;
   onPick: (matchupId: string, entryId: string) => void;
   compact?: boolean;
+  readOnly?: boolean;
 };
 
 function MatchCard({
@@ -29,6 +30,7 @@ function MatchCard({
   pickedId,
   onPick,
   compact = false,
+  readOnly = false,
 }: MatchCardProps) {
   const slots = matchup.options;
 
@@ -50,6 +52,7 @@ function MatchCard({
             }`}
             onClick={() => onPick(matchup.id, entry.id)}
             aria-pressed={pickedId === entry.id}
+            disabled={readOnly}
             title={entry.isPlayIn ? `Play-in slot: ${entry.name}` : entry.name}
           >
             <strong>#{entry.seed}</strong>
@@ -73,6 +76,7 @@ type RegionBracketProps = {
   onPick: (matchupId: string, entryId: string) => void;
   flow: "left" | "right";
   roundDates: TournamentModel["roundDates"];
+  readOnly?: boolean;
 };
 
 function RegionBracket({
@@ -82,6 +86,7 @@ function RegionBracket({
   onPick,
   flow,
   roundDates,
+  readOnly = false,
 }: RegionBracketProps) {
   const rounds = bracket.regions[region];
   const columns = [
@@ -131,6 +136,7 @@ function RegionBracket({
                     matchup={matchup}
                     pickedId={picks[matchup.id]}
                     onPick={onPick}
+                    readOnly={readOnly}
                   />
                 ))}
               </div>
@@ -149,6 +155,7 @@ type BracketBoardProps = {
   roundDates: TournamentModel["roundDates"];
   tiebreaker: string;
   onTiebreakerChange: (value: string) => void;
+  readOnly?: boolean;
 };
 
 export function BracketBoard({
@@ -158,6 +165,7 @@ export function BracketBoard({
   roundDates,
   tiebreaker,
   onTiebreakerChange,
+  readOnly = false,
 }: BracketBoardProps) {
   return (
     <>
@@ -169,6 +177,7 @@ export function BracketBoard({
           onPick={onPick}
           flow="right"
           roundDates={roundDates}
+          readOnly={readOnly}
         />
         <RegionBracket
           region="west"
@@ -177,6 +186,7 @@ export function BracketBoard({
           onPick={onPick}
           flow="left"
           roundDates={roundDates}
+          readOnly={readOnly}
         />
         <RegionBracket
           region="south"
@@ -185,6 +195,7 @@ export function BracketBoard({
           onPick={onPick}
           flow="right"
           roundDates={roundDates}
+          readOnly={readOnly}
         />
         <RegionBracket
           region="midwest"
@@ -193,6 +204,7 @@ export function BracketBoard({
           onPick={onPick}
           flow="left"
           roundDates={roundDates}
+          readOnly={readOnly}
         />
       </div>
 
@@ -209,6 +221,7 @@ export function BracketBoard({
               pickedId={picks[bracket.finalFour[0].id]}
               onPick={onPick}
               compact
+              readOnly={readOnly}
             />
           </div>
 
@@ -220,6 +233,7 @@ export function BracketBoard({
               pickedId={picks[bracket.championship.id]}
               onPick={onPick}
               compact
+              readOnly={readOnly}
             />
             <div className={styles.championResultRow}>
               <div className={styles.championCard} aria-live="polite">
@@ -241,6 +255,7 @@ export function BracketBoard({
                   value={tiebreaker}
                   onChange={(event) => onTiebreakerChange(event.target.value)}
                   placeholder="142"
+                  disabled={readOnly}
                 />
               </label>
             </div>
@@ -254,6 +269,7 @@ export function BracketBoard({
               pickedId={picks[bracket.finalFour[1].id]}
               onPick={onPick}
               compact
+              readOnly={readOnly}
             />
           </div>
         </div>

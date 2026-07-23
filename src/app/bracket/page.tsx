@@ -60,6 +60,7 @@ export default function BracketPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [locked, setLocked] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -134,6 +135,11 @@ export default function BracketPage() {
           SEASON_YEAR,
         );
         const saved = bracketResult.data as SavedBracket | null;
+        const firstRoundStarted = (gamesResult.data as EspnGameRow[]).some(
+          (game) =>
+            game.round_code === "ROUND_OF_64" &&
+            new Date(game.starts_at).getTime() <= Date.now(),
+        );
 
         setUserId(userData.user.id);
         setUsername(profile.username);
@@ -146,6 +152,7 @@ export default function BracketPage() {
             ? ""
             : String(saved.tiebreaker_total),
         );
+        setLocked(firstRoundStarted);
         setLoading(false);
       } catch (loadError) {
         console.error("[bracket] Could not build tournament", loadError);
@@ -168,7 +175,7 @@ export default function BracketPage() {
   const isWarning = message.startsWith("Warning:");
 
   function chooseWinner(matchupId: string, entryId: string) {
-    if (!model) return;
+    if (!model || locked) return;
 
     setPicks((current) =>
       sanitizePicks(model, { ...current, [matchupId]: entryId }),
@@ -208,6 +215,12 @@ export default function BracketPage() {
   async function saveBracket() {
     const client = supabase;
     if (!client || !userId) return;
+    if (locked) {
+      setMessage(
+        "Entries are locked because the Round of 64 has started. Your saved picks cannot be changed.",
+      );
+      return;
+    }
 
     const total = tiebreaker === "" ? null : Number(tiebreaker);
     if (total !== null && (!Number.isInteger(total) || total < 0 || total > 400)) {
@@ -347,11 +360,25 @@ export default function BracketPage() {
             <i style={{ width: `${(completedPicks / TOTAL_PICKS) * 100}%` }} />
           </div>
         </div>
-        <button type="button" onClick={saveBracket} disabled={saving || !dirty}>
+        <button
+          type="button"
+          onClick={saveBracket}
+          disabled={locked || saving || !dirty}
+        >
           {saving ? <LoaderCircle className={styles.spinner} size={18} /> : <Save size={18} />}
-          {saving ? "Saving…" : dirty ? "Save bracket" : "Saved"}
+          {locked ? "Entries locked" : saving ? "Saving…" : dirty ? "Save bracket" : "Saved"}
         </button>
       </section>
+
+      {locked && (
+        <p
+          className={`${styles.statusMessage} ${styles.warningMessage}`}
+          role="status"
+        >
+          Entries are locked. The Round of 64 has started, so this bracket is
+          now read-only and its saved picks cannot be overwritten.
+        </p>
+      )}
 
       {message && (
         <p
@@ -375,10 +402,12 @@ export default function BracketPage() {
         roundDates={model.roundDates}
         tiebreaker={tiebreaker}
         onTiebreakerChange={(value) => {
+          if (locked) return;
           setTiebreaker(value);
           setDirty(true);
           setMessage("");
         }}
+        readOnly={locked}
       />
 
       {isWarning && (
@@ -395,9 +424,13 @@ export default function BracketPage() {
           <strong>{completedPicks === TOTAL_PICKS ? "Your bracket is complete." : `${TOTAL_PICKS - completedPicks} picks remaining.`}</strong>
           {dirty && <span>You have unsaved changes.</span>}
         </div>
-        <button type="button" onClick={saveBracket} disabled={saving || !dirty}>
+        <button
+          type="button"
+          onClick={saveBracket}
+          disabled={locked || saving || !dirty}
+        >
           {saving ? <LoaderCircle className={styles.spinner} size={18} /> : <Save size={18} />}
-          {saving ? "Saving…" : dirty ? "Save bracket" : "Saved"}
+          {locked ? "Entries locked" : saving ? "Saving…" : dirty ? "Save bracket" : "Saved"}
         </button>
       </footer>
     </main>
