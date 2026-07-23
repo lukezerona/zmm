@@ -22,6 +22,7 @@ const {
 } = require("../src/app/bracket/bracket-utils.ts");
 const {
   allocatePrizePayouts,
+  buildActualResults,
   buildLeaderboard,
   buildMasterGameIndex,
 } = require("../src/app/march-madness/tournament-utils.ts");
@@ -51,6 +52,8 @@ function payoutRow(name, points, distance = null) {
     points,
     possiblePointsRemaining: 0,
     champion: "Test",
+    championEliminated: false,
+    championWon: false,
     tiebreaker: 140,
     correctPicks: 0,
     completedGames: 0,
@@ -132,6 +135,7 @@ async function verifyDevelopmentPool() {
     profilesResult.data,
     brackets,
   );
+  const actualResults = buildActualResults(model, gamesResult.data);
   const masterGames = buildMasterGameIndex(model, gamesResult.data);
 
   assert.equal(brackets.length, 5);
@@ -145,6 +149,28 @@ async function verifyDevelopmentPool() {
       ?.championEliminated,
     true,
   );
+  assert.ok(actualResults.actualPicks.championship);
+  const winnerBracket = brackets[0];
+  const winnerProfile = profilesResult.data.find(
+    (profile) => profile.user_id === winnerBracket.user_id,
+  );
+  assert.ok(winnerProfile);
+  const winnerLeaderboard = buildLeaderboard(
+    model,
+    gamesResult.data,
+    [winnerProfile],
+    [
+      {
+        ...winnerBracket,
+        picks: {
+          ...winnerBracket.picks,
+          championship: actualResults.actualPicks.championship,
+        },
+      },
+    ],
+  );
+  assert.equal(winnerLeaderboard.rows[0].championWon, true);
+  assert.equal(winnerLeaderboard.rows[0].championEliminated, false);
   assert.equal(leaderboard.pot, 50);
   assert.equal(leaderboard.championshipComplete, true);
   assert.equal(leaderboard.championshipTotal, 132);

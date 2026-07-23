@@ -37,6 +37,7 @@ export type LeaderboardEntry = {
   possiblePointsRemaining: number;
   champion: string;
   championEliminated: boolean;
+  championWon: boolean;
   tiebreaker: number | null;
   correctPicks: number;
   completedGames: number;

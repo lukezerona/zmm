@@ -278,6 +278,7 @@ export function buildLeaderboard(
   const entries = allEntries(model);
   const eliminated = eliminatedTeams(games);
   const championship = games.find((game) => game.round_number === 6);
+  const championshipResult = results.find((result) => result.roundNumber === 6);
   const championshipComplete = Boolean(championship?.completed);
   const championshipTotal =
     championshipComplete &&
@@ -339,6 +340,9 @@ export function buildLeaderboard(
         championEliminated: champion
           ? champion.teamIds.every((teamId) => eliminated.has(teamId))
           : false,
+        championWon:
+          championshipComplete &&
+          championshipResult?.winnerEntryId === bracket.picks.championship,
         tiebreaker: bracket.tiebreaker_total,
         correctPicks,
         completedGames: results.length,

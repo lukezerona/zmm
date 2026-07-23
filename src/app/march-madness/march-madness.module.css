@@ -359,6 +359,34 @@
   color: #ff6079;
 }
 
+.winningChampionPick {
+  border-color: rgba(87, 216, 154, 0.55);
+  color: #f4fff9;
+  background: linear-gradient(
+    135deg,
+    rgba(29, 137, 88, 0.28),
+    rgba(190, 145, 34, 0.18)
+  );
+  box-shadow:
+    0 0 0 1px rgba(87, 216, 154, 0.08),
+    0 0 18px rgba(87, 216, 154, 0.1);
+}
+
+.winningChampionPick svg {
+  color: #65e3a5;
+}
+
+.championWonLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #65e3a5;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .eliminatedLabel {
   display: inline-flex;
   align-items: center;

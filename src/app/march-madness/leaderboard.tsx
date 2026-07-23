@@ -1,4 +1,4 @@
-import { CircleX, Crown, Medal, Trophy } from "lucide-react";
+import { BadgeCheck, CircleX, Crown, Medal, Trophy } from "lucide-react";
 import { LeaderboardEntry } from "./tournament-types";
 import styles from "./march-madness.module.css";
 
@@ -68,7 +68,9 @@ export function Leaderboard({
                 <div className={styles.championCell}>
                   <span
                     className={`${styles.championPick} ${
-                      entry.championEliminated
+                      entry.championWon
+                        ? styles.winningChampionPick
+                        : entry.championEliminated
                         ? styles.eliminatedChampionPick
                         : ""
                     }`}
@@ -76,7 +78,13 @@ export function Leaderboard({
                     <Trophy size={15} aria-hidden="true" />
                     {entry.champion}
                   </span>
-                  {entry.championEliminated && (
+                  {entry.championWon && (
+                    <span className={styles.championWonLabel}>
+                      <BadgeCheck size={13} aria-hidden="true" />
+                      Champion
+                    </span>
+                  )}
+                  {!entry.championWon && entry.championEliminated && (
                     <span className={styles.eliminatedLabel}>
                       <CircleX size={13} aria-hidden="true" />
                       Eliminated
