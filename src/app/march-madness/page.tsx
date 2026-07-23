@@ -294,10 +294,6 @@ export default function MarchMadnessPage() {
           <div>
             <span>FAMILY STANDINGS</span>
             <h2>Leaderboard</h2>
-            <p>
-              Round values increase from 1 point in the Round of 64 to 32
-              points for the championship.
-            </p>
           </div>
           <div className={styles.updated}>
             <button
@@ -334,11 +330,7 @@ export default function MarchMadnessPage() {
       <section className={styles.section} id="master-bracket">
         <div className={styles.sectionHeading}>
           <div>
-            <span>THE SOURCE OF TRUTH</span>
             <h2>Master bracket</h2>
-            <p>
-              Scores and game states come directly from the latest ESPN sync.
-            </p>
           </div>
         </div>
         <MasterBracket model={model} games={games} />
