@@ -140,6 +140,11 @@ async function verifyDevelopmentPool() {
   }
   assert.equal(leaderboard.rows.length, 5);
   assert.equal(masterGames.size, 63);
+  assert.equal(
+    leaderboard.rows.find((row) => row.username === "alex")
+      ?.championEliminated,
+    true,
+  );
   assert.equal(leaderboard.pot, 50);
   assert.equal(leaderboard.championshipComplete, true);
   assert.equal(leaderboard.championshipTotal, 132);

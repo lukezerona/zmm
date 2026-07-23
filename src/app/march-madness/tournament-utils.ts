@@ -336,6 +336,9 @@ export function buildLeaderboard(
         champion: champion
           ? `#${champion.seed} ${champion.name}`
           : "No champion selected",
+        championEliminated: champion
+          ? champion.teamIds.every((teamId) => eliminated.has(teamId))
+          : false,
         tiebreaker: bracket.tiebreaker_total,
         correctPicks,
         completedGames: results.length,

@@ -322,7 +322,7 @@ export default function MarchMadnessPage() {
             )}
           </div>
         </div>
-        <Leaderboard rows={leaderboard.rows} />
+        <Leaderboard rows={leaderboard.rows} currentUserId={userId} />
         <p className={styles.payoutNote}>
           $10 buy-in · First place 60% · Second place 30% · Third place 10%.
           {leaderboard.championshipComplete

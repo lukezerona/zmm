@@ -1,4 +1,4 @@
-import { Crown, Medal, Trophy } from "lucide-react";
+import { CircleX, Crown, Medal, Trophy } from "lucide-react";
 import { LeaderboardEntry } from "./tournament-types";
 import styles from "./march-madness.module.css";
 
@@ -14,8 +14,10 @@ function RankIcon({ rank }: { rank: number }) {
 }
 export function Leaderboard({
   rows,
+  currentUserId,
 }: {
   rows: LeaderboardEntry[];
+  currentUserId: string;
 }) {
   return (
     <div className={styles.tableScroll}>
@@ -33,8 +35,14 @@ export function Leaderboard({
           </tr>
         </thead>
         <tbody>
-          {rows.map((entry) => (
-            <tr key={entry.userId}>
+          {rows.map((entry) => {
+            const isCurrentPlayer = entry.userId === currentUserId;
+
+            return (
+            <tr
+              key={entry.userId}
+              className={isCurrentPlayer ? styles.currentPlayerRow : ""}
+            >
               <td>
                 <span
                   className={`${styles.rank} ${
@@ -46,16 +54,35 @@ export function Leaderboard({
                 </span>
               </td>
               <td>
-                <strong>{entry.displayName}</strong>
+                <strong>
+                  {entry.displayName}
+                  {isCurrentPlayer && (
+                    <span className={styles.youBadge}>You</span>
+                  )}
+                </strong>
                 <span className={styles.username}>@{entry.username}</span>
               </td>
               <td className={styles.points}>{entry.points}</td>
               <td>{entry.possiblePointsRemaining}</td>
               <td>
-                <span className={styles.championPick}>
-                  <Trophy size={15} aria-hidden="true" />
-                  {entry.champion}
-                </span>
+                <div className={styles.championCell}>
+                  <span
+                    className={`${styles.championPick} ${
+                      entry.championEliminated
+                        ? styles.eliminatedChampionPick
+                        : ""
+                    }`}
+                  >
+                    <Trophy size={15} aria-hidden="true" />
+                    {entry.champion}
+                  </span>
+                  {entry.championEliminated && (
+                    <span className={styles.eliminatedLabel}>
+                      <CircleX size={13} aria-hidden="true" />
+                      Eliminated
+                    </span>
+                  )}
+                </div>
               </td>
               <td>{entry.tiebreaker ?? "—"}</td>
               <td>
@@ -68,7 +95,8 @@ export function Leaderboard({
                 {MONEY_FORMATTER.format(entry.prize)}
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>
