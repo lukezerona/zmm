@@ -14,6 +14,16 @@ const SEED_PAIRS = [
   [7, 10],
   [2, 15],
 ];
+const PICK_OVERRIDES_BY_USERNAME = {
+  morgan: {
+    "midwest-r1-0": "team:130",
+    "midwest-r2-0": "team:130",
+    "midwest-r3-0": "team:130",
+    "midwest-r4-0": "team:130",
+    "final-four-1": "team:130",
+    championship: "team:130",
+  },
+};
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const secret = process.env.SUPABASE_SECRET_KEY;
@@ -234,6 +244,156 @@ async function run() {
       email: "zmm-practice-riley@example.com",
       seed: 202605,
     },
+    {
+      username: "morgan",
+      displayName: "Morgan",
+      email: "zmm-practice-morgan@example.com",
+      seed: 202606,
+    },
+    {
+      username: "taylor",
+      displayName: "Taylor",
+      email: "zmm-practice-taylor@example.com",
+      seed: 202607,
+    },
+    {
+      username: "jamie",
+      displayName: "Jamie",
+      email: "zmm-practice-jamie@example.com",
+      seed: 202608,
+    },
+    {
+      username: "cameron",
+      displayName: "Cameron",
+      email: "zmm-practice-cameron@example.com",
+      seed: 202609,
+    },
+    {
+      username: "avery",
+      displayName: "Avery",
+      email: "zmm-practice-avery@example.com",
+      seed: 202610,
+    },
+    {
+      username: "parker",
+      displayName: "Parker",
+      email: "zmm-practice-parker@example.com",
+      seed: 202611,
+    },
+    {
+      username: "quinn",
+      displayName: "Quinn",
+      email: "zmm-practice-quinn@example.com",
+      seed: 202612,
+    },
+    {
+      username: "reese",
+      displayName: "Reese",
+      email: "zmm-practice-reese@example.com",
+      seed: 202613,
+    },
+    {
+      username: "drew",
+      displayName: "Drew",
+      email: "zmm-practice-drew@example.com",
+      seed: 202614,
+    },
+    {
+      username: "hayden",
+      displayName: "Hayden",
+      email: "zmm-practice-hayden@example.com",
+      seed: 202615,
+    },
+    {
+      username: "emerson",
+      displayName: "Emerson",
+      email: "zmm-practice-emerson@example.com",
+      seed: 202616,
+    },
+    {
+      username: "finley",
+      displayName: "Finley",
+      email: "zmm-practice-finley@example.com",
+      seed: 202617,
+    },
+    {
+      username: "skyler",
+      displayName: "Skyler",
+      email: "zmm-practice-skyler@example.com",
+      seed: 202618,
+    },
+    {
+      username: "dakota",
+      displayName: "Dakota",
+      email: "zmm-practice-dakota@example.com",
+      seed: 202619,
+    },
+    {
+      username: "rowan",
+      displayName: "Rowan",
+      email: "zmm-practice-rowan@example.com",
+      seed: 202620,
+    },
+    {
+      username: "peyton",
+      displayName: "Peyton",
+      email: "zmm-practice-peyton@example.com",
+      seed: 202621,
+    },
+    {
+      username: "kendall",
+      displayName: "Kendall",
+      email: "zmm-practice-kendall@example.com",
+      seed: 202622,
+    },
+    {
+      username: "charlie",
+      displayName: "Charlie",
+      email: "zmm-practice-charlie@example.com",
+      seed: 202623,
+    },
+    {
+      username: "sydney",
+      displayName: "Sydney",
+      email: "zmm-practice-sydney@example.com",
+      seed: 202624,
+    },
+    {
+      username: "logan",
+      displayName: "Logan",
+      email: "zmm-practice-logan@example.com",
+      seed: 202625,
+    },
+    {
+      username: "bailey",
+      displayName: "Bailey",
+      email: "zmm-practice-bailey@example.com",
+      seed: 202626,
+    },
+    {
+      username: "sam",
+      displayName: "Sam",
+      email: "zmm-practice-sam@example.com",
+      seed: 202627,
+    },
+    {
+      username: "jesse",
+      displayName: "Jesse",
+      email: "zmm-practice-jesse@example.com",
+      seed: 202628,
+    },
+    {
+      username: "devin",
+      displayName: "Devin",
+      email: "zmm-practice-devin@example.com",
+      seed: 202629,
+    },
+    {
+      username: "robin",
+      displayName: "Robin",
+      email: "zmm-practice-robin@example.com",
+      seed: 202630,
+    },
   ];
 
   const entrants = [
@@ -269,6 +429,10 @@ async function run() {
     if (profileError) throw profileError;
 
     const bracket = fillBracket(games, entrant.seed);
+    Object.assign(
+      bracket.picks,
+      PICK_OVERRIDES_BY_USERNAME[entrant.username] ?? {},
+    );
     const { error: bracketError } = await supabase.from("brackets").upsert(
       {
         user_id: entrant.userId,

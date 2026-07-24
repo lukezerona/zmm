@@ -1,14 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CircleDollarSign,
   Clock3,
   LoaderCircle,
-  LockKeyhole,
-  LogOut,
   Radio,
   RefreshCw,
   Trophy,
@@ -20,9 +18,9 @@ import {
   TournamentModel,
 } from "../bracket/bracket-types";
 import { buildTournamentModel, sanitizePicks } from "../bracket/bracket-utils";
+import { AccountMenu } from "./account-menu";
 import { Leaderboard } from "./leaderboard";
-import { MasterBracket } from "./master-bracket";
-import { PlayerBracketViewer } from "./player-bracket-viewer";
+import { TournamentBracketViewer } from "./tournament-bracket-viewer";
 import {
   PoolBracket,
   PoolProfile,
@@ -32,8 +30,29 @@ import { buildLeaderboard } from "./tournament-utils";
 import styles from "./march-madness.module.css";
 
 const SEASON_YEAR = 2026;
+const LIVE_REFRESH_DEBOUNCE_MS = 1_000;
+const FALLBACK_POLL_MS = 30_000;
+const ESPN_GAME_SELECT =
+  "espn_event_id, region, round_code, round_number, starts_at, broadcast, status_state, status_description, status_detail, completed, period, clock, home_team_id, home_team_name, home_team_seed, home_score, home_winner, away_team_id, away_team_name, away_team_seed, away_score, away_winner";
+const TOURNAMENT_ROUND_CODES = [
+  "PLAY_IN",
+  "ROUND_OF_64",
+  "ROUND_OF_32",
+  "SWEET_16",
+  "ELITE_8",
+  "FINAL_FOUR",
+  "CHAMPIONSHIP",
+];
 
 type RawBracket = Omit<PoolBracket, "picks"> & { picks: unknown };
+type RefreshKind = "dashboard" | "games";
+type RefreshRequest = { kind: RefreshKind; initial: boolean };
+type LiveUpdateStatus =
+  | "connecting"
+  | "connected"
+  | "updating"
+  | "reconnecting"
+  | "offline";
 
 function pickMap(value: unknown): PickMap {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
@@ -56,20 +75,25 @@ export default function MarchMadnessPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [liveUpdateStatus, setLiveUpdateStatus] =
+    useState<LiveUpdateStatus>("connecting");
+  const refreshInFlightRef = useRef(false);
+  const pendingRefreshRef = useRef<RefreshRequest | null>(null);
+  const liveRefreshTimerRef = useRef<number | null>(null);
+  const mountedRef = useRef(true);
 
-  const loadDashboard = useCallback(
-    async (background = false) => {
+  const fetchDashboard = useCallback(
+    async (showPageError: boolean) => {
       const client = supabase;
       if (!client) {
         router.replace("/");
-        return;
+        return false;
       }
 
-      if (background) setRefreshing(true);
       const { data: userData } = await client.auth.getUser();
       if (!userData.user) {
         router.replace("/");
-        return;
+        return false;
       }
 
       const [profilesResult, bracketsResult, gamesResult] = await Promise.all([
@@ -85,19 +109,9 @@ export default function MarchMadnessPage() {
           .eq("season_year", SEASON_YEAR),
         client
           .from("espn_games")
-          .select(
-            "espn_event_id, region, round_code, round_number, starts_at, broadcast, status_state, status_description, status_detail, completed, period, clock, home_team_id, home_team_name, home_team_seed, home_score, home_winner, away_team_id, away_team_name, away_team_seed, away_score, away_winner",
-          )
+          .select(ESPN_GAME_SELECT)
           .eq("season_year", SEASON_YEAR)
-          .in("round_code", [
-            "PLAY_IN",
-            "ROUND_OF_64",
-            "ROUND_OF_32",
-            "SWEET_16",
-            "ELITE_8",
-            "FINAL_FOUR",
-            "CHAMPIONSHIP",
-          ]),
+          .in("round_code", TOURNAMENT_ROUND_CODES),
       ]);
 
       if (profilesResult.error || bracketsResult.error || gamesResult.error) {
@@ -106,10 +120,10 @@ export default function MarchMadnessPage() {
           brackets: bracketsResult.error?.message,
           games: gamesResult.error?.message,
         });
-        setError("Tournament Central is temporarily unavailable.");
-        setLoading(false);
-        setRefreshing(false);
-        return;
+        if (showPageError && mountedRef.current) {
+          setError("Tournament Central is temporarily unavailable.");
+        }
+        return false;
       }
 
       const loadedProfiles = profilesResult.data as PoolProfile[];
@@ -118,7 +132,7 @@ export default function MarchMadnessPage() {
       );
       if (!currentProfile) {
         router.replace("/accept-invite");
-        return;
+        return false;
       }
 
       try {
@@ -134,6 +148,7 @@ export default function MarchMadnessPage() {
           }),
         );
 
+        if (!mountedRef.current) return false;
         setUserId(userData.user.id);
         setProfile(currentProfile);
         setProfiles(loadedProfiles);
@@ -142,38 +157,217 @@ export default function MarchMadnessPage() {
         setModel(tournament);
         setLastUpdated(new Date());
         setError("");
+        return true;
       } catch (loadError) {
         console.error("[dashboard] Tournament model failed", loadError);
-        setError("The tournament bracket is not ready yet.");
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (showPageError && mountedRef.current) {
+          setError("The tournament bracket is not ready yet.");
+        }
+        return false;
       }
     },
     [router],
   );
 
+  const fetchGames = useCallback(async () => {
+    const client = supabase;
+    if (!client) return false;
+
+    const gamesResult = await client
+      .from("espn_games")
+      .select(ESPN_GAME_SELECT)
+      .eq("season_year", SEASON_YEAR)
+      .in("round_code", TOURNAMENT_ROUND_CODES);
+
+    if (gamesResult.error) {
+      console.error(
+        "[dashboard] Could not refresh tournament games",
+        gamesResult.error.message,
+      );
+      return false;
+    }
+
+    try {
+      const loadedGames = gamesResult.data as TournamentGame[];
+      const tournament = buildTournamentModel(
+        loadedGames as EspnGameRow[],
+        SEASON_YEAR,
+      );
+
+      if (!mountedRef.current) return false;
+      setGames(loadedGames);
+      setModel(tournament);
+      setBrackets((currentBrackets) =>
+        currentBrackets.map((bracket) => ({
+          ...bracket,
+          picks: sanitizePicks(tournament, bracket.picks),
+        })),
+      );
+      setLastUpdated(new Date());
+      return true;
+    } catch (refreshError) {
+      console.error("[dashboard] Tournament game refresh failed", refreshError);
+      return false;
+    }
+  }, []);
+
+  const requestRefresh = useCallback(
+    async (kind: RefreshKind, initial = false) => {
+      const request: RefreshRequest = { kind, initial };
+
+      if (refreshInFlightRef.current) {
+        const pending = pendingRefreshRef.current;
+        if (!pending || kind === "dashboard") {
+          pendingRefreshRef.current = request;
+        }
+        return;
+      }
+
+      refreshInFlightRef.current = true;
+      let currentRequest: RefreshRequest | null = request;
+
+      if (!initial && mountedRef.current) {
+        setRefreshing(true);
+        setLiveUpdateStatus("updating");
+      }
+
+      try {
+        while (currentRequest) {
+          const activeRequest = currentRequest;
+          pendingRefreshRef.current = null;
+          const succeeded =
+            activeRequest.kind === "dashboard"
+              ? await fetchDashboard(activeRequest.initial)
+              : await fetchGames();
+
+          if (mountedRef.current) {
+            if (succeeded && !activeRequest.initial) {
+              setLiveUpdateStatus("connected");
+            } else if (!succeeded && !activeRequest.initial) {
+              setLiveUpdateStatus(
+                navigator.onLine ? "reconnecting" : "offline",
+              );
+            }
+            if (activeRequest.initial) setLoading(false);
+          }
+
+          currentRequest = pendingRefreshRef.current;
+        }
+      } finally {
+        refreshInFlightRef.current = false;
+        if (mountedRef.current) setRefreshing(false);
+      }
+    },
+    [fetchDashboard, fetchGames],
+  );
+
+  const scheduleGamesRefresh = useCallback(() => {
+    if (document.visibilityState !== "visible" || !navigator.onLine) return;
+    if (liveRefreshTimerRef.current !== null) {
+      window.clearTimeout(liveRefreshTimerRef.current);
+    }
+    liveRefreshTimerRef.current = window.setTimeout(() => {
+      liveRefreshTimerRef.current = null;
+      void requestRefresh("games");
+    }, LIVE_REFRESH_DEBOUNCE_MS);
+  }, [requestRefresh]);
+
   useEffect(() => {
-    const initialLoad = window.setTimeout(() => void loadDashboard(), 0);
+    mountedRef.current = true;
+    const initialLoad = window.setTimeout(
+      () => void requestRefresh("dashboard", true),
+      0,
+    );
     const client = supabase;
     if (!client) {
-      return () => window.clearTimeout(initialLoad);
+      return () => {
+        mountedRef.current = false;
+        window.clearTimeout(initialLoad);
+      };
     }
+
+    let pollTimer: number | null = null;
+    const stopPolling = () => {
+      if (pollTimer !== null) {
+        window.clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    };
+    const startPolling = () => {
+      if (
+        pollTimer === null &&
+        document.visibilityState === "visible" &&
+        navigator.onLine
+      ) {
+        pollTimer = window.setInterval(
+          () => void requestRefresh("games"),
+          FALLBACK_POLL_MS,
+        );
+      }
+    };
+    const refreshWhenActive = () => {
+      if (document.visibilityState !== "visible") return;
+      startPolling();
+      scheduleGamesRefresh();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        stopPolling();
+      } else {
+        refreshWhenActive();
+      }
+    };
+    const handleOnline = () => {
+      setLiveUpdateStatus("reconnecting");
+      refreshWhenActive();
+    };
+    const handleOffline = () => {
+      stopPolling();
+      setLiveUpdateStatus("offline");
+    };
 
     const channel = client
       .channel("zmm-tournament-dashboard")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "espn_games" },
-        () => void loadDashboard(true),
+        scheduleGamesRefresh,
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (!mountedRef.current) return;
+        if (status === "SUBSCRIBED") {
+          setLiveUpdateStatus("connected");
+        } else if (
+          status === "CHANNEL_ERROR" ||
+          status === "TIMED_OUT" ||
+          status === "CLOSED"
+        ) {
+          setLiveUpdateStatus(navigator.onLine ? "reconnecting" : "offline");
+        }
+      });
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", refreshWhenActive);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    startPolling();
 
     return () => {
+      mountedRef.current = false;
+      pendingRefreshRef.current = null;
       window.clearTimeout(initialLoad);
+      if (liveRefreshTimerRef.current !== null) {
+        window.clearTimeout(liveRefreshTimerRef.current);
+        liveRefreshTimerRef.current = null;
+      }
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", refreshWhenActive);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
       void client.removeChannel(channel);
     };
-  }, [loadDashboard]);
+  }, [requestRefresh, scheduleGamesRefresh]);
 
   const leaderboard = useMemo(
     () =>
@@ -195,6 +389,19 @@ export default function MarchMadnessPage() {
     (game) => game.status_state === "in" && !game.completed,
   ).length;
   const upcomingGames = tournamentGames.length - finalGames - liveGames;
+  const liveStatusLabel: Record<LiveUpdateStatus, string> = {
+    connecting: "Connecting live updates\u2026",
+    connected: "Live updates connected",
+    updating: "Updating scores\u2026",
+    reconnecting: "Reconnecting live updates\u2026",
+    offline: "Waiting for connection\u2026",
+  };
+  const liveStatusClass =
+    liveUpdateStatus === "connected"
+      ? styles.liveConnected
+      : liveUpdateStatus === "updating"
+        ? styles.liveUpdating
+        : styles.liveReconnecting;
 
   async function signOut() {
     await supabase?.auth.signOut();
@@ -217,7 +424,13 @@ export default function MarchMadnessPage() {
         <Trophy size={38} />
         <strong>Tournament Central unavailable</strong>
         <span>{error || "Please try again shortly."}</span>
-        <button type="button" onClick={() => void loadDashboard()}>
+        <button
+          type="button"
+          onClick={() => {
+            setLoading(true);
+            void requestRefresh("dashboard", true);
+          }}
+        >
           Try again
         </button>
       </main>
@@ -236,33 +449,26 @@ export default function MarchMadnessPage() {
             priority
           />
         </a>
-        <nav aria-label="Tournament sections">
-          <a href="#leaderboard">Leaderboard</a>
-          <a href="#master-bracket">Master bracket</a>
-          <a href="#family-brackets">Family brackets</a>
+        <nav className={styles.viewSwitcher} aria-label="Tournament views">
+          <button
+            className={styles.activeView}
+            type="button"
+            aria-current="page"
+          >
+            Brackets
+          </button>
+          <button type="button" disabled title="Coming soon">
+            Spreadsheet
+          </button>
         </nav>
-        <button type="button" onClick={signOut}>
-          <LogOut size={16} /> Sign out
-        </button>
+        <AccountMenu profile={profile} onSignOut={signOut} />
       </header>
 
       <section className={styles.hero} id="top">
         <div>
-          <span className={styles.kicker}>{SEASON_YEAR} TOURNAMENT CENTRAL</span>
           <h1>
             Welcome back, <em>{profile.display_name}</em>.
           </h1>
-          <p>
-            Follow the tournament, track every bracket, and see where the
-            family standings land.
-          </p>
-        </div>
-        <div className={styles.lockCard}>
-          <LockKeyhole size={20} aria-hidden="true" />
-          <div>
-            <strong>Entries are locked</strong>
-            <span>All saved brackets are now read-only.</span>
-          </div>
         </div>
       </section>
 
@@ -289,71 +495,71 @@ export default function MarchMadnessPage() {
         </article>
       </section>
 
-      <section className={styles.section} id="leaderboard">
-        <div className={styles.sectionHeading}>
-          <div>
-            <span>FAMILY STANDINGS</span>
-            <h2>Leaderboard</h2>
-          </div>
-          <div className={styles.updated}>
-            <button
-              type="button"
-              onClick={() => void loadDashboard(true)}
-              disabled={refreshing}
-            >
-              <RefreshCw
-                className={refreshing ? styles.spinner : ""}
-                size={15}
-              />
-              Refresh
-            </button>
-            {lastUpdated && (
-              <span>
-                Updated{" "}
-                {lastUpdated.toLocaleTimeString([], {
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
-              </span>
-            )}
-          </div>
+      <section
+        className={styles.tournamentWorkspace}
+        aria-label="Tournament brackets and family standings"
+      >
+        <div className={styles.bracketPane} id="brackets">
+          <TournamentBracketViewer
+            model={model}
+            games={games}
+            brackets={brackets}
+            profiles={profiles}
+            currentUserId={userId}
+            leaderboardRows={leaderboard.rows}
+          />
         </div>
-        <Leaderboard rows={leaderboard.rows} currentUserId={userId} />
-        <p className={styles.payoutNote}>
+
+        <aside className={styles.leaderboardPane} id="leaderboard">
+          <div className={styles.leaderboardSidebarHeading}>
+            <div>
+              <span>FAMILY STANDINGS</span>
+              <h2>Leaderboard</h2>
+            </div>
+            <div className={styles.updated}>
+              <div className={styles.updateDetails}>
+                <span
+                  className={`${styles.liveStatus} ${liveStatusClass}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  <i aria-hidden="true" />
+                  {liveStatusLabel[liveUpdateStatus]}
+                </span>
+                {lastUpdated && (
+                  <span className={styles.updatedAt}>
+                    Updated{" "}
+                    {lastUpdated.toLocaleTimeString([], {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => void requestRefresh("dashboard")}
+                disabled={refreshing}
+                aria-label="Refresh tournament data"
+              >
+                <RefreshCw
+                  className={refreshing ? styles.spinner : ""}
+                  size={15}
+                />
+                Refresh
+              </button>
+            </div>
+          </div>
+          <Leaderboard rows={leaderboard.rows} currentUserId={userId} />
+          <p className={styles.payoutNote}>
           $10 buy-in · First place 60% · Second place 30% · Third place 10%.
           {leaderboard.championshipComplete
             ? " Final ties are ordered by championship tiebreaker distance."
             : " Current ties split the combined payouts for their occupied places."}
-        </p>
+          </p>
+        </aside>
       </section>
 
-      <section className={styles.section} id="master-bracket">
-        <div className={styles.sectionHeading}>
-          <div>
-            <h2>Master bracket</h2>
-          </div>
-        </div>
-        <MasterBracket model={model} games={games} />
-      </section>
-
-      <section
-        className={`${styles.section} ${styles.familySection}`}
-        id="family-brackets"
-      >
-        <div className={styles.sectionHeading}>
-          <div>
-            <span>LOCKED PICKS</span>
-            <h2>Family brackets</h2>
-            <p>Choose any display name to review that person’s saved picks.</p>
-          </div>
-        </div>
-        <PlayerBracketViewer
-          model={model}
-          brackets={brackets}
-          profiles={profiles}
-          currentUserId={userId}
-        />
-      </section>
     </main>
   );
 }
