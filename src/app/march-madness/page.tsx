@@ -21,6 +21,7 @@ import { buildTournamentModel, sanitizePicks } from "../bracket/bracket-utils";
 import { AccountMenu } from "./account-menu";
 import { Leaderboard } from "./leaderboard";
 import { TournamentBracketViewer } from "./tournament-bracket-viewer";
+import { TournamentViewSwitcher } from "./view-switcher";
 import {
   PoolBracket,
   PoolProfile,
@@ -449,18 +450,7 @@ export default function MarchMadnessPage() {
             priority
           />
         </a>
-        <nav className={styles.viewSwitcher} aria-label="Tournament views">
-          <button
-            className={styles.activeView}
-            type="button"
-            aria-current="page"
-          >
-            Brackets
-          </button>
-          <button type="button" disabled title="Coming soon">
-            Spreadsheet
-          </button>
-        </nav>
+        <TournamentViewSwitcher activeView="brackets" />
         <AccountMenu profile={profile} onSignOut={signOut} />
       </header>
 

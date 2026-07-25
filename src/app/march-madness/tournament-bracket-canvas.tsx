@@ -3,6 +3,7 @@
 import { CircleCheck, CircleX, Radio, Trophy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
+  BracketEntry,
   BracketMatchup,
   DerivedBracket,
   PickMap,
@@ -132,7 +133,7 @@ function masterMatchups(region: Region, model: TournamentModel) {
   };
 }
 
-function buildMasterTeamOrder(model: TournamentModel) {
+export function buildMasterTeamOrder(model: TournamentModel) {
   const teamOrder = new Map<string, number>();
 
   MASTER_BRACKET_REGION_ORDER.forEach((region, regionIndex) => {
@@ -152,88 +153,154 @@ function buildMasterTeamOrder(model: TournamentModel) {
   return teamOrder;
 }
 
-function MasterGameCard({
-  matchup,
+export function MasterGameCard({
+  matchupId,
+  roundNumber,
   game,
   teamOrder,
+  projectedOptions,
+  predictedWinnerEntryId,
 }: {
-  matchup: BracketMatchup;
+  matchupId: string;
+  roundNumber: number;
   game?: TournamentGame;
   teamOrder: Map<string, number>;
+  projectedOptions?: [BracketEntry | null, BracketEntry | null];
+  predictedWinnerEntryId?: string;
 }) {
-  if (!game) {
-    return (
-      <article
-        className={`${styles.gameCard} ${styles.awaitingGame}`}
-        data-matchup-id={matchup.id}
-      >
-        <span>Awaiting matchup</span>
-      </article>
-    );
-  }
-
-  const live = game.status_state === "in" && !game.completed;
-  const upcoming = !game.completed && !live;
-  const teams = [
-    {
-      id: game.away_team_id,
-      name: game.away_team_name,
-      seed: game.away_team_seed,
-      score: game.away_score,
-      winner: game.away_winner,
-      loser: game.completed && game.home_winner,
-    },
-    {
-      id: game.home_team_id,
-      name: game.home_team_name,
-      seed: game.home_team_seed,
-      score: game.home_score,
-      winner: game.home_winner,
-      loser: game.completed && game.away_winner,
-    },
-  ];
+  const live = Boolean(game && game.status_state === "in" && !game.completed);
+  const upcoming = Boolean(game && !game.completed && !live);
+  const entryForTeam = (teamId: string) =>
+    projectedOptions?.find((entry) => entry?.teamIds.includes(teamId)) ?? null;
+  const gameTeams = game
+    ? [
+        {
+          id: game.away_team_id,
+          entryId: entryForTeam(game.away_team_id)?.id ?? null,
+          name: game.away_team_name,
+          seed: game.away_team_seed,
+          score: game.away_score,
+          winner: game.away_winner,
+          loser: game.completed && game.home_winner,
+        },
+        {
+          id: game.home_team_id,
+          entryId: entryForTeam(game.home_team_id)?.id ?? null,
+          name: game.home_team_name,
+          seed: game.home_team_seed,
+          score: game.home_score,
+          winner: game.home_winner,
+          loser: game.completed && game.away_winner,
+        },
+      ]
+    : [];
+  const projectedTeams = projectedOptions?.map((entry, slotIndex) => {
+    const gameTeam = entry
+      ? gameTeams.find((team) => entry.teamIds.includes(team.id))
+      : null;
+    return {
+      id: entry?.id ?? `tbd-${slotIndex}`,
+      entryId: entry?.id ?? null,
+      name: entry?.name ?? "TBD",
+      seed: entry?.seed ?? null,
+      score: gameTeam?.score ?? null,
+      winner: false,
+      loser: false,
+    };
+  });
+  const teams =
+    !game?.completed && projectedTeams?.some((team) => team.entryId)
+      ? projectedTeams
+      : gameTeams.length > 0
+        ? gameTeams
+        : [
+            {
+              id: "tbd-0",
+              entryId: null,
+              name: "TBD",
+              seed: null,
+              score: null,
+              winner: false,
+              loser: false,
+            },
+            {
+              id: "tbd-1",
+              entryId: null,
+              name: "TBD",
+              seed: null,
+              score: null,
+              winner: false,
+              loser: false,
+            },
+          ];
   const displayedTeams =
-    matchup.roundNumber === 1
-      ? [...teams].sort(
-          (a, b) =>
-            (a.seed ?? Number.MAX_SAFE_INTEGER) -
-            (b.seed ?? Number.MAX_SAFE_INTEGER),
-        )
-      : [...teams].sort(
-          (a, b) =>
-            (teamOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
-            (teamOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER),
-        );
+    projectedTeams === teams
+      ? teams
+      : roundNumber === 1
+        ? [...teams].sort(
+            (a, b) =>
+              (a.seed ?? Number.MAX_SAFE_INTEGER) -
+              (b.seed ?? Number.MAX_SAFE_INTEGER),
+          )
+        : [...teams].sort(
+            (a, b) =>
+              (teamOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+              (teamOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+          );
 
   return (
     <article
       className={`${styles.gameCard} ${live ? styles.liveGame : ""}`}
-      aria-label={`Round ${matchup.roundNumber}: ${displayedTeams[0].name} versus ${displayedTeams[1].name}`}
-      data-matchup-id={matchup.id}
+      aria-label={`Round ${roundNumber}: ${displayedTeams[0].name} versus ${displayedTeams[1].name}`}
+      data-matchup-id={matchupId}
     >
       <div className={styles.gameMeta}>
-        <span className={live ? styles.liveBadge : ""}>
-          {live && <Radio size={10} aria-hidden="true" />}
-          {gameStatus(game)}
-        </span>
-        {(live || upcoming) && game.broadcast && <b>{game.broadcast}</b>}
+        {game && (
+          <>
+            <span className={live ? styles.liveBadge : ""}>
+              {live && <Radio size={10} aria-hidden="true" />}
+              {gameStatus(game)}
+            </span>
+            {(live || upcoming) && game.broadcast && <b>{game.broadcast}</b>}
+          </>
+        )}
       </div>
-      {displayedTeams.map((team) => (
-        <div
-          className={`${styles.scoreRow} ${
-            team.winner
-              ? styles.gameWinner
-              : team.loser
-                ? styles.gameLoser
-                : ""
-          }`}
-          key={team.id}
-        >
-          <span className={styles.seed}>{team.seed ?? "\u2014"}</span>
-          <strong>{team.name}</strong>
-          <b>{team.score ?? "\u2014"}</b>
-        </div>
-      ))}
+      {displayedTeams.map((team) => {
+        const predictedWinner =
+          !game?.completed &&
+          Boolean(
+            predictedWinnerEntryId &&
+              team.entryId === predictedWinnerEntryId,
+          );
+        const predictedLoser =
+          !game?.completed &&
+          Boolean(
+            predictedWinnerEntryId &&
+              team.entryId &&
+              team.entryId !== predictedWinnerEntryId,
+          );
+
+        return (
+          <div
+            className={`${styles.scoreRow} ${
+              team.winner
+                ? styles.gameWinner
+                : team.loser
+                  ? styles.gameLoser
+                  : predictedWinner
+                    ? styles.predictedWinner
+                    : predictedLoser
+                      ? styles.predictedLoser
+                      : ""
+            }`}
+            key={team.id}
+          >
+            <span className={styles.seed}>{team.seed ?? "\u2014"}</span>
+            <strong>{team.name}</strong>
+            <b>{team.score ?? "\u2014"}</b>
+          </div>
+        );
+      })}
     </article>
   );
 }
@@ -368,7 +435,8 @@ function RegionBracket({
                 view.type === "master" ? (
                   <MasterGameCard
                     key={matchup.id}
-                    matchup={matchup}
+                    matchupId={matchup.id}
+                    roundNumber={matchup.roundNumber}
                     game={gameIndex.get(matchup.id)}
                     teamOrder={teamOrder}
                   />
@@ -442,7 +510,8 @@ export function TournamentBracketCanvas({
   const renderFinalCard = (matchup: BracketMatchup) =>
     view.type === "master" ? (
       <MasterGameCard
-        matchup={matchup}
+        matchupId={matchup.id}
+        roundNumber={matchup.roundNumber}
         game={gameIndex.get(matchup.id)}
         teamOrder={teamOrder}
       />

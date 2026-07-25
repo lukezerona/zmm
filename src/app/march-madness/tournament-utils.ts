@@ -6,7 +6,7 @@ import {
   REGIONS,
   TournamentModel,
 } from "../bracket/bracket-types";
-import { deriveBracket } from "../bracket/bracket-utils";
+import { deriveBracket, sanitizePicks } from "../bracket/bracket-utils";
 import {
   LeaderboardEntry,
   PoolBracket,
@@ -215,6 +215,54 @@ function roundNumberForMatchup(matchup: BracketMatchup) {
   return matchup.roundNumber;
 }
 
+type BracketOutcomeResult = {
+  matchupId: string;
+  winnerEntryId: string;
+  roundNumber: number;
+};
+
+function resultsFromPicks(
+  model: TournamentModel,
+  outcomePicks: PickMap,
+): BracketOutcomeResult[] {
+  return allPlayerMatchups(model, outcomePicks).flatMap((matchup) => {
+    const winnerEntryId = outcomePicks[matchup.id];
+    if (
+      !winnerEntryId ||
+      !matchup.options.some((entry) => entry?.id === winnerEntryId)
+    ) {
+      return [];
+    }
+
+    return [
+      {
+        matchupId: matchup.id,
+        winnerEntryId,
+        roundNumber: matchup.roundNumber,
+      },
+    ];
+  });
+}
+
+function eliminatedByOutcome(
+  model: TournamentModel,
+  outcomePicks: PickMap,
+) {
+  const eliminated = new Set<string>();
+
+  for (const matchup of allPlayerMatchups(model, outcomePicks)) {
+    const winnerEntryId = outcomePicks[matchup.id];
+    if (!winnerEntryId) continue;
+
+    for (const entry of matchup.options) {
+      if (!entry || entry.id === winnerEntryId) continue;
+      for (const teamId of entry.teamIds) eliminated.add(teamId);
+    }
+  }
+
+  return eliminated;
+}
+
 export function allocatePrizePayouts(
   rows: LeaderboardEntry[],
   championshipComplete: boolean,
@@ -264,29 +312,26 @@ export function allocatePrizePayouts(
   return sorted;
 }
 
-export function buildLeaderboard(
+function buildLeaderboardForOutcome(
   model: TournamentModel,
   games: TournamentGame[],
   profiles: PoolProfile[],
   brackets: PoolBracket[],
-  buyIn = 10,
+  outcomePicks: PickMap,
+  championshipComplete: boolean,
+  championshipTotal: number | null,
+  buyIn: number,
 ) {
-  const { results } = buildActualResults(model, games);
+  const results = resultsFromPicks(model, outcomePicks);
   const resultByMatchup = new Map(
     results.map((result) => [result.matchupId, result]),
   );
   const entries = allEntries(model);
   const eliminated = eliminatedTeams(games);
-  const championship = games.find((game) => game.round_number === 6);
-  const championshipResult = results.find((result) => result.roundNumber === 6);
-  const championshipComplete = Boolean(championship?.completed);
-  const championshipTotal =
-    championshipComplete &&
-    championship &&
-    championship.home_score !== null &&
-    championship.away_score !== null
-      ? championship.home_score + championship.away_score
-      : null;
+  for (const teamId of eliminatedByOutcome(model, outcomePicks)) {
+    eliminated.add(teamId);
+  }
+  const championshipWinnerId = outcomePicks.championship;
 
   const profileByUser = new Map(
     profiles.map((profile) => [profile.user_id, profile]),
@@ -342,7 +387,7 @@ export function buildLeaderboard(
           : false,
         championWon:
           championshipComplete &&
-          championshipResult?.winnerEntryId === bracket.picks.championship,
+          championshipWinnerId === bracket.picks.championship,
         tiebreaker: bracket.tiebreaker_total,
         correctPicks,
         completedGames: results.length,
@@ -364,6 +409,81 @@ export function buildLeaderboard(
     championshipTotal,
     pot: rows.length * buyIn,
   };
+}
+
+export function buildLeaderboard(
+  model: TournamentModel,
+  games: TournamentGame[],
+  profiles: PoolProfile[],
+  brackets: PoolBracket[],
+  buyIn = 10,
+) {
+  const { actualPicks } = buildActualResults(model, games);
+  const championship = games.find((game) => game.round_number === 6);
+  const championshipComplete = Boolean(championship?.completed);
+  const championshipTotal =
+    championshipComplete &&
+    championship &&
+    championship.home_score !== null &&
+    championship.away_score !== null
+      ? championship.home_score + championship.away_score
+      : null;
+
+  return buildLeaderboardForOutcome(
+    model,
+    games,
+    profiles,
+    brackets,
+    actualPicks,
+    championshipComplete,
+    championshipTotal,
+    buyIn,
+  );
+}
+
+export function buildProjectedPicks(
+  model: TournamentModel,
+  games: TournamentGame[],
+  predictions: PickMap,
+) {
+  const { actualPicks } = buildActualResults(model, games);
+  return sanitizePicks(model, { ...predictions, ...actualPicks });
+}
+
+export function buildProjectedLeaderboard(
+  model: TournamentModel,
+  games: TournamentGame[],
+  profiles: PoolProfile[],
+  brackets: PoolBracket[],
+  predictions: PickMap,
+  projectedChampionshipTotal: number | null,
+  buyIn = 10,
+) {
+  const outcomePicks = buildProjectedPicks(model, games, predictions);
+  const officialChampionship = games.find((game) => game.round_number === 6);
+  const officialChampionshipComplete = Boolean(officialChampionship?.completed);
+  const championshipComplete =
+    officialChampionshipComplete || Boolean(outcomePicks.championship);
+  const championshipTotal =
+    officialChampionshipComplete &&
+    officialChampionship &&
+    officialChampionship.home_score !== null &&
+    officialChampionship.away_score !== null
+      ? officialChampionship.home_score + officialChampionship.away_score
+      : championshipComplete
+        ? projectedChampionshipTotal
+        : null;
+
+  return buildLeaderboardForOutcome(
+    model,
+    games,
+    profiles,
+    brackets,
+    outcomePicks,
+    championshipComplete,
+    championshipTotal,
+    buyIn,
+  );
 }
 
 function seedPairIndex(game: TournamentGame) {

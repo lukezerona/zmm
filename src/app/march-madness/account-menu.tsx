@@ -1,7 +1,12 @@
 "use client";
 
 import { ChevronDown, LogOut } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  getTournamentStartingScreen,
+  setTournamentStartingScreen,
+  subscribeToTournamentStartingScreen,
+} from "@/lib/tournament-preference";
 import { PoolProfile } from "./tournament-types";
 import styles from "./march-madness.module.css";
 
@@ -13,6 +18,11 @@ export function AccountMenu({
   onSignOut: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const startingScreen = useSyncExternalStore(
+    subscribeToTournamentStartingScreen,
+    getTournamentStartingScreen,
+    () => "brackets",
+  );
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -74,26 +84,25 @@ export function AccountMenu({
                 type="radio"
                 name="starting-screen"
                 value="brackets"
-                checked
-                readOnly
+                checked={startingScreen === "brackets"}
+                onChange={() => setTournamentStartingScreen("brackets")}
               />
               <span>
                 <strong>Brackets</strong>
-                <small>Current default</small>
+                <small>Open brackets after sign-in</small>
               </span>
             </label>
-            <label
-              className={`${styles.startingScreenOption} ${styles.disabledStartingScreen}`}
-            >
+            <label className={styles.startingScreenOption}>
               <input
                 type="radio"
                 name="starting-screen"
                 value="spreadsheet"
-                disabled
+                checked={startingScreen === "spreadsheet"}
+                onChange={() => setTournamentStartingScreen("spreadsheet")}
               />
               <span>
                 <strong>Spreadsheet</strong>
-                <small>Coming soon</small>
+                <small>Open spreadsheet after sign-in</small>
               </span>
             </label>
           </fieldset>
