@@ -112,12 +112,17 @@
   white-space: nowrap;
 }
 
-.emptySlot {
+.blankMatchup {
   position: absolute;
   z-index: 1;
-  height: 8px;
-  border-bottom: 0.8px solid #29343c;
+  height: 8%;
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
   transform: translateY(-50%);
+}
+
+.blankMatchup span {
+  border-bottom: 0.8px solid #29343c;
 }
 
 .regionName {
@@ -149,9 +154,9 @@
 .title {
   position: absolute;
   z-index: 2;
-  top: 22%;
-  left: 42%;
-  width: 16%;
+  top: 5%;
+  left: 41.5%;
+  width: 17%;
   text-align: center;
   text-transform: uppercase;
 }
@@ -163,63 +168,72 @@
 }
 
 .title span {
-  color: #0076b2;
-  font-size: 28pt;
+  color: #111820;
+  font-size: 24pt;
   font-weight: 950;
   letter-spacing: -0.08em;
   line-height: 0.8;
 }
 
 .title strong {
-  padding: 4px 0 3px;
-  border-block: 3px solid #111820;
-  font-size: 15pt;
+  padding: 3px 0 2px;
+  border-block: 2.5px solid #111820;
+  font-size: 12.5pt;
   line-height: 0.9;
 }
 
 .title small {
-  margin-top: 4px;
-  font-size: 7pt;
+  margin-top: 3px;
+  font-size: 6.5pt;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
 
-.finalCard {
+.finals {
   position: absolute;
   z-index: 1;
-  top: 46%;
-  height: 8%;
+  top: 44.5%;
+  left: 38%;
+  width: 24%;
+  height: 12%;
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  align-items: start;
+  gap: 8px;
+}
+
+.finalFourMatchup,
+.championshipMatchup {
+  height: 34px;
   display: grid;
   grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
-.finalCard span {
+.finalFourMatchup span,
+.championshipMatchup span,
+.championSlot span {
   border-bottom: 0.9px solid #29343c;
 }
 
-.leftFinalCard {
-  left: 39.5%;
-  width: 6%;
+.championshipArea {
+  display: grid;
+  gap: 5px;
 }
 
-.championshipCard {
-  left: 47%;
-  width: 6%;
-  border-inline: 0.9px solid #29343c;
+.championSlot {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: 4px;
 }
 
-.championshipCard strong {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 50%;
+.championSlot strong {
   font-size: 6.5pt;
   text-transform: uppercase;
-  transform: translateX(-50%);
 }
 
-.rightFinalCard {
-  left: 54.5%;
-  width: 6%;
+.championSlot span {
+  height: 11px;
 }
 
 .footer {

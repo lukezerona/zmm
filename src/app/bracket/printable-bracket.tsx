@@ -33,16 +33,16 @@ const ROUND_HEADERS = [
 
 const ROUND_POSITIONS = {
   left: [
-    { count: 8, left: 0, width: 26 },
-    { count: 4, left: 32, width: 22 },
-    { count: 2, left: 60, width: 20 },
-    { count: 1, left: 84, width: 16 },
+    { count: 8, left: 0, width: 24 },
+    { count: 4, left: 29, width: 18 },
+    { count: 2, left: 53, width: 16 },
+    { count: 1, left: 75, width: 14 },
   ],
   right: [
-    { count: 8, left: 74, width: 26 },
-    { count: 4, left: 46, width: 22 },
-    { count: 2, left: 20, width: 20 },
-    { count: 1, left: 0, width: 16 },
+    { count: 8, left: 76, width: 24 },
+    { count: 4, left: 53, width: 18 },
+    { count: 2, left: 31, width: 16 },
+    { count: 1, left: 11, width: 14 },
   ],
 } as const;
 
@@ -124,14 +124,17 @@ function RegionBracketPrint({
           const y = centerFor(index, round.count);
           return (
             <div
-              className={styles.emptySlot}
+              className={styles.blankMatchup}
               key={`${region}-${roundIndex}-${index}`}
               style={{
                 left: `${round.left}%`,
                 top: `${y}%`,
                 width: `${round.width}%`,
               }}
-            />
+            >
+              <span />
+              <span />
+            </div>
           );
         }),
       )}
@@ -149,21 +152,26 @@ function RegionBracketPrint({
 
 function BlankFinals() {
   return (
-    <>
-      <div className={`${styles.finalCard} ${styles.leftFinalCard}`}>
+    <section className={styles.finals}>
+      <div className={styles.finalFourMatchup}>
         <span />
         <span />
       </div>
-      <div className={`${styles.finalCard} ${styles.championshipCard}`}>
-        <span />
-        <span />
-        <strong>Champion</strong>
+      <div className={styles.championshipArea}>
+        <div className={styles.championshipMatchup}>
+          <span />
+          <span />
+        </div>
+        <div className={styles.championSlot}>
+          <strong>Champion</strong>
+          <span />
+        </div>
       </div>
-      <div className={`${styles.finalCard} ${styles.rightFinalCard}`}>
+      <div className={styles.finalFourMatchup}>
         <span />
         <span />
       </div>
-    </>
+    </section>
   );
 }
 
