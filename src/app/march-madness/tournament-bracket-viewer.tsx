@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Printer } from "lucide-react";
 import { deriveBracket } from "../bracket/bracket-utils";
 import { TournamentModel } from "../bracket/bracket-types";
 import {
@@ -68,45 +69,60 @@ export function TournamentBracketViewer({
     () => buildActualResults(model, games).actualPicks,
     [games, model],
   );
+  const selectedBracketName =
+    selectedValue === MASTER_VALUE
+      ? "Master tournament results"
+      : `${selectedProfile?.display_name ?? "Unknown player"}${
+          selectedBracket?.user_id === currentUserId ? " (You)" : ""
+        }`;
 
   return (
     <div className={styles.bracketViewer}>
       <div className={styles.bracketViewerToolbar}>
         <div>
           <span>Viewing bracket</span>
-          <strong>
-            {selectedValue === MASTER_VALUE
-              ? "Master tournament results"
-              : `${selectedProfile?.display_name ?? "Unknown player"}${
-                  selectedBracket?.user_id === currentUserId ? " (You)" : ""
-                }`}
-          </strong>
+          <strong>{selectedBracketName}</strong>
         </div>
-        <label>
-          <span>Choose a bracket</span>
-          <select
-            value={selectedValue}
-            onChange={(event) => setSelectedValue(event.target.value)}
+        <div className={styles.bracketViewerControls}>
+          <label>
+            <span>Choose a bracket</span>
+            <select
+              value={selectedValue}
+              onChange={(event) => setSelectedValue(event.target.value)}
+            >
+              <option value={MASTER_VALUE}>Master bracket</option>
+              <optgroup label="Family brackets">
+                {orderedBrackets.map((savedBracket) => {
+                  const profile = profiles.find(
+                    (candidate) => candidate.user_id === savedBracket.user_id,
+                  );
+                  return (
+                    <option
+                      value={savedBracket.user_id}
+                      key={savedBracket.user_id}
+                    >
+                      {profile?.display_name ?? "Unknown player"}
+                      {savedBracket.user_id === currentUserId ? " (You)" : ""}
+                    </option>
+                  );
+                })}
+              </optgroup>
+            </select>
+          </label>
+          <button
+            type="button"
+            className={styles.printBracketButton}
+            onClick={() => window.print()}
           >
-            <option value={MASTER_VALUE}>Master bracket</option>
-            <optgroup label="Family brackets">
-              {orderedBrackets.map((savedBracket) => {
-                const profile = profiles.find(
-                  (candidate) => candidate.user_id === savedBracket.user_id,
-                );
-                return (
-                  <option
-                    value={savedBracket.user_id}
-                    key={savedBracket.user_id}
-                  >
-                    {profile?.display_name ?? "Unknown player"}
-                    {savedBracket.user_id === currentUserId ? " (You)" : ""}
-                  </option>
-                );
-              })}
-            </optgroup>
-          </select>
-        </label>
+            <Printer size={17} aria-hidden="true" />
+            Print bracket
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.printBracketHeader}>
+        <strong>{model.seasonYear} Zerona March Madness</strong>
+        <span>{selectedBracketName}</span>
       </div>
 
       {selectedValue === MASTER_VALUE ? (

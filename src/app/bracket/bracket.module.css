@@ -229,7 +229,13 @@
   font-variant-numeric: tabular-nums;
 }
 
-.bracketToolbar > button,
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbarActions > button,
 .saveFooter > button {
   min-width: 136px;
   height: 42px;
@@ -246,12 +252,27 @@
   cursor: pointer;
 }
 
-.bracketToolbar > button:disabled,
+.toolbarActions > button:disabled,
 .saveFooter > button:disabled {
   border-color: #1a3a4c;
   color: #718a98;
   background: #0b202c;
   cursor: default;
+}
+
+.toolbarActions .printButton {
+  border-color: #245d7a;
+  color: #a8ddf5;
+  background: #081923;
+}
+
+.toolbarActions .printButton:hover {
+  border-color: #39bdf7;
+  color: #ffffff;
+}
+
+.printHeader {
+  display: none;
 }
 
 .statusMessage {
@@ -786,7 +807,11 @@
     gap: 14px;
   }
 
-  .bracketToolbar > button {
+  .toolbarActions {
+    width: 100%;
+  }
+
+  .toolbarActions > button {
     width: 100%;
   }
 
@@ -872,5 +897,122 @@
 
   .canvasRegionRounds {
     gap: 4px;
+  }
+}
+
+@page {
+  size: landscape;
+  margin: 0.2in;
+}
+
+@media print {
+  :global(html),
+  :global(body) {
+    width: 100%;
+    min-height: 0;
+    background: #ffffff !important;
+  }
+
+  :global(body) * {
+    visibility: hidden;
+  }
+
+  .printArea,
+  .printArea * {
+    visibility: visible;
+  }
+
+  .printArea {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    color: #07131a;
+    background: #ffffff;
+    print-color-adjust: exact;
+  }
+
+  .printHeader {
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 0 4px 5px;
+    border-bottom: 1px solid #8ca4b2;
+    color: #07131a;
+  }
+
+  .printHeader strong {
+    font-size: 14px;
+  }
+
+  .printHeader span {
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .bracketCanvasFrame {
+    width: 250%;
+    margin: 0;
+    overflow: visible;
+    zoom: 0.4;
+  }
+
+  .bracketCanvas {
+    gap: 300px 180px;
+    padding: 8px;
+    background: #ffffff;
+    break-inside: avoid;
+  }
+
+  .canvasRegion > h2 {
+    color: #07131a;
+    border-bottom-color: #9bb0bb;
+  }
+
+  .roundHeading h3,
+  .roundHeading span,
+  .finalLabel,
+  .finalDate {
+    color: #315f77;
+  }
+
+  .matchup,
+  .championCard,
+  .totalPoints input {
+    border-color: #718d9c;
+    color: #07131a;
+    background: #ffffff !important;
+    box-shadow: none;
+  }
+
+  .teamButton,
+  .awaitingTeam {
+    color: #07131a;
+    background: #ffffff !important;
+  }
+
+  .teamButton + .teamButton,
+  .teamButton + .awaitingTeam,
+  .awaitingTeam + .teamButton,
+  .awaitingTeam + .awaitingTeam {
+    border-top-color: #9eb1bb;
+  }
+
+  .teamButton strong,
+  .awaitingTeam strong,
+  .championCard span,
+  .totalPoints > span {
+    color: #126f9f;
+  }
+
+  .selectedTeam {
+    color: #07131a;
+    background: #dceff8 !important;
+    box-shadow: inset 3px 0 #158bc3;
+  }
+
+  .awaitingTeam {
+    color: #687b85;
   }
 }

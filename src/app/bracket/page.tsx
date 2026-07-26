@@ -9,6 +9,7 @@ import {
   LoaderCircle,
   LogOut,
   Pencil,
+  Printer,
   Save,
   Trophy,
   X,
@@ -497,14 +498,24 @@ export default function BracketPage() {
             </time>
           )}
         </div>
-        <button
-          type="button"
-          onClick={saveBracket}
-          disabled={locked || saving || !dirty}
-        >
-          {saving ? <LoaderCircle className={styles.spinner} size={18} /> : <Save size={18} />}
-          {locked ? "Entries locked" : saving ? "Saving…" : dirty ? "Save bracket" : "Saved"}
-        </button>
+        <div className={styles.toolbarActions}>
+          <button
+            type="button"
+            className={styles.printButton}
+            onClick={() => window.print()}
+          >
+            <Printer size={18} aria-hidden="true" />
+            Print bracket
+          </button>
+          <button
+            type="button"
+            onClick={saveBracket}
+            disabled={locked || saving || !dirty}
+          >
+            {saving ? <LoaderCircle className={styles.spinner} size={18} /> : <Save size={18} />}
+            {locked ? "Entries locked" : saving ? "Saving…" : dirty ? "Save bracket" : "Saved"}
+          </button>
+        </div>
       </section>
 
       {locked && (
@@ -532,21 +543,27 @@ export default function BracketPage() {
         <span>MAKE YOUR PICKS</span>
       </section>
 
-      <BracketBoard
-        bracket={bracket}
-        picks={picks}
-        onPick={chooseWinner}
-        model={model}
-        tiebreaker={tiebreaker}
-        onTiebreakerChange={(value) => {
-          if (locked) return;
-          setTiebreaker(value);
-          setDirty(true);
-          setMessage("");
-        }}
-        readOnly={locked}
-        showMissing={showMissingPicks}
-      />
+      <section className={styles.printArea}>
+        <div className={styles.printHeader}>
+          <strong>{seasonYear} Zerona March Madness</strong>
+          <span>{displayName} (@{username})</span>
+        </div>
+        <BracketBoard
+          bracket={bracket}
+          picks={picks}
+          onPick={chooseWinner}
+          model={model}
+          tiebreaker={tiebreaker}
+          onTiebreakerChange={(value) => {
+            if (locked) return;
+            setTiebreaker(value);
+            setDirty(true);
+            setMessage("");
+          }}
+          readOnly={locked}
+          showMissing={showMissingPicks}
+        />
+      </section>
 
       {isWarning && (
         <p
