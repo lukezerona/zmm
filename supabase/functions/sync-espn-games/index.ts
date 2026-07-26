@@ -5,6 +5,9 @@ const SOURCE = "mens-college-basketball";
 const TOURNAMENT_PREFIX = "NCAA Men's Basketball Championship";
 const ESPN_SCOREBOARD_URL =
   "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard";
+const NCAA_BRACKET_PAGE_BASE_URL =
+  "https://www.ncaa.com/brackets/basketball-men/d1";
+const NCAA_MML_DATA_BASE_URL = "https://mmldata.ncaa.com/mml";
 const BREVO_EMAIL_URL = "https://api.brevo.com/v3/smtp/email";
 const DEFAULT_ALERT_EMAIL = "luke.zerona@gmail.com";
 const DEFAULT_ALERT_SENDER = "luke.zerona@11697146.brevosend.com";
@@ -12,7 +15,7 @@ const ALERT_REMINDER_MS = 6 * 60 * 60 * 1_000;
 const MAX_RANGE_DAYS = 45;
 
 type SyncRequest = {
-  mode?: "auto" | "date" | "range" | "test-alert";
+  mode?: "auto" | "date" | "range" | "pairings" | "test-alert";
   date?: string;
   startDate?: string;
   endDate?: string;
@@ -22,6 +25,8 @@ type SyncStage =
   | "request"
   | "espn-request"
   | "espn-response"
+  | "ncaa-config"
+  | "ncaa-bracket"
   | "database-read"
   | "database-write"
   | "sync-state"
@@ -51,6 +56,25 @@ type RoundDetails = {
   region: "east" | "midwest" | "south" | "west" | null;
   isPlayIn: boolean;
 };
+
+type RegionCode = "east" | "midwest" | "south" | "west";
+
+type OfficialRegionPairings = {
+  seasonYear: number;
+  ncaaSeasonYear: number;
+  leftTopRegion: RegionCode;
+  leftBottomRegion: RegionCode;
+  rightTopRegion: RegionCode;
+  rightBottomRegion: RegionCode;
+  sourcePayloadHash: string;
+};
+
+class PairingsNotReadyError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PairingsNotReadyError";
+  }
+}
 
 function isRecord(value: unknown): value is JsonRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -129,6 +153,20 @@ function diagnoseError(stage: SyncStage, message: string) {
     return {
       cause: "The Edge Function could not complete its request to ESPN. The request may have timed out or ESPN may be unreachable.",
       action: "Open the ESPN scoreboard URL, confirm it responds, and review the Edge Function logs before retrying.",
+    };
+  }
+
+  if (stage === "ncaa-config") {
+    return {
+      cause: "ZMM could not discover the current official NCAA bracket configuration or query metadata.",
+      action: "Open the official NCAA bracket page, confirm it is published for the configured season, and review the Edge Function logs.",
+    };
+  }
+
+  if (stage === "ncaa-bracket") {
+    return {
+      cause: "The official NCAA bracket feed is not published yet, or its bracket structure no longer matches the fields ZMM validates.",
+      action: "Compare the official NCAA bracket page with the configured season. If the bracket is announced, review the feed fields before changing the pairings manually.",
     };
   }
 
@@ -408,6 +446,245 @@ async function sha256(value: unknown): Promise<string> {
     .join("");
 }
 
+async function fetchRequiredText(url: string, label: string): Promise<string> {
+  const response = await fetch(url, {
+    headers: { Accept: "text/html,application/javascript,application/json" },
+    signal: AbortSignal.timeout(25_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`${label} returned HTTP ${response.status}.`);
+  }
+
+  return response.text();
+}
+
+function normalizeOfficialRegion(value: unknown): RegionCode | null {
+  const region = asString(value)?.trim().toLowerCase();
+  return region === "east" ||
+      region === "midwest" ||
+      region === "south" ||
+      region === "west"
+    ? region
+    : null;
+}
+
+async function fetchOfficialRegionPairings(
+  seasonYear: number,
+): Promise<OfficialRegionPairings> {
+  const bracketPageUrl = `${NCAA_BRACKET_PAGE_BASE_URL}/${seasonYear}`;
+  const bracketPage = await fetchRequiredText(
+    bracketPageUrl,
+    "The official NCAA bracket page",
+  );
+  const bracketAssetPath = bracketPage.match(
+    /<script[^>]+src=["']([^"']*\/march-madness-live\/Bracket\.[^"']+\.js)["']/i,
+  )?.[1];
+
+  if (!bracketAssetPath) {
+    throw new Error(
+      "The official NCAA bracket page did not expose its bracket client asset.",
+    );
+  }
+
+  const bracketAssetUrl = new URL(bracketAssetPath, bracketPageUrl).toString();
+  const bracketAsset = await fetchRequiredText(
+    bracketAssetUrl,
+    "The NCAA bracket client asset",
+  );
+  const dataManagerAssetName = bracketAsset.match(
+    /dataManager\.[A-Za-z0-9_-]+\.js/i,
+  )?.[0];
+
+  if (!dataManagerAssetName) {
+    throw new Error(
+      "The NCAA bracket client did not expose its data manager asset.",
+    );
+  }
+
+  const dataManagerAssetUrl = new URL(
+    `./${dataManagerAssetName}`,
+    bracketAssetUrl,
+  ).toString();
+  const dataManagerAsset = await fetchRequiredText(
+    dataManagerAssetUrl,
+    "The NCAA bracket data manager",
+  );
+  const persistedQueryHash = dataManagerAsset.match(
+    /official_bracket_web\s*:\s*[`"']([a-f0-9]{64})[`"']/i,
+  )?.[1];
+
+  if (!persistedQueryHash) {
+    throw new Error(
+      "The NCAA bracket data manager did not expose the official bracket query hash.",
+    );
+  }
+
+  const appConfigUrl =
+    `${NCAA_MML_DATA_BASE_URL}/${seasonYear}/configs/prod/v2/appConfig_web.json`;
+  const appConfig = asRecord(JSON.parse(
+    await fetchRequiredText(appConfigUrl, "The NCAA bracket configuration"),
+  ));
+  const gqlConfig = asRecord(appConfig.gql);
+  const gqlHost = asString(gqlConfig.host);
+  const ncaaSeasonYear = asInteger(gqlConfig.season_year);
+
+  if (!gqlHost || !ncaaSeasonYear) {
+    throw new Error(
+      "The NCAA bracket configuration is missing its GraphQL host or season year.",
+    );
+  }
+
+  if (ncaaSeasonYear !== seasonYear - 1) {
+    throw new PairingsNotReadyError(
+      `The NCAA bracket configuration still targets season ${ncaaSeasonYear}; ZMM is waiting for tournament ${seasonYear}.`,
+    );
+  }
+
+  const officialBracketUrl = new URL(gqlHost);
+  officialBracketUrl.searchParams.set("operationName", "official_bracket_web");
+  officialBracketUrl.searchParams.set(
+    "variables",
+    JSON.stringify({ seasonYear: ncaaSeasonYear, staticTestEnv: null }),
+  );
+  officialBracketUrl.searchParams.set(
+    "extensions",
+    JSON.stringify({
+      persistedQuery: {
+        version: 1,
+        sha256Hash: persistedQueryHash,
+      },
+    }),
+  );
+
+  const officialBracketResponse = await fetch(officialBracketUrl, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(25_000),
+  });
+
+  if (!officialBracketResponse.ok) {
+    throw new Error(
+      `The official NCAA bracket feed returned HTTP ${officialBracketResponse.status}.`,
+    );
+  }
+
+  const officialPayload = asRecord(await officialBracketResponse.json());
+  const payloadErrors = asArray(officialPayload.errors);
+  if (payloadErrors.length > 0) {
+    const firstError = asString(asRecord(payloadErrors[0]).message) ??
+      "Unknown NCAA GraphQL error.";
+    throw new Error(`The official NCAA bracket feed failed: ${firstError}`);
+  }
+
+  const contests = asArray(asRecord(officialPayload.data).mmlContests)
+    .map(asRecord);
+
+  if (contests.length === 0) {
+    throw new PairingsNotReadyError(
+      `The NCAA has not published the ${seasonYear} official bracket yet.`,
+    );
+  }
+
+  const eliteEightContests = contests.filter(
+    (contest) => asInteger(asRecord(contest.round).roundNumber) === 5,
+  );
+  const finalFourContests = contests.filter(
+    (contest) => asInteger(asRecord(contest.round).roundNumber) === 6,
+  );
+
+  if (eliteEightContests.length !== 4 || finalFourContests.length !== 2) {
+    throw new Error(
+      `The official bracket is not ready: expected 4 regional finals and 2 national semifinals, received ${eliteEightContests.length} and ${finalFourContests.length}.`,
+    );
+  }
+
+  const regionByPosition = new Map<string, {
+    region: RegionCode;
+    victorBracketPositionId: number;
+  }>();
+
+  for (const contest of eliteEightContests) {
+    const regionDetails = asRecord(contest.region);
+    const position = asString(regionDetails.position)?.trim().toUpperCase();
+    const region = normalizeOfficialRegion(regionDetails.title);
+    const victorBracketPositionId = asInteger(
+      contest.victorBracketPositionId,
+    );
+
+    if (
+      !position ||
+      !["TL", "BL", "TR", "BR"].includes(position) ||
+      !region ||
+      !victorBracketPositionId ||
+      regionByPosition.has(position)
+    ) {
+      throw new Error(
+        "The official bracket contains an invalid or duplicate regional-final position.",
+      );
+    }
+
+    regionByPosition.set(position, { region, victorBracketPositionId });
+  }
+
+  const topLeft = regionByPosition.get("TL");
+  const bottomLeft = regionByPosition.get("BL");
+  const topRight = regionByPosition.get("TR");
+  const bottomRight = regionByPosition.get("BR");
+
+  if (!topLeft || !bottomLeft || !topRight || !bottomRight) {
+    throw new Error(
+      "The official bracket is missing one or more regional positions.",
+    );
+  }
+
+  if (
+    topLeft.victorBracketPositionId !== bottomLeft.victorBracketPositionId ||
+    topRight.victorBracketPositionId !== bottomRight.victorBracketPositionId ||
+    topLeft.victorBracketPositionId === topRight.victorBracketPositionId
+  ) {
+    throw new Error(
+      "The official bracket regional positions do not form two valid Final Four pairings.",
+    );
+  }
+
+  const finalFourIds = new Set(
+    finalFourContests
+      .map((contest) => asInteger(contest.bracketId))
+      .filter((value): value is number => value !== null),
+  );
+
+  if (
+    !finalFourIds.has(topLeft.victorBracketPositionId) ||
+    !finalFourIds.has(topRight.victorBracketPositionId)
+  ) {
+    throw new Error(
+      "The official bracket regional finals do not advance to the published Final Four games.",
+    );
+  }
+
+  const pairingPayload = {
+    seasonYear,
+    ncaaSeasonYear,
+    leftTopRegion: topLeft.region,
+    leftBottomRegion: bottomLeft.region,
+    rightTopRegion: topRight.region,
+    rightBottomRegion: bottomRight.region,
+  };
+
+  if (new Set(Object.values(pairingPayload).filter(
+    (value): value is RegionCode => typeof value === "string",
+  )).size !== 4) {
+    throw new Error(
+      "The official bracket did not provide four unique tournament regions.",
+    );
+  }
+
+  return {
+    ...pairingPayload,
+    sourcePayloadHash: await sha256(pairingPayload),
+  };
+}
+
 async function normalizeEvent(eventValue: unknown, syncedAt: string) {
   const event = asRecord(eventValue);
   const competition = asRecord(asArray(event.competitions)[0]);
@@ -603,6 +880,99 @@ const handler = {
           { alert },
           { status: alert.status === "failed" ? 500 : 200 },
         );
+      }
+
+      if (body.mode === "pairings") {
+        stage = "database-read";
+        const { data: config, error: configError } = await ctx.supabaseAdmin
+          .from("espn_sync_config")
+          .select("season_year")
+          .eq("source", SOURCE)
+          .maybeSingle();
+
+        if (configError) {
+          throw new Error(
+            `Could not read the configured tournament season: ${configError.message}`,
+          );
+        }
+
+        const seasonYear = asInteger(config?.season_year);
+        if (!seasonYear) {
+          throw new Error(
+            "The tournament season is not configured for the NCAA pairing sync.",
+          );
+        }
+
+        scope = `official NCAA bracket for ${seasonYear}`;
+        stage = "ncaa-bracket";
+        let pairing: OfficialRegionPairings;
+        try {
+          pairing = await fetchOfficialRegionPairings(seasonYear);
+        } catch (error) {
+          if (error instanceof PairingsNotReadyError) {
+            return Response.json({
+              scope,
+              ready: false,
+              changed: false,
+              message: error.message,
+            }, { status: 202 });
+          }
+
+          throw error;
+        }
+
+        stage = "database-read";
+        const { data: existingPairing, error: existingPairingError } =
+          await ctx.supabaseAdmin
+            .from("tournament_region_pairings")
+            .select("source_payload_hash, updated_at")
+            .eq("season_year", seasonYear)
+            .maybeSingle();
+
+        if (existingPairingError) {
+          throw new Error(
+            `Could not read the existing region pairings: ${existingPairingError.message}`,
+          );
+        }
+
+        const changed =
+          existingPairing?.source_payload_hash !== pairing.sourcePayloadHash;
+        stage = "database-write";
+        const { error: pairingError } = await ctx.supabaseAdmin
+          .from("tournament_region_pairings")
+          .upsert({
+            season_year: pairing.seasonYear,
+            ncaa_season_year: pairing.ncaaSeasonYear,
+            left_top_region: pairing.leftTopRegion,
+            left_bottom_region: pairing.leftBottomRegion,
+            right_top_region: pairing.rightTopRegion,
+            right_bottom_region: pairing.rightBottomRegion,
+            pairing_source: "ncaa_official_bracket",
+            source_payload_hash: pairing.sourcePayloadHash,
+            source_synced_at: attemptedAt,
+            updated_at: changed
+              ? attemptedAt
+              : existingPairing?.updated_at ?? attemptedAt,
+          }, { onConflict: "season_year" });
+
+        if (pairingError) {
+          throw new Error(
+            `Could not save the official NCAA region pairings: ${pairingError.message}`,
+          );
+        }
+
+        return Response.json({
+          scope,
+          changed,
+          seasonYear: pairing.seasonYear,
+          ncaaSeasonYear: pairing.ncaaSeasonYear,
+          pairings: {
+            left: [pairing.leftTopRegion, pairing.leftBottomRegion],
+            right: [pairing.rightTopRegion, pairing.rightBottomRegion],
+          },
+          source: "ncaa_official_bracket",
+          syncedAt: attemptedAt,
+        });
       }
 
       scope = requestScope(body);
