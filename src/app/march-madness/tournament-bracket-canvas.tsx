@@ -1,7 +1,6 @@
 "use client";
 
 import { CircleCheck, CircleX, Radio, Trophy } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import {
   BracketEntry,
   BracketMatchup,
@@ -55,49 +54,6 @@ type TournamentBracketCanvasProps = {
   model: TournamentModel;
   view: BracketView;
 };
-
-type ConnectorDiagram = {
-  width: number;
-  height: number;
-  lines: {
-    id: string;
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
-  }[];
-};
-
-const CONNECTOR_PAIRS = [
-  {
-    id: "east-final-four",
-    eliteEightId: "east-r4-0",
-    finalFourId: "final-four-0",
-    side: "left",
-    position: "upper",
-  },
-  {
-    id: "south-final-four",
-    eliteEightId: "south-r4-0",
-    finalFourId: "final-four-0",
-    side: "right",
-    position: "upper",
-  },
-  {
-    id: "west-final-four",
-    eliteEightId: "west-r4-0",
-    finalFourId: "final-four-1",
-    side: "left",
-    position: "lower",
-  },
-  {
-    id: "midwest-final-four",
-    eliteEightId: "midwest-r4-0",
-    finalFourId: "final-four-1",
-    side: "right",
-    position: "lower",
-  },
-] as const;
 
 function gameStatus(game: TournamentGame) {
   if (game.completed) return "Final";
@@ -379,7 +335,7 @@ function RegionBracket({
   view,
   gameIndex,
   teamOrder,
-  showDates = true,
+  showHeading = true,
 }: {
   region: Region;
   side: "left" | "right";
@@ -387,7 +343,7 @@ function RegionBracket({
   view: BracketView;
   gameIndex: Map<string, TournamentGame>;
   teamOrder: Map<string, number>;
-  showDates?: boolean;
+  showHeading?: boolean;
 }) {
   const rounds =
     view.type === "master"
@@ -428,10 +384,12 @@ function RegionBracket({
       <div className={styles.canvasRegionRounds}>
         {displayedColumns.map((column) => (
           <div className={styles.canvasRound} key={column.label}>
-            <div className={styles.masterRoundHeading}>
-              <strong>{column.label}</strong>
-              {showDates && <span>{column.date}</span>}
-            </div>
+            {showHeading && (
+              <div className={styles.masterRoundHeading}>
+                <strong>{column.label}</strong>
+                <span>{column.date}</span>
+              </div>
+            )}
             <div className={styles.masterMatchups}>
               {column.matchups.map((matchup) =>
                 view.type === "master" ? (
@@ -463,9 +421,13 @@ export function TournamentBracketCanvas({
   model,
   view,
 }: TournamentBracketCanvasProps) {
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const [connectorDiagram, setConnectorDiagram] =
-    useState<ConnectorDiagram | null>(null);
+  const { finalFourPairings, regionLayout } = model;
+  const leftFinalFourLabel = finalFourPairings[0]
+    .map((region) => REGION_NAMES[region])
+    .join(" vs. ");
+  const rightFinalFourLabel = finalFourPairings[1]
+    .map((region) => REGION_NAMES[region])
+    .join(" vs. ");
   const gameIndex =
     view.type === "master"
       ? buildMasterGameIndex(model, view.games)
@@ -525,97 +487,11 @@ export function TournamentBracketCanvas({
       />
     );
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const updateConnectors = () => {
-      if (window.matchMedia("(max-width: 760px)").matches) {
-        setConnectorDiagram(null);
-        return;
-      }
-
-      const canvasBounds = canvas.getBoundingClientRect();
-      const lines = CONNECTOR_PAIRS.flatMap((pair) => {
-        const eliteEight = canvas.querySelector<HTMLElement>(
-          `[data-matchup-id="${pair.eliteEightId}"]`,
-        );
-        const finalFour = canvas.querySelector<HTMLElement>(
-          `[data-matchup-id="${pair.finalFourId}"]`,
-        );
-        if (!eliteEight || !finalFour) return [];
-
-        const eliteEightBounds = eliteEight.getBoundingClientRect();
-        const finalFourBounds = finalFour.getBoundingClientRect();
-        const connectsFromAbove = pair.position === "upper";
-        const finalFourAnchor =
-          pair.side === "left" ? 0.28 : 0.72;
-
-        return [
-          {
-            id: pair.id,
-            x1:
-              eliteEightBounds.left +
-              eliteEightBounds.width / 2 -
-              canvasBounds.left,
-            y1:
-              (connectsFromAbove
-                ? eliteEightBounds.bottom
-                : eliteEightBounds.top) - canvasBounds.top,
-            x2:
-              finalFourBounds.left +
-              finalFourBounds.width * finalFourAnchor -
-              canvasBounds.left,
-            y2:
-              (connectsFromAbove
-                ? finalFourBounds.top
-                : finalFourBounds.bottom) - canvasBounds.top,
-          },
-        ];
-      });
-
-      setConnectorDiagram({
-        width: canvasBounds.width,
-        height: canvasBounds.height,
-        lines,
-      });
-    };
-
-    updateConnectors();
-    const resizeObserver = new ResizeObserver(updateConnectors);
-    resizeObserver.observe(canvas);
-    window.addEventListener("resize", updateConnectors);
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", updateConnectors);
-    };
-  }, [view.type]);
-
   return (
     <div className={styles.bracketCanvasFrame}>
-      <div className={styles.bracketCanvas} ref={canvasRef}>
-        {connectorDiagram && connectorDiagram.lines.length > 0 && (
-          <svg
-            className={styles.finalFourConnectors}
-            viewBox={`0 0 ${connectorDiagram.width} ${connectorDiagram.height}`}
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            {connectorDiagram.lines.map((line) => {
-              const midpointY = (line.y1 + line.y2) / 2;
-
-              return (
-                <polyline
-                  key={line.id}
-                  points={`${line.x1},${line.y1} ${line.x1},${midpointY} ${line.x2},${midpointY} ${line.x2},${line.y2}`}
-                />
-              );
-            })}
-          </svg>
-        )}
+      <div className={styles.bracketCanvas}>
         <RegionBracket
-          region="east"
+          region={regionLayout.topLeft}
           side="left"
           model={model}
           view={view}
@@ -623,7 +499,7 @@ export function TournamentBracketCanvas({
           teamOrder={teamOrder}
         />
         <RegionBracket
-          region="west"
+          region={regionLayout.topRight}
           side="right"
           model={model}
           view={view}
@@ -631,28 +507,28 @@ export function TournamentBracketCanvas({
           teamOrder={teamOrder}
         />
         <RegionBracket
-          region="south"
+          region={regionLayout.bottomLeft}
           side="left"
           model={model}
           view={view}
           gameIndex={gameIndex}
           teamOrder={teamOrder}
-          showDates={false}
+          showHeading={false}
         />
         <RegionBracket
-          region="midwest"
+          region={regionLayout.bottomRight}
           side="right"
           model={model}
           view={view}
           gameIndex={gameIndex}
           teamOrder={teamOrder}
-          showDates={false}
+          showHeading={false}
         />
 
         <div className={styles.integratedFinals}>
           <div className={styles.finalFourSlot}>
             <div className={styles.masterRoundHeading}>
-              <strong>East vs. South</strong>
+              <strong>{leftFinalFourLabel}</strong>
               <span>{model.roundDates.finalFour}</span>
             </div>
             {renderFinalCard(finalFourMatchups[0])}
@@ -679,7 +555,7 @@ export function TournamentBracketCanvas({
 
           <div className={styles.finalFourSlot}>
             <div className={styles.masterRoundHeading}>
-              <strong>West vs. Midwest</strong>
+              <strong>{rightFinalFourLabel}</strong>
               <span>{model.roundDates.finalFour}</span>
             </div>
             {renderFinalCard(finalFourMatchups[1])}

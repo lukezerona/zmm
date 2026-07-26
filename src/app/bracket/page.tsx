@@ -26,7 +26,12 @@ import {
   pickCount,
   sanitizePicks,
 } from "./bracket-utils";
-import { EspnGameRow, PickMap, TournamentModel } from "./bracket-types";
+import {
+  EspnGameRow,
+  PickMap,
+  TournamentModel,
+  TournamentRegionPairingRow,
+} from "./bracket-types";
 import styles from "./bracket.module.css";
 
 const TOTAL_PICKS = 63;
@@ -137,34 +142,42 @@ export default function BracketPage() {
       const activeSeasonYear =
         lifecycle.seasonYear ?? CREATION_TEST_SEASON_YEAR;
 
-      const [profileResult, gamesResult, bracketResult] = await Promise.all([
-        client
-          .from("profiles")
-          .select("username, display_name")
-          .eq("user_id", userData.user.id)
-          .maybeSingle(),
-        client
-          .from("espn_games")
-          .select(
-            "espn_event_id, region, round_code, starts_at, home_team_id, home_team_name, home_team_seed, away_team_id, away_team_name, away_team_seed",
-          )
-          .eq("season_year", activeSeasonYear)
-          .in("round_code", [
-            "PLAY_IN",
-            "ROUND_OF_64",
-            "ROUND_OF_32",
-            "SWEET_16",
-            "ELITE_8",
-            "FINAL_FOUR",
-            "CHAMPIONSHIP",
-          ]),
-        client
-          .from("brackets")
-          .select("picks, tiebreaker_total")
-          .eq("user_id", userData.user.id)
-          .eq("season_year", activeSeasonYear)
-          .maybeSingle(),
-      ]);
+      const [profileResult, gamesResult, bracketResult, pairingResult] =
+        await Promise.all([
+          client
+            .from("profiles")
+            .select("username, display_name")
+            .eq("user_id", userData.user.id)
+            .maybeSingle(),
+          client
+            .from("espn_games")
+            .select(
+              "espn_event_id, region, round_code, starts_at, home_team_id, home_team_name, home_team_seed, away_team_id, away_team_name, away_team_seed",
+            )
+            .eq("season_year", activeSeasonYear)
+            .in("round_code", [
+              "PLAY_IN",
+              "ROUND_OF_64",
+              "ROUND_OF_32",
+              "SWEET_16",
+              "ELITE_8",
+              "FINAL_FOUR",
+              "CHAMPIONSHIP",
+            ]),
+          client
+            .from("brackets")
+            .select("picks, tiebreaker_total")
+            .eq("user_id", userData.user.id)
+            .eq("season_year", activeSeasonYear)
+            .maybeSingle(),
+          client
+            .from("tournament_region_pairings")
+            .select(
+              "season_year, left_top_region, left_bottom_region, right_top_region, right_bottom_region",
+            )
+            .eq("season_year", activeSeasonYear)
+            .maybeSingle(),
+        ]);
 
       if (!active) return;
 
@@ -186,10 +199,19 @@ export default function BracketPage() {
         return;
       }
 
+      if (pairingResult.error || !pairingResult.data) {
+        setError(
+          "The tournament region pairings are not configured yet. Please check back soon.",
+        );
+        setLoading(false);
+        return;
+      }
+
       try {
         const tournament = buildTournamentModel(
           gamesResult.data as EspnGameRow[],
           activeSeasonYear,
+          pairingResult.data as TournamentRegionPairingRow,
         );
         const saved = bracketResult.data as SavedBracket | null;
         const deadlineTimestamp = lifecycle.entryDeadline
@@ -510,7 +532,7 @@ export default function BracketPage() {
         bracket={bracket}
         picks={picks}
         onPick={chooseWinner}
-        roundDates={model.roundDates}
+        model={model}
         tiebreaker={tiebreaker}
         onTiebreakerChange={(value) => {
           if (locked) return;

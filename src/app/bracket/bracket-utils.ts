@@ -8,6 +8,7 @@ import {
   RegionRounds,
   REGIONS,
   TournamentModel,
+  TournamentRegionPairingRow,
 } from "./bracket-types";
 
 const FIRST_ROUND_SEED_PAIRS = [
@@ -125,7 +126,29 @@ function seedSetMatches(
 export function buildTournamentModel(
   games: EspnGameRow[],
   seasonYear: number,
+  pairing: TournamentRegionPairingRow | null,
 ): TournamentModel {
+  if (!pairing || pairing.season_year !== seasonYear) {
+    throw new Error(
+      `Final Four region pairings are not configured for ${seasonYear}.`,
+    );
+  }
+
+  const configuredRegions = [
+    pairing.left_top_region,
+    pairing.left_bottom_region,
+    pairing.right_top_region,
+    pairing.right_bottom_region,
+  ];
+  if (
+    configuredRegions.some((region) => !REGIONS.includes(region)) ||
+    new Set(configuredRegions).size !== REGIONS.length
+  ) {
+    throw new Error(
+      `Final Four region pairings are invalid for ${seasonYear}.`,
+    );
+  }
+
   const playIns = playInEntries(games);
   const firstRoundByRegion = {} as Record<Region, BracketMatchup[]>;
 
@@ -180,6 +203,16 @@ export function buildTournamentModel(
   return {
     seasonYear,
     firstRoundByRegion,
+    regionLayout: {
+      topLeft: pairing.left_top_region,
+      topRight: pairing.right_top_region,
+      bottomLeft: pairing.left_bottom_region,
+      bottomRight: pairing.right_bottom_region,
+    },
+    finalFourPairings: [
+      [pairing.left_top_region, pairing.left_bottom_region],
+      [pairing.right_top_region, pairing.right_bottom_region],
+    ],
     roundDates: {
       roundOf64: roundDateLabel(games, "ROUND_OF_64"),
       roundOf32: roundDateLabel(games, "ROUND_OF_32"),
@@ -245,8 +278,8 @@ export function deriveBracket(
       roundNumber: 5,
       matchupIndex: 0,
       options: [
-        regionalChampion(regions.east, picks),
-        regionalChampion(regions.south, picks),
+        regionalChampion(regions[model.finalFourPairings[0][0]], picks),
+        regionalChampion(regions[model.finalFourPairings[0][1]], picks),
       ] as [BracketEntry | null, BracketEntry | null],
     },
     {
@@ -254,8 +287,8 @@ export function deriveBracket(
       roundNumber: 5,
       matchupIndex: 1,
       options: [
-        regionalChampion(regions.west, picks),
-        regionalChampion(regions.midwest, picks),
+        regionalChampion(regions[model.finalFourPairings[1][0]], picks),
+        regionalChampion(regions[model.finalFourPairings[1][1]], picks),
       ] as [BracketEntry | null, BracketEntry | null],
     },
   ];

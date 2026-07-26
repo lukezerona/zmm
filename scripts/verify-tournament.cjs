@@ -104,27 +104,40 @@ function verifyPayoutRules() {
 }
 
 async function verifyDevelopmentPool() {
-  const [profilesResult, bracketsResult, gamesResult] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("user_id, username, display_name"),
-    supabase
-      .from("brackets")
-      .select("user_id, season_year, picks, tiebreaker_total, updated_at")
-      .eq("season_year", SEASON_YEAR),
-    supabase
-      .from("espn_games")
-      .select(
-        "espn_event_id, region, round_code, round_number, starts_at, broadcast, status_state, status_description, status_detail, completed, period, clock, home_team_id, home_team_name, home_team_seed, home_score, home_winner, away_team_id, away_team_name, away_team_seed, away_score, away_winner",
-      )
-      .eq("season_year", SEASON_YEAR),
-  ]);
+  const [profilesResult, bracketsResult, gamesResult, pairingResult] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("user_id, username, display_name"),
+      supabase
+        .from("brackets")
+        .select("user_id, season_year, picks, tiebreaker_total, updated_at")
+        .eq("season_year", SEASON_YEAR),
+      supabase
+        .from("espn_games")
+        .select(
+          "espn_event_id, region, round_code, round_number, starts_at, broadcast, status_state, status_description, status_detail, completed, period, clock, home_team_id, home_team_name, home_team_seed, home_score, home_winner, away_team_id, away_team_name, away_team_seed, away_score, away_winner",
+        )
+        .eq("season_year", SEASON_YEAR),
+      supabase
+        .from("tournament_region_pairings")
+        .select(
+          "season_year, left_top_region, left_bottom_region, right_top_region, right_bottom_region",
+        )
+        .eq("season_year", SEASON_YEAR)
+        .single(),
+    ]);
 
   assert.ifError(profilesResult.error);
   assert.ifError(bracketsResult.error);
   assert.ifError(gamesResult.error);
+  assert.ifError(pairingResult.error);
 
-  const model = buildTournamentModel(gamesResult.data, SEASON_YEAR);
+  const model = buildTournamentModel(
+    gamesResult.data,
+    SEASON_YEAR,
+    pairingResult.data,
+  );
   const brackets = bracketsResult.data.map((bracket) => ({
     ...bracket,
     picks: sanitizePicks(model, bracket.picks),

@@ -56,7 +56,29 @@ sync error.
 ## Seasonal activation
 
 Before a tournament, update `public.espn_sync_config` with the new season year
-and date range, then set `enabled = true`. The lightweight
+and date range. Also add that season's screen positions and official semifinal
+pairings to `public.tournament_region_pairings`. Each side of the screen feeds
+one Final Four game:
+
+```sql
+insert into public.tournament_region_pairings (
+  season_year,
+  left_top_region,
+  left_bottom_region,
+  right_top_region,
+  right_bottom_region
+)
+values (2027, 'east', 'west', 'south', 'midwest')
+on conflict (season_year) do update set
+  left_top_region = excluded.left_top_region,
+  left_bottom_region = excluded.left_bottom_region,
+  right_top_region = excluded.right_top_region,
+  right_bottom_region = excluded.right_bottom_region,
+  updated_at = now();
+```
+
+Use the NCAA's announced pairings for that year; the sample region order above
+is only an example. Then set `espn_sync_config.enabled = true`. The lightweight
 `manage-espn-sync-season` job checks the configuration hourly and automatically
 activates the 15-second ESPN poller and Cron-history cleanup during the
 configured window.

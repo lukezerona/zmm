@@ -14,6 +14,7 @@ import {
   PickMap,
   REGIONS,
   TournamentModel,
+  TournamentRegionPairingRow,
 } from "../bracket/bracket-types";
 import {
   buildTournamentModel,
@@ -160,7 +161,8 @@ export default function SpreadsheetPage() {
     const activeSeasonYear = lifecycle.seasonYear;
     seasonYearRef.current = activeSeasonYear;
 
-    const [profilesResult, bracketsResult, gamesResult] = await Promise.all([
+    const [profilesResult, bracketsResult, gamesResult, pairingResult] =
+      await Promise.all([
       client
         .from("profiles")
         .select("user_id, username, display_name")
@@ -174,13 +176,27 @@ export default function SpreadsheetPage() {
         .select(ESPN_GAME_SELECT)
         .eq("season_year", activeSeasonYear)
         .in("round_code", TOURNAMENT_ROUND_CODES),
+      client
+        .from("tournament_region_pairings")
+        .select(
+          "season_year, left_top_region, left_bottom_region, right_top_region, right_bottom_region",
+        )
+        .eq("season_year", activeSeasonYear)
+        .maybeSingle(),
     ]);
 
-    if (profilesResult.error || bracketsResult.error || gamesResult.error) {
+    if (
+      profilesResult.error ||
+      bracketsResult.error ||
+      gamesResult.error ||
+      pairingResult.error ||
+      !pairingResult.data
+    ) {
       console.error("[spreadsheet] Could not load pool data", {
         profiles: profilesResult.error?.message,
         brackets: bracketsResult.error?.message,
         games: gamesResult.error?.message,
+        pairing: pairingResult.error?.message,
       });
       if (mountedRef.current) {
         setError("The family spreadsheet is temporarily unavailable.");
@@ -202,6 +218,7 @@ export default function SpreadsheetPage() {
       const tournament = buildTournamentModel(
         loadedGames as EspnGameRow[],
         activeSeasonYear,
+        pairingResult.data as TournamentRegionPairingRow,
       );
       const loadedBrackets = (bracketsResult.data as RawBracket[]).map(
         (bracket) => ({
@@ -256,16 +273,25 @@ export default function SpreadsheetPage() {
       return loadSpreadsheet();
     }
 
-    const gamesResult = await client
-      .from("espn_games")
-      .select(ESPN_GAME_SELECT)
-      .eq("season_year", lifecycle.seasonYear)
-      .in("round_code", TOURNAMENT_ROUND_CODES);
+    const [gamesResult, pairingResult] = await Promise.all([
+      client
+        .from("espn_games")
+        .select(ESPN_GAME_SELECT)
+        .eq("season_year", lifecycle.seasonYear)
+        .in("round_code", TOURNAMENT_ROUND_CODES),
+      client
+        .from("tournament_region_pairings")
+        .select(
+          "season_year, left_top_region, left_bottom_region, right_top_region, right_bottom_region",
+        )
+        .eq("season_year", lifecycle.seasonYear)
+        .maybeSingle(),
+    ]);
 
-    if (gamesResult.error) {
+    if (gamesResult.error || pairingResult.error || !pairingResult.data) {
       console.error(
         "[spreadsheet] Could not refresh games",
-        gamesResult.error.message,
+        gamesResult.error?.message ?? pairingResult.error?.message,
       );
       return false;
     }
@@ -275,6 +301,7 @@ export default function SpreadsheetPage() {
       const tournament = buildTournamentModel(
         loadedGames as EspnGameRow[],
         lifecycle.seasonYear,
+        pairingResult.data as TournamentRegionPairingRow,
       );
       if (!mountedRef.current) return false;
 

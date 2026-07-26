@@ -38,9 +38,27 @@ export type RegionRounds = {
   elite8: BracketMatchup[];
 };
 
+export type TournamentRegionPairingRow = {
+  season_year: number;
+  left_top_region: Region;
+  left_bottom_region: Region;
+  right_top_region: Region;
+  right_bottom_region: Region;
+};
+
 export type TournamentModel = {
   seasonYear: number;
   firstRoundByRegion: Record<Region, BracketMatchup[]>;
+  regionLayout: {
+    topLeft: Region;
+    topRight: Region;
+    bottomLeft: Region;
+    bottomRight: Region;
+  };
+  finalFourPairings: [
+    readonly [Region, Region],
+    readonly [Region, Region],
+  ];
   roundDates: {
     roundOf64: string;
     roundOf32: string;

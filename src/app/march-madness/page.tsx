@@ -17,6 +17,7 @@ import {
   EspnGameRow,
   PickMap,
   TournamentModel,
+  TournamentRegionPairingRow,
 } from "../bracket/bracket-types";
 import { buildTournamentModel, sanitizePicks } from "../bracket/bracket-utils";
 import { AccountMenu } from "./account-menu";
@@ -127,7 +128,8 @@ export default function MarchMadnessPage() {
       const activeSeasonYear = lifecycle.seasonYear;
       seasonYearRef.current = activeSeasonYear;
 
-      const [profilesResult, bracketsResult, gamesResult] = await Promise.all([
+      const [profilesResult, bracketsResult, gamesResult, pairingResult] =
+        await Promise.all([
         client
           .from("profiles")
           .select("user_id, username, display_name")
@@ -143,13 +145,27 @@ export default function MarchMadnessPage() {
           .select(ESPN_GAME_SELECT)
           .eq("season_year", activeSeasonYear)
           .in("round_code", TOURNAMENT_ROUND_CODES),
+        client
+          .from("tournament_region_pairings")
+          .select(
+            "season_year, left_top_region, left_bottom_region, right_top_region, right_bottom_region",
+          )
+          .eq("season_year", activeSeasonYear)
+          .maybeSingle(),
       ]);
 
-      if (profilesResult.error || bracketsResult.error || gamesResult.error) {
+      if (
+        profilesResult.error ||
+        bracketsResult.error ||
+        gamesResult.error ||
+        pairingResult.error ||
+        !pairingResult.data
+      ) {
         console.error("[dashboard] Could not load tournament", {
           profiles: profilesResult.error?.message,
           brackets: bracketsResult.error?.message,
           games: gamesResult.error?.message,
+          pairing: pairingResult.error?.message,
         });
         if (showPageError && mountedRef.current) {
           setError("Tournament Central is temporarily unavailable.");
@@ -171,6 +187,7 @@ export default function MarchMadnessPage() {
         const tournament = buildTournamentModel(
           loadedGames as EspnGameRow[],
           activeSeasonYear,
+          pairingResult.data as TournamentRegionPairingRow,
         );
         const loadedBrackets = (bracketsResult.data as RawBracket[]).map(
           (bracket) => ({
@@ -227,16 +244,25 @@ export default function MarchMadnessPage() {
       return fetchDashboard(false);
     }
 
-    const gamesResult = await client
-      .from("espn_games")
-      .select(ESPN_GAME_SELECT)
-      .eq("season_year", lifecycle.seasonYear)
-      .in("round_code", TOURNAMENT_ROUND_CODES);
+    const [gamesResult, pairingResult] = await Promise.all([
+      client
+        .from("espn_games")
+        .select(ESPN_GAME_SELECT)
+        .eq("season_year", lifecycle.seasonYear)
+        .in("round_code", TOURNAMENT_ROUND_CODES),
+      client
+        .from("tournament_region_pairings")
+        .select(
+          "season_year, left_top_region, left_bottom_region, right_top_region, right_bottom_region",
+        )
+        .eq("season_year", lifecycle.seasonYear)
+        .maybeSingle(),
+    ]);
 
-    if (gamesResult.error) {
+    if (gamesResult.error || pairingResult.error || !pairingResult.data) {
       console.error(
         "[dashboard] Could not refresh tournament games",
-        gamesResult.error.message,
+        gamesResult.error?.message ?? pairingResult.error?.message,
       );
       return false;
     }
@@ -246,6 +272,7 @@ export default function MarchMadnessPage() {
       const tournament = buildTournamentModel(
         loadedGames as EspnGameRow[],
         lifecycle.seasonYear,
+        pairingResult.data as TournamentRegionPairingRow,
       );
 
       if (!mountedRef.current) return false;
