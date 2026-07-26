@@ -1,6 +1,7 @@
 "use client";
 
 import { Trophy } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import {
   BracketMatchup,
   DerivedBracket,
@@ -17,6 +18,49 @@ const REGION_NAMES: Record<Region, string> = {
   midwest: "Midwest",
 };
 
+type ConnectorDiagram = {
+  width: number;
+  height: number;
+  lines: {
+    id: string;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+  }[];
+};
+
+const CONNECTOR_PAIRS = [
+  {
+    id: "east-final-four",
+    eliteEightId: "east-r4-0",
+    finalFourId: "final-four-0",
+    side: "left",
+    position: "upper",
+  },
+  {
+    id: "south-final-four",
+    eliteEightId: "south-r4-0",
+    finalFourId: "final-four-0",
+    side: "right",
+    position: "upper",
+  },
+  {
+    id: "west-final-four",
+    eliteEightId: "west-r4-0",
+    finalFourId: "final-four-1",
+    side: "left",
+    position: "lower",
+  },
+  {
+    id: "midwest-final-four",
+    eliteEightId: "midwest-r4-0",
+    finalFourId: "final-four-1",
+    side: "right",
+    position: "lower",
+  },
+] as const;
+
 type MatchCardProps = {
   matchup: BracketMatchup;
   pickedId?: string;
@@ -32,17 +76,15 @@ function MatchCard({
   compact = false,
   readOnly = false,
 }: MatchCardProps) {
-  const slots = matchup.options;
-
   return (
     <article
       className={`${styles.matchup} ${compact ? styles.compactMatchup : ""}`}
-      data-matchup={matchup.id}
+      data-matchup-id={matchup.id}
     >
       <span className={styles.srOnly}>
         Round {matchup.roundNumber}, matchup {matchup.matchupIndex + 1}
       </span>
-      {slots.map((entry, slotIndex) =>
+      {matchup.options.map((entry, slotIndex) =>
         entry ? (
           <button
             key={entry.id}
@@ -74,7 +116,7 @@ type RegionBracketProps = {
   bracket: DerivedBracket;
   picks: PickMap;
   onPick: (matchupId: string, entryId: string) => void;
-  flow: "left" | "right";
+  side: "left" | "right";
   roundDates: TournamentModel["roundDates"];
   readOnly?: boolean;
 };
@@ -84,7 +126,7 @@ function RegionBracket({
   bracket,
   picks,
   onPick,
-  flow,
+  side,
   roundDates,
   readOnly = false,
 }: RegionBracketProps) {
@@ -111,38 +153,39 @@ function RegionBracket({
       matchups: rounds.elite8,
     },
   ];
-  const displayedColumns = flow === "right" ? columns : [...columns].reverse();
+  const displayedColumns = side === "left" ? columns : [...columns].reverse();
 
   return (
-    <section className={styles.regionCard} aria-labelledby={`${region}-title`}>
-      <div className={styles.regionHeading}>
-        <h2 id={`${region}-title`}>{REGION_NAMES[region]} Region</h2>
-      </div>
-      <div className={styles.regionScroll}>
-        <div className={styles.regionBracket}>
-          {displayedColumns.map((column) => (
-            <div className={styles.roundColumn} key={column.label}>
-              <div className={styles.roundHeading}>
-                <h3>{column.label}</h3>
-                <span>{column.date}</span>
-              </div>
-              <div
-                className={styles.matchupStack}
-                data-count={column.matchups.length}
-              >
-                {column.matchups.map((matchup) => (
-                  <MatchCard
-                    key={matchup.id}
-                    matchup={matchup}
-                    pickedId={picks[matchup.id]}
-                    onPick={onPick}
-                    readOnly={readOnly}
-                  />
-                ))}
-              </div>
+    <section
+      className={`${styles.canvasRegion} ${
+        side === "right" ? styles.canvasRegionRight : ""
+      }`}
+      aria-labelledby={`${region}-title`}
+    >
+      <h2 id={`${region}-title`}>{REGION_NAMES[region]} Region</h2>
+      <div className={styles.canvasRegionRounds}>
+        {displayedColumns.map((column) => (
+          <div className={styles.roundColumn} key={column.label}>
+            <div className={styles.roundHeading}>
+              <h3>{column.label}</h3>
+              <span>{column.date}</span>
             </div>
-          ))}
-        </div>
+            <div
+              className={styles.matchupStack}
+              data-count={column.matchups.length}
+            >
+              {column.matchups.map((matchup) => (
+                <MatchCard
+                  key={matchup.id}
+                  matchup={matchup}
+                  pickedId={picks[matchup.id]}
+                  onPick={onPick}
+                  readOnly={readOnly}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -167,24 +210,105 @@ export function BracketBoard({
   onTiebreakerChange,
   readOnly = false,
 }: BracketBoardProps) {
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [connectorDiagram, setConnectorDiagram] =
+    useState<ConnectorDiagram | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const updateConnectors = () => {
+      if (window.matchMedia("(max-width: 760px)").matches) {
+        setConnectorDiagram(null);
+        return;
+      }
+
+      const canvasBounds = canvas.getBoundingClientRect();
+      const lines = CONNECTOR_PAIRS.flatMap((pair) => {
+        const eliteEight = canvas.querySelector<HTMLElement>(
+          `[data-matchup-id="${pair.eliteEightId}"]`,
+        );
+        const finalFour = canvas.querySelector<HTMLElement>(
+          `[data-matchup-id="${pair.finalFourId}"]`,
+        );
+        if (!eliteEight || !finalFour) return [];
+
+        const eliteEightBounds = eliteEight.getBoundingClientRect();
+        const finalFourBounds = finalFour.getBoundingClientRect();
+        const connectsFromAbove = pair.position === "upper";
+        const finalFourAnchor = pair.side === "left" ? 0.28 : 0.72;
+
+        return [
+          {
+            id: pair.id,
+            x1:
+              eliteEightBounds.left +
+              eliteEightBounds.width / 2 -
+              canvasBounds.left,
+            y1:
+              (connectsFromAbove
+                ? eliteEightBounds.bottom
+                : eliteEightBounds.top) - canvasBounds.top,
+            x2:
+              finalFourBounds.left +
+              finalFourBounds.width * finalFourAnchor -
+              canvasBounds.left,
+            y2:
+              (connectsFromAbove
+                ? finalFourBounds.top
+                : finalFourBounds.bottom) - canvasBounds.top,
+          },
+        ];
+      });
+
+      setConnectorDiagram({
+        width: canvasBounds.width,
+        height: canvasBounds.height,
+        lines,
+      });
+    };
+
+    updateConnectors();
+    const resizeObserver = new ResizeObserver(updateConnectors);
+    resizeObserver.observe(canvas);
+    window.addEventListener("resize", updateConnectors);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateConnectors);
+    };
+  }, [bracket]);
+
   return (
-    <>
-      <div className={styles.regionsGrid}>
+    <div className={styles.bracketCanvasFrame}>
+      <div className={styles.bracketCanvas} ref={canvasRef}>
+        {connectorDiagram && connectorDiagram.lines.length > 0 && (
+          <svg
+            className={styles.finalFourConnectors}
+            viewBox={`0 0 ${connectorDiagram.width} ${connectorDiagram.height}`}
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            {connectorDiagram.lines.map((line) => {
+              const midpointY = (line.y1 + line.y2) / 2;
+
+              return (
+                <polyline
+                  key={line.id}
+                  points={`${line.x1},${line.y1} ${line.x1},${midpointY} ${line.x2},${midpointY} ${line.x2},${line.y2}`}
+                />
+              );
+            })}
+          </svg>
+        )}
+
         <RegionBracket
           region="east"
           bracket={bracket}
           picks={picks}
           onPick={onPick}
-          flow="right"
-          roundDates={roundDates}
-          readOnly={readOnly}
-        />
-        <RegionBracket
-          region="west"
-          bracket={bracket}
-          picks={picks}
-          onPick={onPick}
-          flow="left"
+          side="left"
           roundDates={roundDates}
           readOnly={readOnly}
         />
@@ -193,7 +317,16 @@ export function BracketBoard({
           bracket={bracket}
           picks={picks}
           onPick={onPick}
-          flow="right"
+          side="right"
+          roundDates={roundDates}
+          readOnly={readOnly}
+        />
+        <RegionBracket
+          region="west"
+          bracket={bracket}
+          picks={picks}
+          onPick={onPick}
+          side="left"
           roundDates={roundDates}
           readOnly={readOnly}
         />
@@ -202,20 +335,17 @@ export function BracketBoard({
           bracket={bracket}
           picks={picks}
           onPick={onPick}
-          flow="left"
+          side="right"
           roundDates={roundDates}
           readOnly={readOnly}
         />
-      </div>
 
-      <section className={styles.finalStage} aria-labelledby="final-four-title">
-        <div className={styles.finalHeading}>
-          <h2 id="final-four-title">Final Four &amp; Championship</h2>
-        </div>
-        <div className={styles.finalBracket}>
-          <div className={styles.finalColumn}>
-            <span className={styles.finalLabel}>East vs. South</span>
-            <span className={styles.finalDate}>{roundDates.finalFour}</span>
+        <div className={styles.integratedFinals}>
+          <div className={styles.finalFourSlot}>
+            <div className={styles.roundHeading}>
+              <h3>East vs. South</h3>
+              <span>{roundDates.finalFour}</span>
+            </div>
             <MatchCard
               matchup={bracket.finalFour[0]}
               pickedId={picks[bracket.finalFour[0].id]}
@@ -226,8 +356,10 @@ export function BracketBoard({
           </div>
 
           <div className={styles.championshipColumn}>
-            <span className={styles.finalLabel}>National Championship</span>
-            <span className={styles.finalDate}>{roundDates.championship}</span>
+            <div className={styles.roundHeading}>
+              <h3>National Championship</h3>
+              <span>{roundDates.championship}</span>
+            </div>
             <MatchCard
               matchup={bracket.championship}
               pickedId={picks[bracket.championship.id]}
@@ -253,7 +385,9 @@ export function BracketBoard({
                   max="400"
                   inputMode="numeric"
                   value={tiebreaker}
-                  onChange={(event) => onTiebreakerChange(event.target.value)}
+                  onChange={(event) =>
+                    onTiebreakerChange(event.target.value)
+                  }
                   placeholder="142"
                   disabled={readOnly}
                 />
@@ -261,9 +395,11 @@ export function BracketBoard({
             </div>
           </div>
 
-          <div className={styles.finalColumn}>
-            <span className={styles.finalLabel}>West vs. Midwest</span>
-            <span className={styles.finalDate}>{roundDates.finalFour}</span>
+          <div className={styles.finalFourSlot}>
+            <div className={styles.roundHeading}>
+              <h3>West vs. Midwest</h3>
+              <span>{roundDates.finalFour}</span>
+            </div>
             <MatchCard
               matchup={bracket.finalFour[1]}
               pickedId={picks[bracket.finalFour[1].id]}
@@ -273,7 +409,7 @@ export function BracketBoard({
             />
           </div>
         </div>
-      </section>
-    </>
+      </div>
+    </div>
   );
 }

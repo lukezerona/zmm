@@ -63,6 +63,7 @@
 .hero,
 .bracketToolbar,
 .bracketIntro,
+.bracketCanvasFrame,
 .regionsGrid,
 .finalStage,
 .saveFooter,
@@ -434,6 +435,101 @@
   color: #365361;
 }
 
+.bracketCanvasFrame {
+  overflow: hidden;
+}
+
+.bracketCanvas {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 300px clamp(116px, 14%, 180px);
+  padding: 18px;
+}
+
+.canvasRegion {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.canvasRegion > h2 {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-bottom: 1px solid rgba(61, 145, 190, 0.16);
+  font-size: 20px;
+  letter-spacing: -0.025em;
+}
+
+.canvasRegionRight > h2 {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.canvasRegionRounds {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  padding-top: 12px;
+}
+
+.finalFourConnectors {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.finalFourConnectors polyline {
+  fill: none;
+  stroke: rgba(76, 181, 230, 0.16);
+  stroke-linejoin: miter;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.integratedFinals {
+  position: absolute;
+  z-index: 3;
+  top: 18px;
+  bottom: 18px;
+  left: 50%;
+  width: clamp(132px, 16%, 210px);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 24px;
+  padding: 66px 0 18px;
+  transform: translateX(-50%);
+}
+
+.finalFourSlot {
+  align-self: center;
+}
+
+.integratedFinals > .finalFourSlot:first-child {
+  align-self: end;
+  margin-bottom: 48px;
+}
+
+.integratedFinals > .finalFourSlot:last-child {
+  align-self: start;
+  margin-top: 108px;
+}
+
+.integratedFinals > .championshipColumn {
+  width: calc(100% + 96px);
+  align-self: center;
+  justify-self: center;
+}
+
 .finalStage {
   margin-top: 28px;
   padding: 36px;
@@ -636,16 +732,6 @@
   }
 }
 
-@media (max-width: 1180px) {
-  .regionsGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .regionBracket {
-    min-width: 820px;
-  }
-}
-
 @media (max-width: 760px) {
   .header {
     height: 68px;
@@ -681,20 +767,48 @@
     padding-top: 36px;
   }
 
-  .finalStage {
-    padding: 28px 18px;
+  .bracketCanvas {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 12px;
   }
 
-  .finalBracket {
-    grid-template-columns: 1fr;
+  .finalFourConnectors {
+    display: none;
   }
 
-  .finalColumn {
-    padding-top: 0;
+  .integratedFinals {
+    position: static;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    gap: 14px;
+    padding: 18px 0 0;
+    border-top: 1px solid rgba(58, 158, 208, 0.22);
+    transform: none;
   }
 
-  .championshipColumn {
-    order: 3;
+  .integratedFinals > .finalFourSlot:first-child {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: stretch;
+    margin-bottom: 0;
+  }
+
+  .integratedFinals > .finalFourSlot:last-child {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: stretch;
+    margin-top: 0;
+  }
+
+  .integratedFinals > .championshipColumn {
+    width: min(100%, 460px);
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: center;
   }
 
   .saveFooter {
@@ -711,6 +825,7 @@
   .hero,
   .bracketToolbar,
   .bracketIntro,
+  .bracketCanvasFrame,
   .regionsGrid,
   .finalStage,
   .saveFooter,
@@ -731,7 +846,7 @@
     padding: 16px;
   }
 
-  .regionBracket {
-    min-width: 730px;
+  .canvasRegionRounds {
+    gap: 4px;
   }
 }
