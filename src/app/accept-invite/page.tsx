@@ -93,8 +93,8 @@ export default function AcceptInvitePage() {
       setMessage("Enter a display name between 1 and 50 characters.");
       return;
     }
-    if (password.length < 8) {
-      setMessage("Use a password with at least 8 characters.");
+    if (password.length < 6) {
+      setMessage("Use a password with at least 6 characters.");
       return;
     }
     if (password !== confirmPassword) {
@@ -236,7 +236,7 @@ export default function AcceptInvitePage() {
                     setPassword(event.target.value);
                     setPasswordSaved(false);
                   }}
-                  minLength={8}
+                  minLength={6}
                   required
                 />
               </div>
@@ -249,7 +249,7 @@ export default function AcceptInvitePage() {
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
-                minLength={8}
+                minLength={6}
                 required
               />
 

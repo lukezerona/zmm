@@ -27,7 +27,7 @@ export default function ResetPasswordPage() {
   async function updatePassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
-    if (password.length < 8) { setMessage("Use at least 8 characters."); return; }
+    if (password.length < 6) { setMessage("Use at least 6 characters."); return; }
     if (password !== confirmPassword) { setMessage("The passwords don’t match."); return; }
     setLoading(true);
     const { error } = await supabase!.auth.updateUser({ password });
@@ -43,7 +43,7 @@ export default function ResetPasswordPage() {
         {complete ? (
           <div className={styles.complete}><CheckCircle2 size={44} /><h1>Password updated</h1><p>You’re all set. Return to ZMM and sign in with your new password.</p><button type="button" onClick={() => router.push("/")}>Return to sign in</button></div>
         ) : (
-          <><div className={styles.icon}><LockKeyhole size={24} /></div><h1>Choose a new password</h1><p>Make it something memorable and at least 8 characters long.</p><form onSubmit={updatePassword}><label htmlFor="password">New password</label><input id="password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required /><label htmlFor="confirm">Confirm password</label><input id="confirm" type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />{message && <span className={styles.message}>{message}</span>}<button type="submit" disabled={!ready || loading}>{loading ? <><LoaderCircle size={17} /> Updating…</> : "Update password"}</button></form></>
+          <><div className={styles.icon}><LockKeyhole size={24} /></div><h1>Choose a new password</h1><p>Make it something memorable and at least 6 characters long.</p><form onSubmit={updatePassword}><label htmlFor="password">New password</label><input id="password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} required /><label htmlFor="confirm">Confirm password</label><input id="confirm" type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={6} required />{message && <span className={styles.message}>{message}</span>}<button type="submit" disabled={!ready || loading}>{loading ? <><LoaderCircle size={17} /> Updating…</> : "Update password"}</button></form></>
         )}
       </section>
     </main>
