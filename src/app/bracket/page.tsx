@@ -262,7 +262,7 @@ export default function BracketPage() {
     () => (model ? deriveBracket(model, picks) : null),
     [model, picks],
   );
-  const completedPicks = pickCount(picks);
+  const completedPicks = pickCount(bracket, picks);
   const isWarning = message.startsWith("Warning:");
 
   function chooseWinner(matchupId: string, entryId: string) {

@@ -317,6 +317,25 @@ export function sanitizePicks(model: TournamentModel, candidate: PickMap) {
   return accepted;
 }
 
-export function pickCount(picks: PickMap) {
-  return Object.keys(picks).length;
+export function pickCount(bracket: DerivedBracket | null, picks: PickMap) {
+  if (!bracket) return 0;
+
+  const regionalMatchups = REGIONS.flatMap((region) => {
+    const rounds = bracket.regions[region];
+    return [
+      ...rounds.roundOf64,
+      ...rounds.roundOf32,
+      ...rounds.sweet16,
+      ...rounds.elite8,
+    ];
+  });
+  const matchups = [
+    ...regionalMatchups,
+    ...bracket.finalFour,
+    bracket.championship,
+  ];
+
+  return matchups.filter((matchup) =>
+    matchup.options.some((entry) => entry?.id === picks[matchup.id]),
+  ).length;
 }
