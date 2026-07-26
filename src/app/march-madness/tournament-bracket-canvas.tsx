@@ -379,6 +379,7 @@ function RegionBracket({
   view,
   gameIndex,
   teamOrder,
+  showDates = true,
 }: {
   region: Region;
   side: "left" | "right";
@@ -386,6 +387,7 @@ function RegionBracket({
   view: BracketView;
   gameIndex: Map<string, TournamentGame>;
   teamOrder: Map<string, number>;
+  showDates?: boolean;
 }) {
   const rounds =
     view.type === "master"
@@ -428,7 +430,7 @@ function RegionBracket({
           <div className={styles.canvasRound} key={column.label}>
             <div className={styles.masterRoundHeading}>
               <strong>{column.label}</strong>
-              <span>{column.date}</span>
+              {showDates && <span>{column.date}</span>}
             </div>
             <div className={styles.masterMatchups}>
               {column.matchups.map((matchup) =>
@@ -621,7 +623,7 @@ export function TournamentBracketCanvas({
           teamOrder={teamOrder}
         />
         <RegionBracket
-          region="south"
+          region="west"
           side="right"
           model={model}
           view={view}
@@ -629,12 +631,13 @@ export function TournamentBracketCanvas({
           teamOrder={teamOrder}
         />
         <RegionBracket
-          region="west"
+          region="south"
           side="left"
           model={model}
           view={view}
           gameIndex={gameIndex}
           teamOrder={teamOrder}
+          showDates={false}
         />
         <RegionBracket
           region="midwest"
@@ -643,6 +646,7 @@ export function TournamentBracketCanvas({
           view={view}
           gameIndex={gameIndex}
           teamOrder={teamOrder}
+          showDates={false}
         />
 
         <div className={styles.integratedFinals}>

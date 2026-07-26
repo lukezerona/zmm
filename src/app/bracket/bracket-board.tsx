@@ -118,6 +118,7 @@ type RegionBracketProps = {
   onPick: (matchupId: string, entryId: string) => void;
   side: "left" | "right";
   roundDates: TournamentModel["roundDates"];
+  showDates?: boolean;
   readOnly?: boolean;
 };
 
@@ -128,6 +129,7 @@ function RegionBracket({
   onPick,
   side,
   roundDates,
+  showDates = true,
   readOnly = false,
 }: RegionBracketProps) {
   const rounds = bracket.regions[region];
@@ -168,7 +170,7 @@ function RegionBracket({
           <div className={styles.roundColumn} key={column.label}>
             <div className={styles.roundHeading}>
               <h3>{column.label}</h3>
-              <span>{column.date}</span>
+              {showDates && <span>{column.date}</span>}
             </div>
             <div
               className={styles.matchupStack}
@@ -313,7 +315,7 @@ export function BracketBoard({
           readOnly={readOnly}
         />
         <RegionBracket
-          region="south"
+          region="west"
           bracket={bracket}
           picks={picks}
           onPick={onPick}
@@ -322,12 +324,13 @@ export function BracketBoard({
           readOnly={readOnly}
         />
         <RegionBracket
-          region="west"
+          region="south"
           bracket={bracket}
           picks={picks}
           onPick={onPick}
           side="left"
           roundDates={roundDates}
+          showDates={false}
           readOnly={readOnly}
         />
         <RegionBracket
@@ -337,6 +340,7 @@ export function BracketBoard({
           onPick={onPick}
           side="right"
           roundDates={roundDates}
+          showDates={false}
           readOnly={readOnly}
         />
 

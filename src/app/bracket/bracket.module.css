@@ -459,7 +459,7 @@
 .canvasRegion > h2 {
   min-height: 48px;
   display: flex;
-  align-items: center;
+  align-items: start;
   padding: 0 12px;
   border-bottom: 1px solid rgba(61, 145, 190, 0.16);
   font-size: 20px;
@@ -499,34 +499,33 @@
 .integratedFinals {
   position: absolute;
   z-index: 3;
-  top: 18px;
-  bottom: 18px;
+  top: 50%;
   left: 50%;
-  width: clamp(132px, 16%, 210px);
+  width: clamp(620px, 64%, 920px);
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 24px;
-  padding: 66px 0 18px;
-  transform: translateX(-50%);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 1.55fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+  transform: translate(-50%, -50%);
 }
 
 .finalFourSlot {
-  align-self: center;
+  align-self: start;
 }
 
 .integratedFinals > .finalFourSlot:first-child {
-  align-self: end;
-  margin-bottom: 48px;
+  align-self: start;
+  margin-bottom: 0;
 }
 
 .integratedFinals > .finalFourSlot:last-child {
   align-self: start;
-  margin-top: 108px;
+  margin-top: 0;
 }
 
 .integratedFinals > .championshipColumn {
-  width: calc(100% + 96px);
-  align-self: center;
+  width: 100%;
+  align-self: start;
   justify-self: center;
 }
 

@@ -1124,39 +1124,38 @@
 .integratedFinals {
   position: absolute;
   z-index: 3;
-  top: 18px;
-  bottom: 18px;
+  top: 50%;
   left: 50%;
-  width: clamp(132px, 16%, 210px);
+  width: clamp(620px, 64%, 920px);
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 24px;
-  padding: 66px 0 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 1.55fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
   border-inline: 0;
   pointer-events: none;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
 }
 
 .finalFourSlot {
-  align-self: center;
+  align-self: start;
 }
 
 .integratedFinals > .finalFourSlot:first-child {
-  align-self: end;
-  margin-bottom: 48px;
+  align-self: start;
+  margin-bottom: 0;
 }
 
 .integratedFinals > .finalFourSlot:last-child {
   align-self: start;
-  margin-top: 108px;
+  margin-top: 0;
 }
 
 .championshipSlot {
-  width: calc(100% + 56px);
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 9px;
-  align-self: center;
+  align-self: start;
   justify-self: center;
 }
 
