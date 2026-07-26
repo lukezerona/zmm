@@ -79,25 +79,6 @@
   bottom: 0;
 }
 
-.regionLines,
-.finalsLines {
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none;
-}
-
-.regionLines path,
-.finalsLines path {
-  fill: none;
-  stroke: #29343c;
-  stroke-width: 0.8;
-  shape-rendering: crispEdges;
-}
-
 .firstRoundMatchup {
   position: absolute;
   z-index: 1;
@@ -201,10 +182,6 @@
   font-size: 7pt;
   font-weight: 800;
   letter-spacing: 0.08em;
-}
-
-.finalsLines {
-  z-index: 0;
 }
 
 .finalCard {

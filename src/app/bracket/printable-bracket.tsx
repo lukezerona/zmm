@@ -46,19 +46,6 @@ const ROUND_POSITIONS = {
   ],
 } as const;
 
-const CONNECTOR_COLUMNS = {
-  left: [
-    { from: 26, bend: 29, to: 32 },
-    { from: 54, bend: 57, to: 60 },
-    { from: 80, bend: 82, to: 84 },
-  ],
-  right: [
-    { from: 74, bend: 71, to: 68 },
-    { from: 46, bend: 43, to: 40 },
-    { from: 20, bend: 18, to: 16 },
-  ],
-} as const;
-
 type PrintSide = "left" | "right";
 type RegionPosition = "top" | "bottom";
 
@@ -73,34 +60,6 @@ function centerFor(index: number, count: number) {
 function teamLabel(team: BracketEntry | null) {
   if (!team) return { seed: "", name: "TBD" };
   return { seed: `(${team.seed})`, name: team.name };
-}
-
-function RegionConnections({ side }: { side: PrintSide }) {
-  const paths = CONNECTOR_COLUMNS[side].flatMap((column, roundIndex) => {
-    const childCount = 8 / 2 ** roundIndex;
-    const parentCount = childCount / 2;
-
-    return Array.from({ length: childCount }, (_, childIndex) => {
-      const parentIndex = Math.floor(childIndex / 2);
-      const childY = centerFor(childIndex, childCount);
-      const parentY = centerFor(parentIndex, parentCount);
-
-      return `M ${column.from} ${childY} H ${column.bend} V ${parentY} H ${column.to}`;
-    });
-  });
-
-  return (
-    <svg
-      className={styles.regionLines}
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      {paths.map((path, index) => (
-        <path key={`${side}-${index}`} d={path} vectorEffect="non-scaling-stroke" />
-      ))}
-    </svg>
-  );
 }
 
 function FirstRoundMatchup({
@@ -144,8 +103,6 @@ function RegionBracketPrint({
         side === "right" ? styles.regionRight : ""
       }`}
     >
-      <RegionConnections side={side} />
-
       {matchups.map((matchup, index) => {
         const round = roundPositions[0];
         const y = centerFor(index, round.count);
@@ -193,20 +150,6 @@ function RegionBracketPrint({
 function BlankFinals() {
   return (
     <>
-      <svg
-        className={styles.finalsLines}
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <path d="M 39.6 23 H 38.8 V 47.5 H 39.5" vectorEffect="non-scaling-stroke" />
-        <path d="M 39.6 77 H 38.8 V 52.5 H 39.5" vectorEffect="non-scaling-stroke" />
-        <path d="M 60.4 23 H 61.2 V 47.5 H 60.5" vectorEffect="non-scaling-stroke" />
-        <path d="M 60.4 77 H 61.2 V 52.5 H 60.5" vectorEffect="non-scaling-stroke" />
-        <path d="M 45.5 50 H 46.2 V 48.3 H 47" vectorEffect="non-scaling-stroke" />
-        <path d="M 54.5 50 H 53.8 V 51.7 H 53" vectorEffect="non-scaling-stroke" />
-      </svg>
-
       <div className={`${styles.finalCard} ${styles.leftFinalCard}`}>
         <span />
         <span />
