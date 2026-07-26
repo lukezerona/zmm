@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Printer } from "lucide-react";
 import { deriveBracket } from "../bracket/bracket-utils";
 import { TournamentModel } from "../bracket/bracket-types";
+import { PrintableBlankBracket } from "../bracket/printable-bracket";
 import {
   LeaderboardEntry,
   PoolBracket,
@@ -120,10 +121,7 @@ export function TournamentBracketViewer({
         </div>
       </div>
 
-      <div className={styles.printBracketHeader}>
-        <strong>{model.seasonYear} Zerona March Madness</strong>
-        <span>{selectedBracketName}</span>
-      </div>
+      <PrintableBlankBracket model={model} />
 
       {selectedValue === MASTER_VALUE ? (
         <TournamentBracketCanvas

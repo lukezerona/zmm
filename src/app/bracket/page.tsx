@@ -21,6 +21,7 @@ import {
 } from "@/lib/tournament-lifecycle";
 import { getTournamentStartingPath } from "@/lib/tournament-preference";
 import { BracketBoard } from "./bracket-board";
+import { PrintableBlankBracket } from "./printable-bracket";
 import {
   buildTournamentModel,
   deriveBracket,
@@ -543,27 +544,23 @@ export default function BracketPage() {
         <span>MAKE YOUR PICKS</span>
       </section>
 
-      <section className={styles.printArea}>
-        <div className={styles.printHeader}>
-          <strong>{seasonYear} Zerona March Madness</strong>
-          <span>{displayName} (@{username})</span>
-        </div>
-        <BracketBoard
-          bracket={bracket}
-          picks={picks}
-          onPick={chooseWinner}
-          model={model}
-          tiebreaker={tiebreaker}
-          onTiebreakerChange={(value) => {
-            if (locked) return;
-            setTiebreaker(value);
-            setDirty(true);
-            setMessage("");
-          }}
-          readOnly={locked}
-          showMissing={showMissingPicks}
-        />
-      </section>
+      <BracketBoard
+        bracket={bracket}
+        picks={picks}
+        onPick={chooseWinner}
+        model={model}
+        tiebreaker={tiebreaker}
+        onTiebreakerChange={(value) => {
+          if (locked) return;
+          setTiebreaker(value);
+          setDirty(true);
+          setMessage("");
+        }}
+        readOnly={locked}
+        showMissing={showMissingPicks}
+      />
+
+      <PrintableBlankBracket model={model} />
 
       {isWarning && (
         <p
