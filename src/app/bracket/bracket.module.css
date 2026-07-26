@@ -367,6 +367,14 @@
   box-shadow: 0 5px 14px rgba(0, 0, 0, 0.2);
 }
 
+.missingMatchup {
+  border-color: #f6b84e;
+  background: rgba(129, 78, 9, 0.18);
+  box-shadow:
+    0 0 0 2px rgba(246, 184, 78, 0.2),
+    0 7px 20px rgba(0, 0, 0, 0.28);
+}
+
 .teamButton,
 .awaitingTeam {
   width: 100%;
@@ -483,9 +491,12 @@
   z-index: 3;
   top: 50%;
   left: 50%;
-  width: clamp(620px, 64%, 920px);
+  width: clamp(650px, 64%, 920px);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 1.55fr) minmax(0, 1fr);
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(280px, 1.2fr)
+    minmax(0, 1fr);
   align-items: start;
   gap: 16px;
   transform: translate(-50%, -50%);
@@ -509,6 +520,7 @@
   width: 100%;
   align-self: start;
   justify-self: center;
+  transform: translateY(-39px);
 }
 
 .finalStage {
@@ -575,6 +587,30 @@
   font-size: 12px;
 }
 
+.championshipColumn > .compactMatchup {
+  border-radius: 10px;
+}
+
+.championshipColumn > .compactMatchup > :nth-child(2) {
+  min-height: 70px;
+}
+
+.championshipColumn > .compactMatchup > :nth-child(3) {
+  min-height: 70px;
+}
+
+.championshipColumn > .compactMatchup .teamButton,
+.championshipColumn > .compactMatchup .awaitingTeam {
+  grid-template-columns: 40px minmax(0, 1fr);
+  padding-inline: 14px;
+}
+
+.championshipColumn > .compactMatchup .teamButton strong,
+.championshipColumn > .compactMatchup .teamButton span,
+.championshipColumn > .compactMatchup .awaitingTeam span {
+  font-size: 15px;
+}
+
 .championCard {
   min-height: 92px;
   display: grid;
@@ -627,6 +663,16 @@
 .totalPoints input:focus {
   border-color: #3bc2ff;
   outline: 2px solid rgba(59, 194, 255, 0.18);
+}
+
+.missingTiebreaker > span {
+  color: #ffd18b;
+}
+
+.missingTiebreaker input {
+  border-color: #f6b84e;
+  background: rgba(129, 78, 9, 0.18);
+  outline: 2px solid rgba(246, 184, 78, 0.2);
 }
 
 .championCard svg {
@@ -786,6 +832,7 @@
     grid-column: 1 / -1;
     grid-row: 2;
     justify-self: center;
+    transform: none;
   }
 
   .saveFooter {

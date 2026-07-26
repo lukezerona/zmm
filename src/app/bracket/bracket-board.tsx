@@ -23,6 +23,7 @@ type MatchCardProps = {
   onPick: (matchupId: string, entryId: string) => void;
   compact?: boolean;
   readOnly?: boolean;
+  showMissing?: boolean;
 };
 
 function MatchCard({
@@ -31,10 +32,19 @@ function MatchCard({
   onPick,
   compact = false,
   readOnly = false,
+  showMissing = false,
 }: MatchCardProps) {
+  const hasAvailablePick = matchup.options.some((entry) => entry !== null);
+  const hasValidPick = matchup.options.some(
+    (entry) => entry !== null && entry.id === pickedId,
+  );
+  const isMissing = showMissing && hasAvailablePick && !hasValidPick;
+
   return (
     <article
-      className={`${styles.matchup} ${compact ? styles.compactMatchup : ""}`}
+      className={`${styles.matchup} ${compact ? styles.compactMatchup : ""} ${
+        isMissing ? styles.missingMatchup : ""
+      }`}
       data-matchup-id={matchup.id}
     >
       <span className={styles.srOnly}>
@@ -76,6 +86,7 @@ type RegionBracketProps = {
   roundDates: TournamentModel["roundDates"];
   showHeading?: boolean;
   readOnly?: boolean;
+  showMissing?: boolean;
 };
 
 function RegionBracket({
@@ -87,6 +98,7 @@ function RegionBracket({
   roundDates,
   showHeading = true,
   readOnly = false,
+  showMissing = false,
 }: RegionBracketProps) {
   const rounds = bracket.regions[region];
   const columns = [
@@ -141,6 +153,7 @@ function RegionBracket({
                   pickedId={picks[matchup.id]}
                   onPick={onPick}
                   readOnly={readOnly}
+                  showMissing={showMissing}
                 />
               ))}
             </div>
@@ -159,6 +172,7 @@ type BracketBoardProps = {
   tiebreaker: string;
   onTiebreakerChange: (value: string) => void;
   readOnly?: boolean;
+  showMissing?: boolean;
 };
 
 export function BracketBoard({
@@ -169,6 +183,7 @@ export function BracketBoard({
   tiebreaker,
   onTiebreakerChange,
   readOnly = false,
+  showMissing = false,
 }: BracketBoardProps) {
   const { finalFourPairings, regionLayout, roundDates } = model;
   const leftFinalFourLabel = finalFourPairings[0]
@@ -190,6 +205,7 @@ export function BracketBoard({
           side="left"
           roundDates={roundDates}
           readOnly={readOnly}
+          showMissing={showMissing}
         />
         <RegionBracket
           region={regionLayout.topRight}
@@ -199,6 +215,7 @@ export function BracketBoard({
           side="right"
           roundDates={roundDates}
           readOnly={readOnly}
+          showMissing={showMissing}
         />
         <RegionBracket
           region={regionLayout.bottomLeft}
@@ -209,6 +226,7 @@ export function BracketBoard({
           roundDates={roundDates}
           showHeading={false}
           readOnly={readOnly}
+          showMissing={showMissing}
         />
         <RegionBracket
           region={regionLayout.bottomRight}
@@ -219,6 +237,7 @@ export function BracketBoard({
           roundDates={roundDates}
           showHeading={false}
           readOnly={readOnly}
+          showMissing={showMissing}
         />
 
         <div className={styles.integratedFinals}>
@@ -233,6 +252,7 @@ export function BracketBoard({
               onPick={onPick}
               compact
               readOnly={readOnly}
+              showMissing={showMissing}
             />
           </div>
 
@@ -247,6 +267,7 @@ export function BracketBoard({
               onPick={onPick}
               compact
               readOnly={readOnly}
+              showMissing={showMissing}
             />
             <div className={styles.championResultRow}>
               <div className={styles.championCard} aria-live="polite">
@@ -258,7 +279,13 @@ export function BracketBoard({
                     : "Make your final pick"}
                 </strong>
               </div>
-              <label className={styles.totalPoints}>
+              <label
+                className={`${styles.totalPoints} ${
+                  showMissing && tiebreaker === ""
+                    ? styles.missingTiebreaker
+                    : ""
+                }`}
+              >
                 <span>Total points</span>
                 <input
                   type="number"
@@ -271,6 +298,9 @@ export function BracketBoard({
                   }
                   placeholder="142"
                   disabled={readOnly}
+                  aria-invalid={
+                    showMissing && tiebreaker === "" ? true : undefined
+                  }
                 />
               </label>
             </div>
@@ -287,6 +317,7 @@ export function BracketBoard({
               onPick={onPick}
               compact
               readOnly={readOnly}
+              showMissing={showMissing}
             />
           </div>
         </div>

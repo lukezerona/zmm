@@ -90,6 +90,7 @@ export default function BracketPage() {
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [locked, setLocked] = useState(false);
+  const [showMissingPicks, setShowMissingPicks] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -337,10 +338,13 @@ export default function BracketPage() {
 
     const total = tiebreaker === "" ? null : Number(tiebreaker);
     if (total !== null && (!Number.isInteger(total) || total < 0 || total > 400)) {
+      setShowMissingPicks(true);
       setMessage("Enter a final-game total between 0 and 400.");
       return;
     }
 
+    const remainingPicks = TOTAL_PICKS - completedPicks;
+    setShowMissingPicks(remainingPicks > 0 || total === null);
     setSaving(true);
     setMessage("");
     const { error: saveError } = await client.from("brackets").upsert(
@@ -373,8 +377,8 @@ export default function BracketPage() {
     }
 
     setDirty(false);
-    const remainingPicks = TOTAL_PICKS - completedPicks;
     if (remainingPicks === 0 && total !== null) {
+      setShowMissingPicks(false);
       setMessage("Bracket saved—your champion and tiebreaker are set.");
       return;
     }
@@ -541,6 +545,7 @@ export default function BracketPage() {
           setMessage("");
         }}
         readOnly={locked}
+        showMissing={showMissingPicks}
       />
 
       {isWarning && (
