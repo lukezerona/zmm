@@ -335,7 +335,13 @@ export function pickCount(bracket: DerivedBracket | null, picks: PickMap) {
     bracket.championship,
   ];
 
-  return matchups.filter((matchup) =>
-    matchup.options.some((entry) => entry?.id === picks[matchup.id]),
-  ).length;
+  return matchups.filter((matchup) => {
+    const pickedId = picks[matchup.id];
+    return (
+      typeof pickedId === "string" &&
+      matchup.options.some(
+        (entry) => entry !== null && entry.id === pickedId,
+      )
+    );
+  }).length;
 }
