@@ -12,6 +12,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { getTournamentLifecycle } from "@/lib/tournament-lifecycle";
 import {
   EspnGameRow,
   PickMap,
@@ -30,7 +31,6 @@ import {
 import { buildLeaderboard } from "./tournament-utils";
 import styles from "./march-madness.module.css";
 
-const SEASON_YEAR = 2026;
 const LIVE_REFRESH_DEBOUNCE_MS = 1_000;
 const FALLBACK_POLL_MS = 30_000;
 const ESPN_GAME_SELECT =
@@ -82,6 +82,7 @@ export default function MarchMadnessPage() {
   const pendingRefreshRef = useRef<RefreshRequest | null>(null);
   const liveRefreshTimerRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
+  const seasonYearRef = useRef<number | null>(null);
 
   const fetchDashboard = useCallback(
     async (showPageError: boolean) => {
@@ -97,6 +98,35 @@ export default function MarchMadnessPage() {
         return false;
       }
 
+      let lifecycle;
+      try {
+        lifecycle = await getTournamentLifecycle(client);
+      } catch (lifecycleError) {
+        console.error(
+          "[dashboard] Could not load tournament lifecycle",
+          lifecycleError,
+        );
+        if (showPageError && mountedRef.current) {
+          setError("Tournament Central is temporarily unavailable.");
+        }
+        return false;
+      }
+
+      if (lifecycle.phase === "picks_open") {
+        router.replace("/bracket");
+        return true;
+      }
+
+      if (lifecycle.seasonYear === null || !lifecycle.fieldReady) {
+        if (showPageError && mountedRef.current) {
+          setError("The tournament bracket is not ready yet.");
+        }
+        return false;
+      }
+
+      const activeSeasonYear = lifecycle.seasonYear;
+      seasonYearRef.current = activeSeasonYear;
+
       const [profilesResult, bracketsResult, gamesResult] = await Promise.all([
         client
           .from("profiles")
@@ -107,11 +137,11 @@ export default function MarchMadnessPage() {
           .select(
             "user_id, season_year, picks, tiebreaker_total, updated_at",
           )
-          .eq("season_year", SEASON_YEAR),
+          .eq("season_year", activeSeasonYear),
         client
           .from("espn_games")
           .select(ESPN_GAME_SELECT)
-          .eq("season_year", SEASON_YEAR)
+          .eq("season_year", activeSeasonYear)
           .in("round_code", TOURNAMENT_ROUND_CODES),
       ]);
 
@@ -140,7 +170,7 @@ export default function MarchMadnessPage() {
         const loadedGames = gamesResult.data as TournamentGame[];
         const tournament = buildTournamentModel(
           loadedGames as EspnGameRow[],
-          SEASON_YEAR,
+          activeSeasonYear,
         );
         const loadedBrackets = (bracketsResult.data as RawBracket[]).map(
           (bracket) => ({
@@ -174,10 +204,33 @@ export default function MarchMadnessPage() {
     const client = supabase;
     if (!client) return false;
 
+    let lifecycle;
+    try {
+      lifecycle = await getTournamentLifecycle(client);
+    } catch (lifecycleError) {
+      console.error(
+        "[dashboard] Could not refresh tournament lifecycle",
+        lifecycleError,
+      );
+      return false;
+    }
+
+    if (lifecycle.phase === "picks_open") {
+      router.replace("/bracket");
+      return true;
+    }
+
+    if (
+      lifecycle.seasonYear === null ||
+      lifecycle.seasonYear !== seasonYearRef.current
+    ) {
+      return fetchDashboard(false);
+    }
+
     const gamesResult = await client
       .from("espn_games")
       .select(ESPN_GAME_SELECT)
-      .eq("season_year", SEASON_YEAR)
+      .eq("season_year", lifecycle.seasonYear)
       .in("round_code", TOURNAMENT_ROUND_CODES);
 
     if (gamesResult.error) {
@@ -192,7 +245,7 @@ export default function MarchMadnessPage() {
       const loadedGames = gamesResult.data as TournamentGame[];
       const tournament = buildTournamentModel(
         loadedGames as EspnGameRow[],
-        SEASON_YEAR,
+        lifecycle.seasonYear,
       );
 
       if (!mountedRef.current) return false;
@@ -210,7 +263,7 @@ export default function MarchMadnessPage() {
       console.error("[dashboard] Tournament game refresh failed", refreshError);
       return false;
     }
-  }, []);
+  }, [fetchDashboard, router]);
 
   const requestRefresh = useCallback(
     async (kind: RefreshKind, initial = false) => {

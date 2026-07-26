@@ -55,12 +55,13 @@ sync error.
 
 ## Seasonal activation
 
-The polling job is installed inactive. Before a tournament:
+Before a tournament, update `public.espn_sync_config` with the new season year
+and date range, then set `enabled = true`. The lightweight
+`manage-espn-sync-season` job checks the configuration hourly and automatically
+activates the 15-second ESPN poller and Cron-history cleanup during the
+configured window.
 
-1. Update `public.espn_sync_config` with the new season year and date range.
-2. Set `enabled = true`.
-3. Activate `sync-espn-games-every-15-seconds` and
-   `cleanup-espn-sync-cron-history` with `cron.alter_job`.
-
-After the championship, set `enabled = false` and deactivate both jobs. This
-prevents unnecessary Edge Function invocations and keeps Cron history small.
+When ESPN marks the championship final, the Edge Function calls
+`finalize_tournament_sync`. That disables the configuration and deactivates
+both tournament jobs. The hourly manager remains active so a future configured
+season can start without manually editing `cron.job`.

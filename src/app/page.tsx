@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Eye, EyeOff, LoaderCircle, LockKeyhole, UserRound, X } from "lucide-react";
 import { RETURN_TO_SIGN_IN_SESSION_KEY } from "@/lib/auth-navigation";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
-import { getTournamentStartingPath } from "@/lib/tournament-preference";
+import {
+  getTournamentLifecycle,
+  tournamentDestination,
+} from "@/lib/tournament-lifecycle";
 import styles from "./page.module.css";
 
 type LoginResponse = {
@@ -38,7 +41,10 @@ export default function LoginPage() {
       .maybeSingle();
 
     if (profileError) throw profileError;
-    return data ? getTournamentStartingPath() : "/accept-invite";
+    if (!data) return "/accept-invite";
+
+    const lifecycle = await getTournamentLifecycle(supabase);
+    return tournamentDestination(lifecycle);
   }
 
   useEffect(() => {

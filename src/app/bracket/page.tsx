@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Check,
+  Clock3,
   LoaderCircle,
   LogOut,
   Pencil,
@@ -13,6 +14,11 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import {
+  CREATION_TEST_SEASON_YEAR,
+  getTournamentLifecycle,
+} from "@/lib/tournament-lifecycle";
+import { getTournamentStartingPath } from "@/lib/tournament-preference";
 import { BracketBoard } from "./bracket-board";
 import {
   buildTournamentModel,
@@ -23,7 +29,6 @@ import {
 import { EspnGameRow, PickMap, TournamentModel } from "./bracket-types";
 import styles from "./bracket.module.css";
 
-const SEASON_YEAR = 2026;
 const TOTAL_PICKS = 63;
 
 type Profile = {
@@ -46,6 +51,18 @@ function savedPickMap(value: unknown): PickMap {
   );
 }
 
+function countdownLabel(milliseconds: number) {
+  const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1_000));
+  const days = Math.floor(totalSeconds / 86_400);
+  const hours = Math.floor((totalSeconds % 86_400) / 3_600);
+  const minutes = Math.floor((totalSeconds % 3_600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  return `${minutes}m ${seconds}s`;
+}
+
 export default function BracketPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
@@ -54,6 +71,13 @@ export default function BracketPage() {
   const [displayNameDraft, setDisplayNameDraft] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [savingName, setSavingName] = useState(false);
+  const [seasonYear, setSeasonYear] = useState(
+    CREATION_TEST_SEASON_YEAR,
+  );
+  const [entryDeadline, setEntryDeadline] = useState<string | null>(null);
+  const [millisecondsUntilLock, setMillisecondsUntilLock] = useState<
+    number | null
+  >(null);
   const [model, setModel] = useState<TournamentModel | null>(null);
   const [picks, setPicks] = useState<PickMap>({});
   const [tiebreaker, setTiebreaker] = useState("");
@@ -80,6 +104,39 @@ export default function BracketPage() {
         return;
       }
 
+      let lifecycle;
+      try {
+        lifecycle = await getTournamentLifecycle(client);
+      } catch (lifecycleError) {
+        console.error(
+          "[bracket] Could not load tournament lifecycle",
+          lifecycleError,
+        );
+        setError("The tournament schedule is temporarily unavailable.");
+        setLoading(false);
+        return;
+      }
+
+      if (lifecycle.phase === "live" || lifecycle.phase === "final") {
+        router.replace(getTournamentStartingPath());
+        return;
+      }
+
+      if (
+        lifecycle.phase !== "picks_open" ||
+        !lifecycle.fieldReady ||
+        lifecycle.seasonYear === null
+      ) {
+        setError(
+          "The tournament bracket has not been announced yet. Please check back soon.",
+        );
+        setLoading(false);
+        return;
+      }
+
+      const activeSeasonYear =
+        lifecycle.seasonYear ?? CREATION_TEST_SEASON_YEAR;
+
       const [profileResult, gamesResult, bracketResult] = await Promise.all([
         client
           .from("profiles")
@@ -91,7 +148,7 @@ export default function BracketPage() {
           .select(
             "espn_event_id, region, round_code, starts_at, home_team_id, home_team_name, home_team_seed, away_team_id, away_team_name, away_team_seed",
           )
-          .eq("season_year", SEASON_YEAR)
+          .eq("season_year", activeSeasonYear)
           .in("round_code", [
             "PLAY_IN",
             "ROUND_OF_64",
@@ -105,7 +162,7 @@ export default function BracketPage() {
           .from("brackets")
           .select("picks, tiebreaker_total")
           .eq("user_id", userData.user.id)
-          .eq("season_year", SEASON_YEAR)
+          .eq("season_year", activeSeasonYear)
           .maybeSingle(),
       ]);
 
@@ -132,19 +189,22 @@ export default function BracketPage() {
       try {
         const tournament = buildTournamentModel(
           gamesResult.data as EspnGameRow[],
-          SEASON_YEAR,
+          activeSeasonYear,
         );
         const saved = bracketResult.data as SavedBracket | null;
-        const firstRoundStarted = (gamesResult.data as EspnGameRow[]).some(
-          (game) =>
-            game.round_code === "ROUND_OF_64" &&
-            new Date(game.starts_at).getTime() <= Date.now(),
-        );
+        const deadlineTimestamp = lifecycle.entryDeadline
+          ? new Date(lifecycle.entryDeadline).getTime()
+          : Number.NaN;
+        const firstRoundStarted =
+          Number.isFinite(deadlineTimestamp) &&
+          deadlineTimestamp <= Date.now();
 
         setUserId(userData.user.id);
         setUsername(profile.username);
         setDisplayName(profile.display_name);
         setDisplayNameDraft(profile.display_name);
+        setSeasonYear(activeSeasonYear);
+        setEntryDeadline(lifecycle.entryDeadline);
         setModel(tournament);
         setPicks(sanitizePicks(tournament, savedPickMap(saved?.picks)));
         setTiebreaker(
@@ -166,6 +226,37 @@ export default function BracketPage() {
       active = false;
     };
   }, [router]);
+
+  useEffect(() => {
+    if (!entryDeadline) return;
+
+    const deadlineTimestamp = new Date(entryDeadline).getTime();
+    if (!Number.isFinite(deadlineTimestamp)) return;
+
+    let redirectTimer: number | null = null;
+    const updateCountdown = () => {
+      const remaining = Math.max(0, deadlineTimestamp - Date.now());
+      setMillisecondsUntilLock(remaining);
+
+      if (remaining > 0 || redirectTimer !== null) return;
+
+      setLocked(true);
+      setDirty(false);
+      setMessage(
+        "Entries are locked because the Round of 64 has started. Opening Tournament Central…",
+      );
+      redirectTimer = window.setTimeout(() => {
+        router.replace(getTournamentStartingPath());
+      }, 2_000);
+    };
+
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 1_000);
+    return () => {
+      window.clearInterval(timer);
+      if (redirectTimer !== null) window.clearTimeout(redirectTimer);
+    };
+  }, [entryDeadline, router]);
 
   const bracket = useMemo(
     () => (model ? deriveBracket(model, picks) : null),
@@ -233,7 +324,7 @@ export default function BracketPage() {
     const { error: saveError } = await client.from("brackets").upsert(
       {
         user_id: userId,
-        season_year: SEASON_YEAR,
+        season_year: seasonYear,
         picks,
         tiebreaker_total: total,
         updated_at: new Date().toISOString(),
@@ -244,6 +335,17 @@ export default function BracketPage() {
 
     if (saveError) {
       console.error("[bracket] Save failed", saveError);
+      if (
+        entryDeadline &&
+        new Date(entryDeadline).getTime() <= Date.now()
+      ) {
+        setLocked(true);
+        setDirty(false);
+        setMessage(
+          "Entries are locked because the Round of 64 has started. Your saved picks were not changed.",
+        );
+        return;
+      }
       setMessage("We couldn’t save your bracket. Please try again.");
       return;
     }
@@ -274,7 +376,7 @@ export default function BracketPage() {
     return (
       <main className={styles.loading}>
         <LoaderCircle className={styles.spinner} size={28} />
-        <span>Building the 2026 field…</span>
+        <span>Building the {seasonYear} field…</span>
       </main>
     );
   }
@@ -309,7 +411,7 @@ export default function BracketPage() {
 
       <section className={styles.hero}>
         <div>
-          <span className={styles.kicker}>{SEASON_YEAR} FAMILY TOURNAMENT</span>
+          <span className={styles.kicker}>{seasonYear} FAMILY TOURNAMENT</span>
           <h1>Build your bracket, <em>@{username}</em>.</h1>
         </div>
 
@@ -359,6 +461,15 @@ export default function BracketPage() {
           <div className={styles.progressTrack}>
             <i style={{ width: `${(completedPicks / TOTAL_PICKS) * 100}%` }} />
           </div>
+          {millisecondsUntilLock !== null && !locked && (
+            <time
+              className={styles.entryCountdown}
+              dateTime={entryDeadline ?? undefined}
+            >
+              <Clock3 size={14} aria-hidden="true" />
+              Entries lock in {countdownLabel(millisecondsUntilLock)}
+            </time>
+          )}
         </div>
         <button
           type="button"

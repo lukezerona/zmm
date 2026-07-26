@@ -217,6 +217,17 @@
   transition: width 180ms ease;
 }
 
+.entryCountdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: #53c7fb;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
 .bracketToolbar > button,
 .saveFooter > button {
   min-width: 136px;

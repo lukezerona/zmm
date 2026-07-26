@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CloudRain, LoaderCircle, RefreshCw, Trophy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { getTournamentLifecycle } from "@/lib/tournament-lifecycle";
 import {
   BracketEntry,
   BracketMatchup,
@@ -42,7 +43,6 @@ import { TournamentViewSwitcher } from "../march-madness/view-switcher";
 import { buildSpreadsheetPickGroups } from "./spreadsheet-order";
 import styles from "./spreadsheet.module.css";
 
-const SEASON_YEAR = 2026;
 const POLL_INTERVAL_MS = 30_000;
 const ESPN_GAME_SELECT =
   "espn_event_id, region, round_code, round_number, starts_at, broadcast, status_state, status_description, status_detail, completed, period, clock, home_team_id, home_team_name, home_team_seed, home_score, home_winner, away_team_id, away_team_name, away_team_seed, away_score, away_winner";
@@ -116,6 +116,7 @@ export default function SpreadsheetPage() {
   const [rainManTiebreaker, setRainManTiebreaker] = useState("");
   const mountedRef = useRef(true);
   const refreshTimerRef = useRef<number | null>(null);
+  const seasonYearRef = useRef<number | null>(null);
 
   const loadSpreadsheet = useCallback(async () => {
     const client = supabase;
@@ -130,6 +131,35 @@ export default function SpreadsheetPage() {
       return false;
     }
 
+    let lifecycle;
+    try {
+      lifecycle = await getTournamentLifecycle(client);
+    } catch (lifecycleError) {
+      console.error(
+        "[spreadsheet] Could not load tournament lifecycle",
+        lifecycleError,
+      );
+      if (mountedRef.current) {
+        setError("The family spreadsheet is temporarily unavailable.");
+      }
+      return false;
+    }
+
+    if (lifecycle.phase === "picks_open") {
+      router.replace("/bracket");
+      return true;
+    }
+
+    if (lifecycle.seasonYear === null || !lifecycle.fieldReady) {
+      if (mountedRef.current) {
+        setError("The tournament bracket is not ready yet.");
+      }
+      return false;
+    }
+
+    const activeSeasonYear = lifecycle.seasonYear;
+    seasonYearRef.current = activeSeasonYear;
+
     const [profilesResult, bracketsResult, gamesResult] = await Promise.all([
       client
         .from("profiles")
@@ -138,11 +168,11 @@ export default function SpreadsheetPage() {
       client
         .from("brackets")
         .select("user_id, season_year, picks, tiebreaker_total, updated_at")
-        .eq("season_year", SEASON_YEAR),
+        .eq("season_year", activeSeasonYear),
       client
         .from("espn_games")
         .select(ESPN_GAME_SELECT)
-        .eq("season_year", SEASON_YEAR)
+        .eq("season_year", activeSeasonYear)
         .in("round_code", TOURNAMENT_ROUND_CODES),
     ]);
 
@@ -171,7 +201,7 @@ export default function SpreadsheetPage() {
       const loadedGames = gamesResult.data as TournamentGame[];
       const tournament = buildTournamentModel(
         loadedGames as EspnGameRow[],
-        SEASON_YEAR,
+        activeSeasonYear,
       );
       const loadedBrackets = (bracketsResult.data as RawBracket[]).map(
         (bracket) => ({
@@ -203,10 +233,33 @@ export default function SpreadsheetPage() {
     const client = supabase;
     if (!client) return false;
 
+    let lifecycle;
+    try {
+      lifecycle = await getTournamentLifecycle(client);
+    } catch (lifecycleError) {
+      console.error(
+        "[spreadsheet] Could not refresh tournament lifecycle",
+        lifecycleError,
+      );
+      return false;
+    }
+
+    if (lifecycle.phase === "picks_open") {
+      router.replace("/bracket");
+      return true;
+    }
+
+    if (
+      lifecycle.seasonYear === null ||
+      lifecycle.seasonYear !== seasonYearRef.current
+    ) {
+      return loadSpreadsheet();
+    }
+
     const gamesResult = await client
       .from("espn_games")
       .select(ESPN_GAME_SELECT)
-      .eq("season_year", SEASON_YEAR)
+      .eq("season_year", lifecycle.seasonYear)
       .in("round_code", TOURNAMENT_ROUND_CODES);
 
     if (gamesResult.error) {
@@ -221,7 +274,7 @@ export default function SpreadsheetPage() {
       const loadedGames = gamesResult.data as TournamentGame[];
       const tournament = buildTournamentModel(
         loadedGames as EspnGameRow[],
-        SEASON_YEAR,
+        lifecycle.seasonYear,
       );
       if (!mountedRef.current) return false;
 
@@ -239,7 +292,7 @@ export default function SpreadsheetPage() {
       console.error("[spreadsheet] Game refresh failed", refreshError);
       return false;
     }
-  }, []);
+  }, [loadSpreadsheet, router]);
 
   const runRefresh = useCallback(
     async (fullRefresh = false) => {

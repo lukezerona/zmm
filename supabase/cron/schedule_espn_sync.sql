@@ -3,8 +3,9 @@
 --   2. Store the project URL in Vault as espn_sync_project_url.
 --   3. Store a Supabase secret API key in Vault as espn_sync_secret_key.
 --
--- This installs the jobs in an inactive state. Enable the polling job only
--- during the configured tournament window.
+-- This installs the tournament jobs in an inactive state. The always-on,
+-- hourly manage-espn-sync-season job activates them only while the configured
+-- season is enabled and inside its tournament window.
 
 do $$
 begin

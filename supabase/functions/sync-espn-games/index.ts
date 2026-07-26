@@ -691,6 +691,26 @@ const handler = {
         throw new Error(`Could not save sync state: ${stateError.message}`);
       }
 
+      const championshipComplete = games.some(
+        (game) =>
+          game.round_code === "CHAMPIONSHIP" &&
+          game.completed,
+      );
+
+      if (championshipComplete) {
+        stage = "sync-state";
+        const { error: finalizeError } = await ctx.supabaseAdmin.rpc(
+          "finalize_tournament_sync",
+          { p_source: SOURCE },
+        );
+
+        if (finalizeError) {
+          throw new Error(
+            `The championship is final, but synchronization could not be stopped: ${finalizeError.message}`,
+          );
+        }
+      }
+
       let alert: AlertResult | null = null;
       if (skippedGameCount > 0 || unclassifiedHeadlines.length > 0) {
         stage = "validation";
@@ -725,6 +745,7 @@ const handler = {
         unchangedGames: games.length - changedGames.length,
         skippedGames: Math.max(0, skippedGameCount),
         durationMs,
+        synchronizationStopped: championshipComplete,
         alert,
       });
     } catch (error) {
