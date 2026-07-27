@@ -193,13 +193,13 @@
   position: absolute;
   z-index: 1;
   top: 47%;
-  left: 39%;
-  width: 22%;
+  left: 38%;
+  width: 24%;
   height: 10%;
   display: grid;
   grid-template-columns: 1fr 1.1fr 1fr;
   align-items: start;
-  gap: 7px;
+  gap: 14px;
 }
 
 .finalFourMatchup,
