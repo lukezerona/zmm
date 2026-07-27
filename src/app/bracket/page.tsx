@@ -796,7 +796,7 @@ export default function BracketPage() {
               aria-label="Print bracket"
             >
               <Printer size={16} aria-hidden="true" />
-              Print bracket
+              Print
             </button>
             <button
               type="button"
@@ -818,11 +818,11 @@ export default function BracketPage() {
                 <Save size={16} />
               )}
               {locked
-                ? "Entries locked"
+                ? "Locked"
                 : saving
-                  ? "Saving…"
+                  ? "Saving"
                   : dirty
-                    ? "Save bracket"
+                    ? "Save"
                     : "Saved"}
             </button>
           </div>
