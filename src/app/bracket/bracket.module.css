@@ -1078,7 +1078,13 @@
     [data-mobile-role="preview"],
   .mobileRoundSharedBackward
     .mobileRoundOutgoing
-    [data-mobile-role="current"] {
+    [data-mobile-role="current"],
+  .mobileRoundSharedForward
+    .mobileRoundOutgoing
+    [data-mobile-detail-role="preview"],
+  .mobileRoundSharedBackward
+    .mobileRoundOutgoing
+    [data-mobile-detail-role="current"] {
     visibility: hidden;
   }
 
@@ -1112,47 +1118,29 @@
 
   .mobileRoundSharedForward
     .mobileRoundOutgoing
-    .mobileLabeledMatchup {
+    [data-mobile-detail-role="current"] {
     animation: mobileMatchupLeaveLeft 560ms cubic-bezier(0.22, 1, 0.36, 1)
       both;
   }
 
   .mobileRoundSharedBackward
     .mobileRoundOutgoing
-    .mobileLabeledMatchup {
+    [data-mobile-detail-role="preview"] {
     animation: mobileMatchupLeaveRight 560ms cubic-bezier(0.22, 1, 0.36, 1)
       both;
   }
 
-  .mobileRoundSharedBackward
-    .mobileRoundIncoming
-    .mobileLabeledMatchup {
-    animation: mobileMatchupArriveLeft 560ms cubic-bezier(0.22, 1, 0.36, 1)
-      both;
-  }
-
-  .mobileRoundSharedForward
-    .mobileRoundOutgoing
-    .mobileLabeledMatchup
-    [data-mobile-role="current"],
-  .mobileRoundSharedBackward
-    .mobileRoundIncoming
-    .mobileLabeledMatchup
-    [data-mobile-role="current"] {
-    animation: none;
-  }
-
   .mobileRoundSharedForward
     .mobileRoundIncoming
-    .championResultRow {
+    [data-mobile-detail-role="preview"] {
     animation: mobileMatchupArriveRight 560ms cubic-bezier(0.22, 1, 0.36, 1)
       both;
   }
 
   .mobileRoundSharedBackward
-    .mobileRoundOutgoing
-    .championResultRow {
-    animation: mobileMatchupLeaveRight 560ms cubic-bezier(0.22, 1, 0.36, 1)
+    .mobileRoundIncoming
+    [data-mobile-detail-role="current"] {
+    animation: mobileMatchupArriveLeft 560ms cubic-bezier(0.22, 1, 0.36, 1)
       both;
   }
 
@@ -1232,11 +1220,13 @@
   .mobileNextMatchupPreview {
     position: relative;
     width: 66.666%;
+    display: grid;
+    gap: 7px;
     margin: 12px 0;
     transform: translateX(calc(100% + 14px));
   }
 
-  .mobileLabeledMatchup > span {
+  .mobileMatchupLabel {
     display: flex;
     align-items: center;
     gap: 3px;
@@ -1260,8 +1250,41 @@
     gap: 7px;
   }
 
-  .mobileLabeledMatchup > span {
+  .mobileLabeledMatchup > .mobileMatchupLabel,
+  .mobileNextMatchupPreview > .mobileMatchupLabel {
     color: #7799aa;
+  }
+
+  .mobilePreviewChampionResult {
+    grid-template-columns: minmax(0, 1fr) 82px;
+    gap: 6px;
+  }
+
+  .mobilePreviewChampionResult .championCard {
+    min-height: 76px;
+    grid-template-columns: 24px minmax(0, 1fr);
+    column-gap: 5px;
+    margin-top: 0;
+    padding: 8px;
+  }
+
+  .mobilePreviewChampionResult .championCard svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .mobilePreviewChampionResult .championCard span,
+  .mobilePreviewChampionResult .totalPoints > span {
+    font-size: 7px;
+  }
+
+  .mobilePreviewChampionResult .championCard strong {
+    font-size: 10px;
+  }
+
+  .mobilePreviewChampionResult .totalPoints input {
+    min-height: 58px;
+    font-size: 16px;
   }
 
   .mobileBracketFrame .matchup {
@@ -1513,19 +1536,16 @@
     [data-mobile-role="current"],
   .mobileRoundSharedForward
     .mobileRoundOutgoing
-    .mobileLabeledMatchup,
+    [data-mobile-detail-role="current"],
   .mobileRoundSharedBackward
     .mobileRoundOutgoing
-    .mobileLabeledMatchup,
-  .mobileRoundSharedBackward
-    .mobileRoundIncoming
-    .mobileLabeledMatchup,
+    [data-mobile-detail-role="preview"],
   .mobileRoundSharedForward
     .mobileRoundIncoming
-    .championResultRow,
+    [data-mobile-detail-role="preview"],
   .mobileRoundSharedBackward
-    .mobileRoundOutgoing
-    .championResultRow {
+    .mobileRoundIncoming
+    [data-mobile-detail-role="current"] {
     animation-duration: 1ms;
   }
 

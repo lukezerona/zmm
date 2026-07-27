@@ -255,6 +255,7 @@ function MobileBracketBoard({
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const roundViewport = useRef<HTMLDivElement>(null);
   const sharedMatchupRects = useRef(new Map<string, DOMRect>());
+  const sharedDetailRects = useRef(new Map<string, DOMRect>());
   const outgoingRoundHeight = useRef(0);
   const activeRound = MOBILE_ROUNDS[activeRoundIndex];
   const orderedRegions = [
@@ -296,6 +297,7 @@ function MobileBracketBoard({
     const isAdjacentRound = Math.abs(nextIndex - activeRoundIndex) === 1;
     const viewport = roundViewport.current;
     sharedMatchupRects.current.clear();
+    sharedDetailRects.current.clear();
 
     if (isAdjacentRound && viewport) {
       const sourceRole = direction === 1 ? "preview" : "current";
@@ -308,6 +310,19 @@ function MobileBracketBoard({
           if (matchupId) {
             sharedMatchupRects.current.set(
               matchupId,
+              element.getBoundingClientRect(),
+            );
+          }
+        });
+      viewport
+        .querySelectorAll<HTMLElement>(
+          `[data-mobile-detail-role="${sourceRole}"][data-mobile-detail-id]`,
+        )
+        .forEach((element) => {
+          const detailId = element.dataset.mobileDetailId;
+          if (detailId) {
+            sharedDetailRects.current.set(
+              detailId,
               element.getBoundingClientRect(),
             );
           }
@@ -349,14 +364,39 @@ function MobileBracketBoard({
         if (!startRect) return;
 
         const endRect = element.getBoundingClientRect();
-        const animationElement =
-          targetRole === "current"
-            ? (element.closest<HTMLElement>(
-                `.${styles.mobileLabeledMatchup}`,
-              ) ?? element)
-            : element;
         animations.push(
-          animationElement.animate(
+          element.animate(
+            [
+              {
+                transform: `translate(${startRect.left - endRect.left}px, ${
+                  startRect.top - endRect.top
+                }px)`,
+              },
+              { transform: "translate(0, 0)" },
+            ],
+            {
+              duration: 560,
+              easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+              fill: "both",
+            },
+          ),
+        );
+      });
+
+    incomingPanel
+      .querySelectorAll<HTMLElement>(
+        `[data-mobile-detail-role="${targetRole}"][data-mobile-detail-id]`,
+      )
+      .forEach((element) => {
+        const detailId = element.dataset.mobileDetailId;
+        const startRect = detailId
+          ? sharedDetailRects.current.get(detailId)
+          : undefined;
+        if (!startRect) return;
+
+        const endRect = element.getBoundingClientRect();
+        animations.push(
+          element.animate(
             [
               {
                 transform: `translate(${startRect.left - endRect.left}px, ${
@@ -453,7 +493,12 @@ function MobileBracketBoard({
                       showMissing={showMissing}
                       mobileRole="current"
                     />
-                    {nextMatchupPreview(nextMatchup)}
+                    {nextMatchupPreview(
+                      nextMatchup,
+                      nextRoundId === "elite8"
+                        ? `${REGION_NAMES[region]} Region`
+                        : undefined,
+                    )}
                     <MatchCard
                       matchup={matchups[index * 2 + 1]}
                       pickedId={picks[matchups[index * 2 + 1].id]}
@@ -472,17 +517,77 @@ function MobileBracketBoard({
     );
   }
 
-  function nextMatchupPreview(matchup: BracketMatchup) {
+  function championResult(
+    role: "current" | "preview",
+    preview = false,
+  ) {
+    return (
+      <div
+        className={`${styles.championResultRow} ${
+          preview ? styles.mobilePreviewChampionResult : ""
+        }`}
+        data-mobile-detail-id={`champion:${bracket.championship.id}`}
+        data-mobile-detail-role={role}
+      >
+        <div className={styles.championCard} aria-live="polite">
+          <Trophy size={26} aria-hidden="true" />
+          <span>National Champion</span>
+          <strong>
+            {bracket.champion
+              ? `#${bracket.champion.seed} ${bracket.champion.name}`
+              : "Make your final pick"}
+          </strong>
+        </div>
+        <label
+          className={`${styles.totalPoints} ${
+            showMissing && tiebreaker === ""
+              ? styles.missingTiebreaker
+              : ""
+          }`}
+        >
+          <span>Total points</span>
+          <input
+            type="number"
+            min="0"
+            max="400"
+            inputMode="numeric"
+            value={tiebreaker}
+            onChange={(event) => onTiebreakerChange(event.target.value)}
+            placeholder="142"
+            disabled={readOnly}
+            aria-invalid={showMissing && tiebreaker === "" ? true : undefined}
+          />
+        </label>
+      </div>
+    );
+  }
+
+  function nextMatchupPreview(
+    matchup: BracketMatchup,
+    label?: string,
+    showChampionResult = false,
+  ) {
     return (
       <div className={styles.mobileNextMatchupPreview}>
+        {label ? (
+          <span
+            className={styles.mobileMatchupLabel}
+            data-mobile-detail-id={`label:${matchup.id}`}
+            data-mobile-detail-role="preview"
+          >
+            {label}
+          </span>
+        ) : null}
         <MatchCard
           matchup={matchup}
           pickedId={picks[matchup.id]}
           onPick={onPick}
+          compact={showChampionResult}
           readOnly={readOnly}
           showMissing={showMissing}
           mobileRole="preview"
         />
+        {showChampionResult ? championResult("preview", true) : null}
       </div>
     );
   }
@@ -490,7 +595,13 @@ function MobileBracketBoard({
   function labeledMatchup(label: string, matchup: BracketMatchup) {
     return (
       <div className={styles.mobileLabeledMatchup}>
-        <span>{label}</span>
+        <span
+          className={styles.mobileMatchupLabel}
+          data-mobile-detail-id={`label:${matchup.id}`}
+          data-mobile-detail-role="current"
+        >
+          {label}
+        </span>
         <MatchCard
           matchup={matchup}
           pickedId={picks[matchup.id]}
@@ -524,7 +635,12 @@ function MobileBracketBoard({
                     `${REGION_NAMES[pairing[0]]} Region`,
                     firstMatchup,
                   )}
-                  {nextMatchupPreview(bracket.finalFour[index])}
+                  {nextMatchupPreview(
+                    bracket.finalFour[index],
+                    pairing
+                      .map((region) => REGION_NAMES[region])
+                      .join(" vs. "),
+                  )}
                   {labeledMatchup(
                     `${REGION_NAMES[pairing[1]]} Region`,
                     secondMatchup,
@@ -554,7 +670,11 @@ function MobileBracketBoard({
                   .join(" vs. "),
                 bracket.finalFour[0],
               )}
-              {nextMatchupPreview(bracket.championship)}
+              {nextMatchupPreview(
+                bracket.championship,
+                undefined,
+                true,
+              )}
               {labeledMatchup(
                 model.finalFourPairings[1]
                   .map((region) => REGION_NAMES[region])
@@ -582,39 +702,7 @@ function MobileBracketBoard({
           showMissing={showMissing}
           mobileRole="current"
         />
-        <div className={styles.championResultRow}>
-          <div className={styles.championCard} aria-live="polite">
-            <Trophy size={26} aria-hidden="true" />
-            <span>National Champion</span>
-            <strong>
-              {bracket.champion
-                ? `#${bracket.champion.seed} ${bracket.champion.name}`
-                : "Make your final pick"}
-            </strong>
-          </div>
-          <label
-            className={`${styles.totalPoints} ${
-              showMissing && tiebreaker === ""
-                ? styles.missingTiebreaker
-                : ""
-            }`}
-          >
-            <span>Total points</span>
-            <input
-              type="number"
-              min="0"
-              max="400"
-              inputMode="numeric"
-              value={tiebreaker}
-              onChange={(event) => onTiebreakerChange(event.target.value)}
-              placeholder="142"
-              disabled={readOnly}
-              aria-invalid={
-                showMissing && tiebreaker === "" ? true : undefined
-              }
-            />
-          </label>
-        </div>
+        {championResult("current")}
       </div>
     );
   }
