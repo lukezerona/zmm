@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type TouchEvent } from "react";
+import { useLayoutEffect, useRef, useState, type TouchEvent } from "react";
 import { ChevronLeft, ChevronRight, Trophy } from "lucide-react";
 import {
   BracketMatchup,
@@ -66,6 +66,7 @@ type RoundTransition = {
   fromIndex: number;
   toIndex: number;
   direction: -1 | 1;
+  shared: boolean;
 };
 
 const NEXT_REGIONAL_ROUND: Record<
@@ -84,6 +85,7 @@ type MatchCardProps = {
   compact?: boolean;
   readOnly?: boolean;
   showMissing?: boolean;
+  mobileRole?: "current" | "preview";
 };
 
 function MatchCard({
@@ -93,6 +95,7 @@ function MatchCard({
   compact = false,
   readOnly = false,
   showMissing = false,
+  mobileRole,
 }: MatchCardProps) {
   const hasAvailablePick = matchup.options.some((entry) => entry !== null);
   const hasValidPick = matchup.options.some(
@@ -106,6 +109,7 @@ function MatchCard({
         isMissing ? styles.missingMatchup : ""
       }`}
       data-matchup-id={matchup.id}
+      data-mobile-role={mobileRole}
     >
       <span className={styles.srOnly}>
         Round {matchup.roundNumber}, matchup {matchup.matchupIndex + 1}
@@ -249,6 +253,9 @@ function MobileBracketBoard({
   const [roundTransition, setRoundTransition] =
     useState<RoundTransition | null>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const roundViewport = useRef<HTMLDivElement>(null);
+  const sharedMatchupRects = useRef(new Map<string, DOMRect>());
+  const outgoingRoundHeight = useRef(0);
   const activeRound = MOBILE_ROUNDS[activeRoundIndex];
   const orderedRegions = [
     model.regionLayout.topLeft,
@@ -285,13 +292,100 @@ function MobileBracketBoard({
     );
     if (nextIndex === activeRoundIndex || roundTransition) return;
 
+    const direction = nextIndex > activeRoundIndex ? 1 : -1;
+    const isAdjacentRound = Math.abs(nextIndex - activeRoundIndex) === 1;
+    const viewport = roundViewport.current;
+    sharedMatchupRects.current.clear();
+
+    if (isAdjacentRound && viewport) {
+      const sourceRole = direction === 1 ? "preview" : "current";
+      viewport
+        .querySelectorAll<HTMLElement>(
+          `[data-mobile-role="${sourceRole}"][data-matchup-id]`,
+        )
+        .forEach((element) => {
+          const matchupId = element.dataset.matchupId;
+          if (matchupId) {
+            sharedMatchupRects.current.set(
+              matchupId,
+              element.getBoundingClientRect(),
+            );
+          }
+        });
+      outgoingRoundHeight.current = viewport.getBoundingClientRect().height;
+    }
+
     setRoundTransition({
       fromIndex: activeRoundIndex,
       toIndex: nextIndex,
-      direction: nextIndex > activeRoundIndex ? 1 : -1,
+      direction,
+      shared: isAdjacentRound,
     });
     setActiveRoundIndex(nextIndex);
   }
+
+  useLayoutEffect(() => {
+    if (!roundTransition?.shared) return;
+
+    const viewport = roundViewport.current;
+    const incomingPanel = viewport?.querySelector<HTMLElement>(
+      '[data-mobile-panel="incoming"]',
+    );
+    if (!viewport || !incomingPanel) return;
+
+    const targetRole =
+      roundTransition.direction === 1 ? "current" : "preview";
+    const animations: Animation[] = [];
+
+    incomingPanel
+      .querySelectorAll<HTMLElement>(
+        `[data-mobile-role="${targetRole}"][data-matchup-id]`,
+      )
+      .forEach((element) => {
+        const matchupId = element.dataset.matchupId;
+        const startRect = matchupId
+          ? sharedMatchupRects.current.get(matchupId)
+          : undefined;
+        if (!startRect) return;
+
+        const endRect = element.getBoundingClientRect();
+        animations.push(
+          element.animate(
+            [
+              {
+                transform: `translate(${startRect.left - endRect.left}px, ${
+                  startRect.top - endRect.top
+                }px)`,
+              },
+              { transform: "translate(0, 0)" },
+            ],
+            {
+              duration: 560,
+              easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+              fill: "both",
+            },
+          ),
+        );
+      });
+
+    const incomingHeight = incomingPanel.getBoundingClientRect().height;
+    viewport.style.height = `${outgoingRoundHeight.current}px`;
+    viewport.getBoundingClientRect();
+    viewport.style.height = `${incomingHeight}px`;
+
+    const timeout = window.setTimeout(() => {
+      setRoundTransition((current) =>
+        current === roundTransition ? null : current,
+      );
+      viewport.style.height = "";
+    }, 580);
+
+    return () => {
+      window.clearTimeout(timeout);
+      animations.forEach((animation) => animation.cancel());
+      viewport.style.height = "";
+    };
+  }, [roundTransition]);
 
   function moveRound(direction: -1 | 1) {
     showRound(activeRoundIndex + direction);
@@ -351,6 +445,7 @@ function MobileBracketBoard({
                       onPick={onPick}
                       readOnly={readOnly}
                       showMissing={showMissing}
+                      mobileRole="current"
                     />
                     {nextMatchupPreview(nextMatchup)}
                     <MatchCard
@@ -359,6 +454,7 @@ function MobileBracketBoard({
                       onPick={onPick}
                       readOnly={readOnly}
                       showMissing={showMissing}
+                      mobileRole="current"
                     />
                   </div>
                 ))}
@@ -379,6 +475,7 @@ function MobileBracketBoard({
           onPick={onPick}
           readOnly={readOnly}
           showMissing={showMissing}
+          mobileRole="preview"
         />
       </div>
     );
@@ -394,6 +491,7 @@ function MobileBracketBoard({
           onPick={onPick}
           readOnly={readOnly}
           showMissing={showMissing}
+          mobileRole="current"
         />
       </div>
     );
@@ -476,6 +574,7 @@ function MobileBracketBoard({
           compact
           readOnly={readOnly}
           showMissing={showMissing}
+          mobileRole="current"
         />
         <div className={styles.championResultRow}>
           <div className={styles.championCard} aria-live="polite">
@@ -589,8 +688,15 @@ function MobileBracketBoard({
       <div
         className={`${styles.mobileRoundViewport} ${
           roundTransition ? styles.mobileRoundTransitioning : ""
+        } ${
+          roundTransition?.shared
+            ? roundTransition.direction === 1
+              ? styles.mobileRoundSharedForward
+              : styles.mobileRoundSharedBackward
+            : ""
         }`}
         aria-live="polite"
+        ref={roundViewport}
       >
         {roundTransition ? (
           <>
@@ -599,9 +705,11 @@ function MobileBracketBoard({
                 styles.mobileRoundPanel,
                 styles.mobileRoundSlide,
                 styles.mobileRoundOutgoing,
-                roundTransition.direction === 1
-                  ? styles.mobileRoundExitLeft
-                  : styles.mobileRoundExitRight,
+                !roundTransition.shared
+                  ? roundTransition.direction === 1
+                    ? styles.mobileRoundExitLeft
+                    : styles.mobileRoundExitRight
+                  : "",
               ].join(" ")}
               key={`outgoing-${roundTransition.fromIndex}`}
               aria-hidden="true"
@@ -613,13 +721,19 @@ function MobileBracketBoard({
                 styles.mobileRoundPanel,
                 styles.mobileRoundSlide,
                 styles.mobileRoundIncoming,
-                roundTransition.direction === 1
-                  ? styles.mobileRoundEnterRight
-                  : styles.mobileRoundEnterLeft,
+                !roundTransition.shared
+                  ? roundTransition.direction === 1
+                    ? styles.mobileRoundEnterRight
+                    : styles.mobileRoundEnterLeft
+                  : "",
               ].join(" ")}
               key={`incoming-${roundTransition.toIndex}`}
+              data-mobile-panel="incoming"
               onAnimationEnd={(event) => {
-                if (event.target === event.currentTarget) {
+                if (
+                  !roundTransition.shared &&
+                  event.target === event.currentTarget
+                ) {
                   setRoundTransition(null);
                 }
               }}
