@@ -33,8 +33,8 @@ Using an absolute public URL keeps the logo working when the development project
 4. Send a password reset to your own username from the ZMM login page.
 5. Check the message on both a phone and desktop email client.
 6. Click the button and confirm that it opens the ZMM new-password page.
-7. Use **Authentication → Users → Invite user** with a real `+` email alias.
-8. Accept the invite and confirm that ZMM opens the username, display name, and password setup page.
+7. Use **Authentication → Users → Invite user** with your regular email address. Do not add a `+` suffix.
+8. Accept the invite and confirm that ZMM opens the username and password setup page.
 
 The `{{ .ConfirmationURL }}` placeholder is a Supabase template variable. Do not replace it with a fixed value.
 

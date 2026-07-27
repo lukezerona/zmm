@@ -4,8 +4,9 @@ A black-and-blue family March Madness app built with Next.js, TypeScript, and Su
 
 - An animated ZMM logo reveal and responsive sign-in screen
 - Persistent Supabase sessions for automatic sign-in on return visits
-- Invite-only account setup with unique usernames and display names
-- Username-based sign-in and password recovery through hidden email aliases
+- Invite-only account setup with a unique username and password
+- Username-based sign-in and password recovery through one regular account email
+- Multiple named family brackets under one account
 - Loading, error, and password visibility states
 - Supabase password recovery and new-password flow
 - A protected Create Bracket placeholder personalized with the signed-in user's name
@@ -53,23 +54,24 @@ ZMM-branded templates for password recovery, invitations, account confirmation, 
 
 ## 4. Invite family members
 
-ZMM intentionally has no public sign-up page. Each invitation creates one private player account.
+ZMM intentionally has no public sign-up page. Send one invitation to the regular email address for each family account. That account can create and manage multiple named brackets for family members.
 
 1. Open **Authentication → Users** in Supabase.
 2. Choose **Add user → Send invitation**.
-3. Enter a unique real `+` alias, such as `zeronafamily+charlie@gmail.com`.
-4. The player opens the ZMM invitation email.
+3. Enter the family's normal email address. Do not add a `+` suffix.
+4. The account owner opens the ZMM invitation email.
 5. ZMM sends the authenticated invitee to `/accept-invite`.
-6. The player chooses a username, display name, and password.
-7. Future sign-ins and password recovery use the username. Supabase sends recovery mail to the hidden alias.
+6. The account owner chooses a username and password.
+7. On the Create Bracket screen, name the default bracket and add any additional family brackets.
+8. Future sign-ins and password recovery use the username. Supabase sends recovery mail to the regular account email.
 
 If an invitation expires, send a new one from the same Supabase Users screen.
 
 ## 5. Test the complete flow
 
-1. Send an invitation to one of your own `+` aliases.
-2. Accept it and create a username, display name, and password.
-3. Confirm that the personalized Create Bracket placeholder opens.
+1. Send an invitation to your regular email address.
+2. Accept it and create a username and password.
+3. Confirm that the Create Bracket screen opens, then name the default bracket and add a second test bracket.
 4. Sign out and sign in using the username rather than the email.
 5. Close and reopen the browser tab; the saved session should sign the user in automatically.
 6. Sign out, select **Forgot password?**, submit the username, and open the recovery link.
