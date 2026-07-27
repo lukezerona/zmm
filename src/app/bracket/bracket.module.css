@@ -1069,16 +1069,12 @@
   }
 
   .mobileRoundSharedForward .mobileRoundOutgoing .mobileRegion > header,
-  .mobileRoundSharedForward .mobileRoundIncoming .mobileRegion > header,
-  .mobileRoundSharedBackward .mobileRoundOutgoing .mobileRegion > header,
-  .mobileRoundSharedBackward .mobileRoundIncoming .mobileRegion > header {
+  .mobileRoundSharedBackward .mobileRoundOutgoing .mobileRegion > header {
     opacity: 0;
   }
 
   .mobileRoundSharedForward .mobileLabeledMatchup > span,
-  .mobileRoundSharedBackward .mobileLabeledMatchup > span,
-  .mobileRoundSharedForward .championResultRow,
-  .mobileRoundSharedBackward .championResultRow {
+  .mobileRoundSharedBackward .mobileLabeledMatchup > span {
     visibility: hidden;
     opacity: 0;
   }
