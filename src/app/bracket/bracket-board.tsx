@@ -349,8 +349,14 @@ function MobileBracketBoard({
         if (!startRect) return;
 
         const endRect = element.getBoundingClientRect();
+        const animationElement =
+          targetRole === "current"
+            ? (element.closest<HTMLElement>(
+                `.${styles.mobileLabeledMatchup}`,
+              ) ?? element)
+            : element;
         animations.push(
-          element.animate(
+          animationElement.animate(
             [
               {
                 transform: `translate(${startRect.left - endRect.left}px, ${

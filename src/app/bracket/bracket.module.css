@@ -1073,19 +1073,6 @@
     opacity: 0;
   }
 
-  .mobileRoundSharedForward .mobileLabeledMatchup > span,
-  .mobileRoundSharedBackward .mobileLabeledMatchup > span {
-    visibility: hidden;
-    opacity: 0;
-  }
-
-  .mobileRoundSharedBackward
-    .mobileRoundOutgoing
-    .championResultRow {
-    visibility: hidden;
-    opacity: 0;
-  }
-
   .mobileRoundSharedForward
     .mobileRoundOutgoing
     [data-mobile-role="preview"],
@@ -1120,6 +1107,52 @@
     .mobileRoundIncoming
     [data-mobile-role="current"] {
     animation: mobileMatchupArriveLeft 560ms cubic-bezier(0.22, 1, 0.36, 1)
+      both;
+  }
+
+  .mobileRoundSharedForward
+    .mobileRoundOutgoing
+    .mobileLabeledMatchup {
+    animation: mobileMatchupLeaveLeft 560ms cubic-bezier(0.22, 1, 0.36, 1)
+      both;
+  }
+
+  .mobileRoundSharedBackward
+    .mobileRoundOutgoing
+    .mobileLabeledMatchup {
+    animation: mobileMatchupLeaveRight 560ms cubic-bezier(0.22, 1, 0.36, 1)
+      both;
+  }
+
+  .mobileRoundSharedBackward
+    .mobileRoundIncoming
+    .mobileLabeledMatchup {
+    animation: mobileMatchupArriveLeft 560ms cubic-bezier(0.22, 1, 0.36, 1)
+      both;
+  }
+
+  .mobileRoundSharedForward
+    .mobileRoundOutgoing
+    .mobileLabeledMatchup
+    [data-mobile-role="current"],
+  .mobileRoundSharedBackward
+    .mobileRoundIncoming
+    .mobileLabeledMatchup
+    [data-mobile-role="current"] {
+    animation: none;
+  }
+
+  .mobileRoundSharedForward
+    .mobileRoundIncoming
+    .championResultRow {
+    animation: mobileMatchupArriveRight 560ms cubic-bezier(0.22, 1, 0.36, 1)
+      both;
+  }
+
+  .mobileRoundSharedBackward
+    .mobileRoundOutgoing
+    .championResultRow {
+    animation: mobileMatchupLeaveRight 560ms cubic-bezier(0.22, 1, 0.36, 1)
       both;
   }
 
@@ -1477,7 +1510,22 @@
     [data-mobile-role="preview"],
   .mobileRoundSharedBackward
     .mobileRoundIncoming
-    [data-mobile-role="current"] {
+    [data-mobile-role="current"],
+  .mobileRoundSharedForward
+    .mobileRoundOutgoing
+    .mobileLabeledMatchup,
+  .mobileRoundSharedBackward
+    .mobileRoundOutgoing
+    .mobileLabeledMatchup,
+  .mobileRoundSharedBackward
+    .mobileRoundIncoming
+    .mobileLabeledMatchup,
+  .mobileRoundSharedForward
+    .mobileRoundIncoming
+    .championResultRow,
+  .mobileRoundSharedBackward
+    .mobileRoundOutgoing
+    .championResultRow {
     animation-duration: 1ms;
   }
 
