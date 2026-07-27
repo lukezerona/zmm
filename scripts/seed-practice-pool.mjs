@@ -206,7 +206,7 @@ async function run() {
         .in("round_code", ["PLAY_IN", "ROUND_OF_64"]),
       supabase
         .from("profiles")
-        .select("user_id, username, display_name"),
+        .select("user_id, username"),
     ]);
 
   if (gamesError) throw gamesError;
@@ -400,7 +400,7 @@ async function run() {
     {
       userId: luke.user_id,
       username: luke.username,
-      displayName: luke.display_name,
+      displayName: "Luke",
       seed: 202601,
     },
   ];
@@ -422,7 +422,6 @@ async function run() {
       {
         user_id: entrant.userId,
         username: entrant.username,
-        display_name: entrant.displayName,
       },
       { onConflict: "user_id" },
     );
@@ -433,16 +432,30 @@ async function run() {
       bracket.picks,
       PICK_OVERRIDES_BY_USERNAME[entrant.username] ?? {},
     );
-    const { error: bracketError } = await supabase.from("brackets").upsert(
-      {
-        user_id: entrant.userId,
-        season_year: SEASON_YEAR,
-        picks: bracket.picks,
-        tiebreaker_total: bracket.tiebreaker,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,season_year" },
-    );
+    const { data: existingBracket, error: existingBracketError } =
+      await supabase
+        .from("brackets")
+        .select("id")
+        .eq("user_id", entrant.userId)
+        .eq("season_year", SEASON_YEAR)
+        .eq("is_primary", true)
+        .maybeSingle();
+    if (existingBracketError) throw existingBracketError;
+
+    const bracketPayload = {
+      user_id: entrant.userId,
+      season_year: SEASON_YEAR,
+      display_name: entrant.displayName,
+      picks: bracket.picks,
+      tiebreaker_total: bracket.tiebreaker,
+      updated_at: new Date().toISOString(),
+    };
+    const { error: bracketError } = existingBracket
+      ? await supabase
+          .from("brackets")
+          .update(bracketPayload)
+          .eq("id", existingBracket.id)
+      : await supabase.from("brackets").insert(bracketPayload);
     if (bracketError) throw bracketError;
   }
 

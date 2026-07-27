@@ -121,11 +121,85 @@
   box-shadow: 0 20px 55px rgba(0, 0, 0, 0.24);
 }
 
+.bracketSelector {
+  margin-bottom: 17px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #163444;
+}
+
+.bracketSelector label {
+  display: block;
+  margin-bottom: 7px;
+  color: #31baff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+}
+
+.bracketSelectorRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px 38px;
+  gap: 7px;
+}
+
+.bracketSelectorRow select {
+  min-width: 0;
+  height: 40px;
+  padding: 0 32px 0 11px;
+  border: 1px solid #24617f;
+  border-radius: 9px;
+  color: #f3f9fc;
+  background: #071721;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.bracketIconButton {
+  display: grid;
+  place-items: center;
+  border: 1px solid #24617f;
+  border-radius: 9px;
+  color: #43c1ff;
+  background: #0a1a24;
+  cursor: pointer;
+}
+
+.deleteBracketButton {
+  color: #ff8ca1;
+  border-color: #663140;
+}
+
+.bracketIconButton:disabled,
+.displayNameButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
 .identityCard form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 36px 36px;
   gap: 7px;
   margin: 8px 0 7px;
+}
+
+.identityCard .addBracketForm {
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin: -4px 0 17px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #163444;
+}
+
+.identityCard .addBracketForm button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  color: white;
+  background: #0b83c4;
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
 }
 
 .identityCard input {

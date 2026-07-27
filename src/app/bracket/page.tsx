@@ -9,8 +9,10 @@ import {
   LoaderCircle,
   LogOut,
   Pencil,
+  Plus,
   Printer,
   Save,
+  Trash2,
   Trophy,
   X,
 } from "lucide-react";
@@ -40,12 +42,18 @@ const TOTAL_PICKS = 63;
 
 type Profile = {
   username: string;
-  display_name: string;
 };
 
 type SavedBracket = {
+  id: string;
+  user_id: string;
+  season_year: number;
+  display_name: string;
+  is_primary: boolean;
   picks: unknown;
   tiebreaker_total: number | null;
+  created_at: string;
+  updated_at: string;
 };
 
 function savedPickMap(value: unknown): PickMap {
@@ -78,6 +86,12 @@ export default function BracketPage() {
   const [displayNameDraft, setDisplayNameDraft] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [savingName, setSavingName] = useState(false);
+  const [savedBrackets, setSavedBrackets] = useState<SavedBracket[]>([]);
+  const [activeBracketId, setActiveBracketId] = useState("");
+  const [showAddBracket, setShowAddBracket] = useState(false);
+  const [newBracketName, setNewBracketName] = useState("");
+  const [addingBracket, setAddingBracket] = useState(false);
+  const [deletingBracket, setDeletingBracket] = useState(false);
   const [seasonYear, setSeasonYear] = useState(
     CREATION_TEST_SEASON_YEAR,
   );
@@ -149,7 +163,7 @@ export default function BracketPage() {
         await Promise.all([
           client
             .from("profiles")
-            .select("username, display_name")
+            .select("username")
             .eq("user_id", userData.user.id)
             .maybeSingle(),
           client
@@ -169,10 +183,13 @@ export default function BracketPage() {
             ]),
           client
             .from("brackets")
-            .select("picks, tiebreaker_total")
+            .select(
+              "id, user_id, season_year, display_name, is_primary, picks, tiebreaker_total, created_at, updated_at",
+            )
             .eq("user_id", userData.user.id)
             .eq("season_year", activeSeasonYear)
-            .maybeSingle(),
+            .order("is_primary", { ascending: false })
+            .order("created_at", { ascending: true }),
           client
             .from("tournament_region_pairings")
             .select(
@@ -216,7 +233,30 @@ export default function BracketPage() {
           activeSeasonYear,
           pairingResult.data as TournamentRegionPairingRow,
         );
-        const saved = bracketResult.data as SavedBracket | null;
+        let entries = (bracketResult.data ?? []) as SavedBracket[];
+        if (entries.length === 0) {
+          const { data: firstBracket, error: firstBracketError } = await client
+            .from("brackets")
+            .insert({
+              user_id: userData.user.id,
+              season_year: activeSeasonYear,
+              display_name: profile.username,
+              picks: {},
+              tiebreaker_total: null,
+            })
+            .select(
+              "id, user_id, season_year, display_name, is_primary, picks, tiebreaker_total, created_at, updated_at",
+            )
+            .single();
+
+          if (firstBracketError || !firstBracket) {
+            throw new Error(
+              firstBracketError?.message ?? "Could not create the first bracket",
+            );
+          }
+          entries = [firstBracket as SavedBracket];
+        }
+        const saved = entries[0];
         const deadlineTimestamp = lifecycle.entryDeadline
           ? new Date(lifecycle.entryDeadline).getTime()
           : Number.NaN;
@@ -226,8 +266,10 @@ export default function BracketPage() {
 
         setUserId(userData.user.id);
         setUsername(profile.username);
-        setDisplayName(profile.display_name);
-        setDisplayNameDraft(profile.display_name);
+        setSavedBrackets(entries);
+        setActiveBracketId(saved.id);
+        setDisplayName(saved.display_name);
+        setDisplayNameDraft(saved.display_name);
         setSeasonYear(activeSeasonYear);
         setEntryDeadline(lifecycle.entryDeadline);
         setModel(tournament);
@@ -289,6 +331,43 @@ export default function BracketPage() {
   );
   const completedPicks = pickCount(bracket, picks);
   const isWarning = message.startsWith("Warning:");
+  const activeBracket = savedBrackets.find(
+    (savedBracket) => savedBracket.id === activeBracketId,
+  );
+
+  function openSavedBracket(savedBracket: SavedBracket) {
+    if (!model) return;
+    setActiveBracketId(savedBracket.id);
+    setDisplayName(savedBracket.display_name);
+    setDisplayNameDraft(savedBracket.display_name);
+    setPicks(sanitizePicks(model, savedPickMap(savedBracket.picks)));
+    setTiebreaker(
+      savedBracket.tiebreaker_total === null
+        ? ""
+        : String(savedBracket.tiebreaker_total),
+    );
+    setEditingName(false);
+    setShowAddBracket(false);
+    setShowMissingPicks(false);
+    setDirty(false);
+    setMessage("");
+  }
+
+  function selectBracket(bracketId: string) {
+    const nextBracket = savedBrackets.find(
+      (savedBracket) => savedBracket.id === bracketId,
+    );
+    if (!nextBracket || nextBracket.id === activeBracketId) return;
+    if (
+      dirty &&
+      !window.confirm(
+        "This bracket has unsaved changes. Switch brackets and discard them?",
+      )
+    ) {
+      return;
+    }
+    openSavedBracket(nextBracket);
+  }
 
   function chooseWinner(matchupId: string, entryId: string) {
     if (!model || locked) return;
@@ -305,32 +384,150 @@ export default function BracketPage() {
     const client = supabase;
     const cleanName = displayNameDraft.trim();
 
-    if (!client || !userId || cleanName.length < 1 || cleanName.length > 50) {
+    if (
+      !client ||
+      !userId ||
+      !activeBracketId ||
+      cleanName.length < 1 ||
+      cleanName.length > 50
+    ) {
       setMessage("Display names must be between 1 and 50 characters.");
       return;
     }
 
     setSavingName(true);
-    const { error: nameError } = await client
-      .from("profiles")
+    const { data: renamedBracket, error: nameError } = await client
+      .from("brackets")
       .update({ display_name: cleanName })
-      .eq("user_id", userId);
+      .eq("id", activeBracketId)
+      .eq("user_id", userId)
+      .select("id")
+      .maybeSingle();
     setSavingName(false);
 
-    if (nameError) {
-      setMessage("We couldn’t update your display name. Please try again.");
+    if (nameError || !renamedBracket) {
+      setMessage(
+        nameError?.code === "23505"
+          ? "You already have a bracket with that display name."
+          : "We couldn’t update this bracket’s display name. Please try again.",
+      );
       return;
     }
 
+    setSavedBrackets((current) =>
+      current.map((savedBracket) =>
+        savedBracket.id === activeBracketId
+          ? { ...savedBracket, display_name: cleanName }
+          : savedBracket,
+      ),
+    );
     setDisplayName(cleanName);
     setDisplayNameDraft(cleanName);
     setEditingName(false);
     setMessage("Display name updated.");
   }
 
+  async function addBracket(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const client = supabase;
+    const cleanName = newBracketName.trim();
+
+    if (
+      !client ||
+      !userId ||
+      cleanName.length < 1 ||
+      cleanName.length > 50
+    ) {
+      setMessage("Display names must be between 1 and 50 characters.");
+      return;
+    }
+    if (
+      dirty &&
+      !window.confirm(
+        "This bracket has unsaved changes. Create a new bracket and discard them?",
+      )
+    ) {
+      return;
+    }
+
+    setAddingBracket(true);
+    const { data: createdBracket, error: createError } = await client
+      .from("brackets")
+      .insert({
+        user_id: userId,
+        season_year: seasonYear,
+        display_name: cleanName,
+        picks: {},
+        tiebreaker_total: null,
+      })
+      .select(
+        "id, user_id, season_year, display_name, is_primary, picks, tiebreaker_total, created_at, updated_at",
+      )
+      .single();
+    setAddingBracket(false);
+
+    if (createError || !createdBracket) {
+      setMessage(
+        createError?.code === "23505"
+          ? "You already have a bracket with that display name."
+          : "We couldn’t create another bracket. Please try again.",
+      );
+      return;
+    }
+
+    const savedBracket = createdBracket as SavedBracket;
+    setSavedBrackets((current) => [...current, savedBracket]);
+    setNewBracketName("");
+    openSavedBracket(savedBracket);
+    setMessage(`Blank bracket created for ${savedBracket.display_name}.`);
+  }
+
+  async function deleteBracket() {
+    const client = supabase;
+    if (
+      !client ||
+      !activeBracket ||
+      activeBracket.is_primary ||
+      savedBrackets.length <= 1
+    ) {
+      return;
+    }
+    if (
+      !window.confirm(
+        `Delete ${activeBracket.display_name}’s bracket? This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    setDeletingBracket(true);
+    const { data: deletedBracket, error: deleteError } = await client
+      .from("brackets")
+      .delete()
+      .eq("id", activeBracket.id)
+      .eq("user_id", userId)
+      .select("id")
+      .maybeSingle();
+    setDeletingBracket(false);
+
+    if (deleteError || !deletedBracket) {
+      setMessage("We couldn’t delete this bracket. Please try again.");
+      return;
+    }
+
+    const remaining = savedBrackets.filter(
+      (savedBracket) => savedBracket.id !== activeBracket.id,
+    );
+    const nextBracket =
+      remaining.find((savedBracket) => savedBracket.is_primary) ?? remaining[0];
+    setSavedBrackets(remaining);
+    openSavedBracket(nextBracket);
+    setMessage("Extra bracket deleted.");
+  }
+
   async function saveBracket() {
     const client = supabase;
-    if (!client || !userId) return;
+    if (!client || !userId || !activeBracketId) return;
     if (locked) {
       setMessage(
         "Entries are locked because the Round of 64 has started. Your saved picks cannot be changed.",
@@ -349,19 +546,21 @@ export default function BracketPage() {
     setShowMissingPicks(remainingPicks > 0 || total === null);
     setSaving(true);
     setMessage("");
-    const { error: saveError } = await client.from("brackets").upsert(
-      {
-        user_id: userId,
-        season_year: seasonYear,
+    const savedAt = new Date().toISOString();
+    const { data: updatedBracket, error: saveError } = await client
+      .from("brackets")
+      .update({
         picks,
         tiebreaker_total: total,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,season_year" },
-    );
+        updated_at: savedAt,
+      })
+      .eq("id", activeBracketId)
+      .eq("user_id", userId)
+      .select("id")
+      .maybeSingle();
     setSaving(false);
 
-    if (saveError) {
+    if (saveError || !updatedBracket) {
       console.error("[bracket] Save failed", saveError);
       if (
         entryDeadline &&
@@ -378,6 +577,18 @@ export default function BracketPage() {
       return;
     }
 
+    setSavedBrackets((current) =>
+      current.map((savedBracket) =>
+        savedBracket.id === activeBracketId
+          ? {
+              ...savedBracket,
+              picks,
+              tiebreaker_total: total,
+              updated_at: savedAt,
+            }
+          : savedBracket,
+      ),
+    );
     setDirty(false);
     if (remainingPicks === 0 && total !== null) {
       setShowMissingPicks(false);
@@ -444,6 +655,77 @@ export default function BracketPage() {
         </div>
 
         <div className={styles.identityCard}>
+          <div className={styles.bracketSelector}>
+            <label htmlFor="family-bracket">FAMILY BRACKET</label>
+            <div className={styles.bracketSelectorRow}>
+              <select
+                id="family-bracket"
+                value={activeBracketId}
+                onChange={(event) => selectBracket(event.target.value)}
+                aria-label="Choose a family bracket"
+              >
+                {savedBrackets.map((savedBracket) => (
+                  <option value={savedBracket.id} key={savedBracket.id}>
+                    {savedBracket.display_name}
+                    {savedBracket.is_primary ? " (Primary)" : ""}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className={styles.bracketIconButton}
+                onClick={() => {
+                  setShowAddBracket((visible) => !visible);
+                  setNewBracketName("");
+                }}
+                disabled={locked}
+                aria-label="Add another family bracket"
+                title="Add another family bracket"
+              >
+                <Plus size={17} aria-hidden="true" />
+              </button>
+              {!activeBracket?.is_primary && savedBrackets.length > 1 && (
+                <button
+                  type="button"
+                  className={`${styles.bracketIconButton} ${styles.deleteBracketButton}`}
+                  onClick={() => void deleteBracket()}
+                  disabled={locked || deletingBracket}
+                  aria-label={`Delete ${displayName} bracket`}
+                  title="Delete this extra bracket"
+                >
+                  {deletingBracket ? (
+                    <LoaderCircle className={styles.spinner} size={17} />
+                  ) : (
+                    <Trash2 size={17} aria-hidden="true" />
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {showAddBracket && (
+            <form className={styles.addBracketForm} onSubmit={addBracket}>
+              <input
+                type="text"
+                value={newBracketName}
+                onChange={(event) => setNewBracketName(event.target.value)}
+                maxLength={50}
+                placeholder="Family member display name"
+                aria-label="New bracket display name"
+                autoFocus
+                required
+              />
+              <button type="submit" disabled={addingBracket}>
+                {addingBracket ? (
+                  <LoaderCircle className={styles.spinner} size={17} />
+                ) : (
+                  <Plus size={17} />
+                )}
+                Create blank bracket
+              </button>
+            </form>
+          )}
+
           <span>BRACKET DISPLAY NAME</span>
           {editingName ? (
             <form onSubmit={saveDisplayName}>
@@ -474,6 +756,7 @@ export default function BracketPage() {
               type="button"
               className={styles.displayNameButton}
               onClick={() => setEditingName(true)}
+              disabled={locked}
             >
               <strong>{displayName}</strong>
               <Pencil size={15} aria-hidden="true" />

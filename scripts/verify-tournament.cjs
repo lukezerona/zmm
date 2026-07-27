@@ -45,7 +45,8 @@ const supabase = createClient(url, secret, {
 
 function payoutRow(name, points, distance = null) {
   return {
-    userId: name,
+    bracketId: name,
+    ownerUserId: name,
     username: name,
     displayName: name,
     rank: 0,
@@ -108,10 +109,12 @@ async function verifyDevelopmentPool() {
     await Promise.all([
       supabase
         .from("profiles")
-        .select("user_id, username, display_name"),
+        .select("user_id, username"),
       supabase
         .from("brackets")
-        .select("user_id, season_year, picks, tiebreaker_total, updated_at")
+        .select(
+          "id, user_id, season_year, display_name, is_primary, picks, tiebreaker_total, updated_at",
+        )
         .eq("season_year", SEASON_YEAR),
       supabase
         .from("espn_games")

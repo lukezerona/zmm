@@ -17,19 +17,22 @@ export type TournamentGame = EspnGameRow & {
 export type PoolProfile = {
   user_id: string;
   username: string;
-  display_name: string;
 };
 
 export type PoolBracket = {
+  id: string;
   user_id: string;
   season_year: number;
+  display_name: string;
+  is_primary: boolean;
   picks: PickMap;
   tiebreaker_total: number | null;
   updated_at: string;
 };
 
 export type LeaderboardEntry = {
-  userId: string;
+  bracketId: string;
+  ownerUserId: string;
   username: string;
   displayName: string;
   rank: number;

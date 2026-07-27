@@ -61,7 +61,7 @@ export function AccountMenu({
         aria-haspopup="dialog"
         aria-controls="account-menu-panel"
       >
-        <span>{profile.display_name}</span>
+        <span>@{profile.username}</span>
         <ChevronDown size={15} aria-hidden="true" />
       </button>
 
@@ -73,7 +73,7 @@ export function AccountMenu({
           aria-label="Account settings"
         >
           <div className={styles.accountIdentity}>
-            <strong>{profile.display_name}</strong>
+            <strong>Account</strong>
             <span>@{profile.username}</span>
           </div>
 

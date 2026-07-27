@@ -373,9 +373,10 @@ function buildLeaderboardForOutcome(
           : null;
 
       return {
-        userId: bracket.user_id,
+        bracketId: bracket.id,
+        ownerUserId: bracket.user_id,
         username: profile.username,
-        displayName: profile.display_name,
+        displayName: bracket.display_name,
         rank: 0,
         points,
         possiblePointsRemaining,

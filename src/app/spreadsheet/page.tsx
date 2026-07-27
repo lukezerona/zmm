@@ -165,11 +165,13 @@ export default function SpreadsheetPage() {
       await Promise.all([
       client
         .from("profiles")
-        .select("user_id, username, display_name")
-        .order("display_name"),
+        .select("user_id, username")
+        .order("username"),
       client
         .from("brackets")
-        .select("user_id, season_year, picks, tiebreaker_total, updated_at")
+        .select(
+          "id, user_id, season_year, display_name, is_primary, picks, tiebreaker_total, updated_at",
+        )
         .eq("season_year", activeSeasonYear),
       client
         .from("espn_games")
@@ -513,8 +515,8 @@ export default function SpreadsheetPage() {
       ),
     [groups, projectedPicks],
   );
-  const bracketByUser = useMemo(
-    () => new Map(brackets.map((bracket) => [bracket.user_id, bracket])),
+  const bracketById = useMemo(
+    () => new Map(brackets.map((bracket) => [bracket.id, bracket])),
     [brackets],
   );
 
@@ -883,13 +885,13 @@ export default function SpreadsheetPage() {
                 )}
               </tr>
               {leaderboard.rows.map((row) => {
-                const bracket = bracketByUser.get(row.userId);
-                const isCurrentUser = row.userId === userId;
+                const bracket = bracketById.get(row.bracketId);
+                const isCurrentUser = row.ownerUserId === userId;
 
                 return (
                   <tr
                     className={isCurrentUser ? styles.currentUserRow : undefined}
-                    key={row.userId}
+                    key={row.bracketId}
                   >
                     <td
                       className={`${styles.stickyCell} ${styles.rankCell} ${styles.rank}`}

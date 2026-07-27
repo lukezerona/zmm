@@ -132,12 +132,12 @@ export default function MarchMadnessPage() {
         await Promise.all([
         client
           .from("profiles")
-          .select("user_id, username, display_name")
-          .order("display_name"),
+          .select("user_id, username")
+          .order("username"),
         client
           .from("brackets")
           .select(
-            "user_id, season_year, picks, tiebreaker_total, updated_at",
+            "id, user_id, season_year, display_name, is_primary, picks, tiebreaker_total, updated_at",
           )
           .eq("season_year", activeSeasonYear),
         client
@@ -537,7 +537,7 @@ export default function MarchMadnessPage() {
       <section className={styles.hero} id="top">
         <div>
           <h1>
-            Welcome back, <em>{profile.display_name}</em>.
+            Welcome back, <em>@{profile.username}</em>.
           </h1>
         </div>
       </section>
@@ -574,7 +574,6 @@ export default function MarchMadnessPage() {
             model={model}
             games={games}
             brackets={brackets}
-            profiles={profiles}
             currentUserId={userId}
             leaderboardRows={leaderboard.rows}
           />

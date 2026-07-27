@@ -8,7 +8,6 @@ import { PrintableBlankBracket } from "../bracket/printable-bracket";
 import {
   LeaderboardEntry,
   PoolBracket,
-  PoolProfile,
   TournamentGame,
 } from "./tournament-types";
 import { TournamentBracketCanvas } from "./tournament-bracket-canvas";
@@ -21,47 +20,33 @@ export function TournamentBracketViewer({
   model,
   games,
   brackets,
-  profiles,
   currentUserId,
   leaderboardRows,
 }: {
   model: TournamentModel;
   games: TournamentGame[];
   brackets: PoolBracket[];
-  profiles: PoolProfile[];
   currentUserId: string;
   leaderboardRows: LeaderboardEntry[];
 }) {
   const orderedBrackets = useMemo(() => {
-    const profileByUser = new Map(
-      profiles.map((profile) => [profile.user_id, profile]),
-    );
-    const rankByUser = new Map(
-      leaderboardRows.map((entry, index) => [entry.userId, index]),
+    const rankByBracket = new Map(
+      leaderboardRows.map((entry, index) => [entry.bracketId, index]),
     );
 
     return [...brackets].sort((a, b) => {
       const rankDifference =
-        (rankByUser.get(a.user_id) ?? Number.MAX_SAFE_INTEGER) -
-        (rankByUser.get(b.user_id) ?? Number.MAX_SAFE_INTEGER);
+        (rankByBracket.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+        (rankByBracket.get(b.id) ?? Number.MAX_SAFE_INTEGER);
 
       if (rankDifference !== 0) return rankDifference;
 
-      return (
-        profileByUser
-          .get(a.user_id)
-          ?.display_name.localeCompare(
-            profileByUser.get(b.user_id)?.display_name ?? "",
-          ) ?? 0
-      );
+      return a.display_name.localeCompare(b.display_name);
     });
-  }, [brackets, leaderboardRows, profiles]);
+  }, [brackets, leaderboardRows]);
   const [selectedValue, setSelectedValue] = useState(MASTER_VALUE);
   const selectedBracket = orderedBrackets.find(
-    (bracket) => bracket.user_id === selectedValue,
-  );
-  const selectedProfile = profiles.find(
-    (profile) => profile.user_id === selectedBracket?.user_id,
+    (bracket) => bracket.id === selectedValue,
   );
   const playerBracket = selectedBracket
     ? deriveBracket(model, selectedBracket.picks)
@@ -73,7 +58,7 @@ export function TournamentBracketViewer({
   const selectedBracketName =
     selectedValue === MASTER_VALUE
       ? "Master tournament results"
-      : `${selectedProfile?.display_name ?? "Unknown player"}${
+      : `${selectedBracket?.display_name ?? "Unknown player"}${
           selectedBracket?.user_id === currentUserId ? " (You)" : ""
         }`;
 
@@ -94,15 +79,12 @@ export function TournamentBracketViewer({
               <option value={MASTER_VALUE}>Master bracket</option>
               <optgroup label="Family brackets">
                 {orderedBrackets.map((savedBracket) => {
-                  const profile = profiles.find(
-                    (candidate) => candidate.user_id === savedBracket.user_id,
-                  );
                   return (
                     <option
-                      value={savedBracket.user_id}
-                      key={savedBracket.user_id}
+                      value={savedBracket.id}
+                      key={savedBracket.id}
                     >
-                      {profile?.display_name ?? "Unknown player"}
+                      {savedBracket.display_name}
                       {savedBracket.user_id === currentUserId ? " (You)" : ""}
                     </option>
                   );

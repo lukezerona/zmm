@@ -47,11 +47,11 @@ export function Leaderboard({
         </thead>
         <tbody>
           {rows.map((entry) => {
-            const isCurrentPlayer = entry.userId === currentUserId;
+            const isCurrentPlayer = entry.ownerUserId === currentUserId;
 
             return (
               <tr
-                key={entry.userId}
+                key={entry.bracketId}
                 className={isCurrentPlayer ? styles.currentPlayerRow : ""}
               >
                 <td>

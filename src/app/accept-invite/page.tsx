@@ -20,7 +20,6 @@ export default function AcceptInvitePage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
   const [username, setUsername] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordSaved, setPasswordSaved] = useState(false);
@@ -83,14 +82,9 @@ export default function AcceptInvitePage() {
     }
 
     const normalizedUsername = username.trim().toLowerCase();
-    const cleanDisplayName = displayName.trim();
 
     if (!usernamePattern.test(normalizedUsername)) {
       setMessage("Use 3–24 letters, numbers, periods, dashes, or underscores for your username.");
-      return;
-    }
-    if (!cleanDisplayName || cleanDisplayName.length > 50) {
-      setMessage("Enter a display name between 1 and 50 characters.");
       return;
     }
     if (password.length < 6) {
@@ -121,7 +115,6 @@ export default function AcceptInvitePage() {
     const { error: profileError } = await supabase.from("profiles").insert({
       user_id: userId,
       username: normalizedUsername,
-      display_name: cleanDisplayName,
     });
 
     setLoading(false);
@@ -179,15 +172,15 @@ export default function AcceptInvitePage() {
             <CheckCircle2 size={46} />
             <h1>You’re on the roster</h1>
             <p>Your ZMM account is ready. Sign in next time with the username <strong>{username.trim().toLowerCase()}</strong>.</p>
-            <button type="button" onClick={() => router.replace("/march-madness")}>
-              Enter Tournament Central
+            <button type="button" onClick={() => router.replace("/bracket")}>
+              Create your bracket
             </button>
           </div>
         ) : (
           <>
             <div className={styles.icon}><UserRound size={24} /></div>
             <h1>Set up your account</h1>
-            <p>Choose the name you’ll use to sign in and the name your family will see.</p>
+            <p>Choose the username and password you will use to sign in.</p>
 
             <form onSubmit={createAccount}>
               <label htmlFor="username">Username</label>
@@ -209,19 +202,6 @@ export default function AcceptInvitePage() {
                 />
               </div>
               <span className={styles.hint}>3–24 characters. Usernames are not case-sensitive.</span>
-
-              <label htmlFor="display-name">Display name</label>
-              <input
-                id="display-name"
-                name="displayName"
-                type="text"
-                autoComplete="name"
-                placeholder="Charlie"
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
-                maxLength={50}
-                required
-              />
 
               <label htmlFor="password">Password</label>
               <div className={styles.inputWrap}>
