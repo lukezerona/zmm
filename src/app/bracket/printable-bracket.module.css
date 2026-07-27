@@ -144,11 +144,11 @@
 }
 
 .regionNameBottom {
-  bottom: 8%;
+  bottom: 11%;
 }
 
 .regionNameTop {
-  top: 8%;
+  top: 11%;
 }
 
 .title {
@@ -192,9 +192,9 @@
 .finals {
   position: absolute;
   z-index: 1;
-  top: 45%;
-  left: 40%;
-  width: 20%;
+  top: 47%;
+  left: 39%;
+  width: 22%;
   height: 10%;
   display: grid;
   grid-template-columns: 1fr 1.1fr 1fr;
@@ -216,24 +216,29 @@
 }
 
 .championshipArea {
+  position: relative;
   display: grid;
-  gap: 4px;
 }
 
 .championSlot {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  width: 100%;
   display: grid;
   justify-items: center;
-  gap: 2px;
+  gap: 3px;
 }
 
 .championSlot strong {
-  font-size: 6.5pt;
+  font-size: 8.5pt;
+  font-weight: 900;
   text-transform: uppercase;
 }
 
 .championSlot span {
-  width: 76%;
-  height: 7px;
+  width: 84%;
+  height: 8px;
 }
 
 .footer {

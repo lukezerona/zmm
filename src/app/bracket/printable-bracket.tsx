@@ -158,12 +158,12 @@ function BlankFinals() {
         <span />
       </div>
       <div className={styles.championshipArea}>
-        <div className={styles.championshipMatchup}>
-          <span />
-          <span />
-        </div>
         <div className={styles.championSlot}>
           <strong>Champion</strong>
+          <span />
+        </div>
+        <div className={styles.championshipMatchup}>
+          <span />
           <span />
         </div>
       </div>
