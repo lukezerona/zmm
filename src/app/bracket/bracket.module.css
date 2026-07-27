@@ -1057,7 +1057,7 @@
 
   .mobileMatchupList {
     display: grid;
-    gap: 22px;
+    gap: 16px;
     padding: 11px;
   }
 
@@ -1068,40 +1068,22 @@
   }
 
   .mobileMatchupBranch + .mobileMatchupBranch {
-    padding-top: 20px;
+    padding-top: 14px;
     border-top: 1px solid rgba(48, 149, 198, 0.16);
   }
 
   .mobileMatchupBranch > .matchup,
   .mobileLabeledMatchup {
-    width: calc(100% - 30px);
+    width: 66.666%;
   }
 
   .mobileNextMatchupPreview {
     position: relative;
-    width: calc(100% - 30px);
-    display: grid;
-    gap: 7px;
-    margin: 13px 0 13px 30px;
-    padding: 10px 0;
+    width: 66.666%;
+    margin: 12px 0;
+    transform: translateX(calc(100% + 14px));
   }
 
-  .mobileNextMatchupPreview::before {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: -15px;
-    width: 1px;
-    background: linear-gradient(
-      transparent,
-      rgba(52, 187, 247, 0.38) 22%,
-      rgba(52, 187, 247, 0.38) 78%,
-      transparent
-    );
-    content: "";
-  }
-
-  .mobileNextMatchupPreview > span,
   .mobileLabeledMatchup > span {
     display: flex;
     align-items: center;
@@ -1242,16 +1224,6 @@
 
   .mobileBracketFrame {
     padding: 11px;
-  }
-
-  .mobileMatchupBranch > .matchup,
-  .mobileLabeledMatchup,
-  .mobileNextMatchupPreview {
-    width: calc(100% - 22px);
-  }
-
-  .mobileNextMatchupPreview {
-    margin-left: 22px;
   }
 
   .mobileRoundHeader {

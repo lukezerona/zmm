@@ -65,11 +65,11 @@ type RegionalRoundId = Exclude<
 
 const NEXT_REGIONAL_ROUND: Record<
   Exclude<RegionalRoundId, "elite8">,
-  { id: RegionalRoundId; label: string }
+  RegionalRoundId
 > = {
-  roundOf64: { id: "roundOf32", label: "Round 2" },
-  roundOf32: { id: "sweet16", label: "Sweet 16" },
-  sweet16: { id: "elite8", label: "Elite 8" },
+  roundOf64: "roundOf32",
+  roundOf32: "sweet16",
+  sweet16: "elite8",
 };
 
 type MatchCardProps = {
@@ -306,13 +306,13 @@ function MobileBracketBoard({
       return eliteEightRound();
     }
 
-    const nextRound = NEXT_REGIONAL_ROUND[roundId];
+    const nextRoundId = NEXT_REGIONAL_ROUND[roundId];
 
     return (
       <div className={styles.mobileRegionList}>
         {orderedRegions.map((region) => {
           const matchups = bracket.regions[region][roundId];
-          const nextMatchups = bracket.regions[region][nextRound.id];
+          const nextMatchups = bracket.regions[region][nextRoundId];
 
           return (
             <section className={styles.mobileRegion} key={region}>
@@ -335,7 +335,7 @@ function MobileBracketBoard({
                       readOnly={readOnly}
                       showMissing={showMissing}
                     />
-                    {nextMatchupPreview(nextMatchup, nextRound.label)}
+                    {nextMatchupPreview(nextMatchup)}
                     <MatchCard
                       matchup={matchups[index * 2 + 1]}
                       pickedId={picks[matchups[index * 2 + 1].id]}
@@ -353,13 +353,9 @@ function MobileBracketBoard({
     );
   }
 
-  function nextMatchupPreview(matchup: BracketMatchup, roundLabel: string) {
+  function nextMatchupPreview(matchup: BracketMatchup) {
     return (
       <div className={styles.mobileNextMatchupPreview}>
-        <span>
-          <ChevronRight size={14} aria-hidden="true" />
-          Advances to {roundLabel}
-        </span>
         <MatchCard
           matchup={matchup}
           pickedId={picks[matchup.id]}
@@ -407,10 +403,7 @@ function MobileBracketBoard({
                     `${REGION_NAMES[pairing[0]]} Region`,
                     firstMatchup,
                   )}
-                  {nextMatchupPreview(
-                    bracket.finalFour[index],
-                    "Final Four",
-                  )}
+                  {nextMatchupPreview(bracket.finalFour[index])}
                   {labeledMatchup(
                     `${REGION_NAMES[pairing[1]]} Region`,
                     secondMatchup,
@@ -440,7 +433,7 @@ function MobileBracketBoard({
                   .join(" vs. "),
                 bracket.finalFour[0],
               )}
-              {nextMatchupPreview(bracket.championship, "Championship")}
+              {nextMatchupPreview(bracket.championship)}
               {labeledMatchup(
                 model.finalFourPairings[1]
                   .map((region) => REGION_NAMES[region])
