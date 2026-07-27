@@ -121,6 +121,10 @@
   box-shadow: 0 20px 55px rgba(0, 0, 0, 0.24);
 }
 
+.mobileProgressCard {
+  display: none;
+}
+
 .bracketSelector {
   margin-bottom: 17px;
   padding-bottom: 15px;
@@ -866,22 +870,146 @@
     width: 92px;
   }
 
-  .hero,
   .bracketToolbar {
     grid-template-columns: 1fr;
   }
 
   .hero {
-    gap: 25px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 10px;
     padding-top: 45px;
+  }
+
+  .hero > div:first-child {
+    grid-column: 1 / -1;
+    margin-bottom: 15px;
   }
 
   .hero h1 {
     font-size: clamp(37px, 12vw, 58px);
   }
 
+  .identityCard,
+  .mobileProgressCard {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid #19384a;
+    border-radius: 13px;
+    background: linear-gradient(
+      145deg,
+      rgba(10, 26, 37, 0.96),
+      rgba(5, 14, 21, 0.98)
+    );
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.2);
+  }
+
+  .mobileProgressCard {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .mobileProgressCard .progressCopy {
+    width: 100%;
+  }
+
+  .mobileProgressCard .progressCopy > span {
+    margin-bottom: 10px;
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .mobileProgressCard .progressTrack {
+    height: 6px;
+  }
+
+  .mobileProgressCard .entryCountdown {
+    align-items: flex-start;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  .identityCard .bracketSelector {
+    margin-bottom: 12px;
+    padding-bottom: 11px;
+  }
+
+  .identityCard .bracketSelector label,
+  .identityCard > span {
+    font-size: 8px;
+    letter-spacing: 0.12em;
+  }
+
+  .identityCard .bracketSelectorRow {
+    grid-template-columns: minmax(0, 1fr) 30px 30px;
+    gap: 5px;
+  }
+
+  .identityCard
+    .bracketSelectorRow:not(:has(.deleteBracketButton)) {
+    grid-template-columns: minmax(0, 1fr) 30px;
+  }
+
+  .identityCard .bracketSelectorRow select {
+    height: 34px;
+    padding: 0 24px 0 7px;
+    font-size: 11px;
+  }
+
+  .identityCard .displayNameButton {
+    gap: 6px;
+  }
+
+  .identityCard .displayNameButton strong {
+    font-size: 15px;
+  }
+
+  .identityCard small {
+    display: block;
+    overflow: hidden;
+    font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .identityCard form {
+    grid-template-columns: minmax(0, 1fr) 30px 30px;
+    gap: 5px;
+  }
+
+  .identityCard .addBracketForm {
+    grid-template-columns: 1fr;
+  }
+
+  .identityCard .addBracketForm button {
+    min-height: 34px;
+    justify-content: center;
+    padding-inline: 7px;
+    font-size: 10px;
+  }
+
+  .identityCard input {
+    height: 34px;
+    font-size: 12px;
+  }
+
+  .mobileProgressCard .toolbarActions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .mobileProgressCard .toolbarActions > button {
+    min-width: 0;
+    height: 34px;
+    padding: 0 7px;
+    font-size: 10px;
+  }
+
   .bracketToolbar {
-    gap: 14px;
+    display: none;
   }
 
   .toolbarActions {
@@ -1394,7 +1522,7 @@
   }
 
   .identityCard {
-    padding: 16px;
+    padding: 10px;
   }
 
   .mobileBracketFrame {

@@ -764,6 +764,69 @@ export default function BracketPage() {
           )}
           <small>Signed in as @{username}</small>
         </div>
+
+        <div
+          className={styles.mobileProgressCard}
+          aria-label="Bracket progress"
+        >
+          <div className={styles.progressCopy}>
+            <span>{completedPicks} of {TOTAL_PICKS} picks complete</span>
+            <div className={styles.progressTrack}>
+              <i
+                style={{
+                  width: `${(completedPicks / TOTAL_PICKS) * 100}%`,
+                }}
+              />
+            </div>
+            {millisecondsUntilLock !== null && !locked && (
+              <time
+                className={styles.entryCountdown}
+                dateTime={entryDeadline ?? undefined}
+              >
+                <Clock3 size={14} aria-hidden="true" />
+                Entries lock in {countdownLabel(millisecondsUntilLock)}
+              </time>
+            )}
+          </div>
+          <div className={styles.toolbarActions}>
+            <button
+              type="button"
+              className={styles.printButton}
+              onClick={() => window.print()}
+              aria-label="Print bracket"
+            >
+              <Printer size={16} aria-hidden="true" />
+              Print bracket
+            </button>
+            <button
+              type="button"
+              onClick={saveBracket}
+              disabled={locked || saving || !dirty}
+              aria-label={
+                locked
+                  ? "Entries locked"
+                  : saving
+                    ? "Saving bracket"
+                    : dirty
+                      ? "Save bracket"
+                      : "Bracket saved"
+              }
+            >
+              {saving ? (
+                <LoaderCircle className={styles.spinner} size={16} />
+              ) : (
+                <Save size={16} />
+              )}
+              {locked
+                ? "Entries locked"
+                : saving
+                  ? "Saving…"
+                  : dirty
+                    ? "Save bracket"
+                    : "Saved"}
+            </button>
+          </div>
+        </div>
       </section>
 
       <section className={styles.bracketToolbar} aria-label="Bracket progress">
