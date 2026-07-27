@@ -209,6 +209,14 @@
   grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
+.finalFourMatchup:first-child {
+  transform: translateX(-30px);
+}
+
+.finalFourMatchup:last-child {
+  transform: translateX(30px);
+}
+
 .finalFourMatchup span,
 .championshipMatchup span,
 .championSlot span {
