@@ -657,50 +657,103 @@ export default function BracketPage() {
         <div className={styles.identityCard}>
           <div className={styles.bracketSelector}>
             <label htmlFor="family-bracket">FAMILY BRACKET</label>
-            <div className={styles.bracketSelectorRow}>
-              <select
-                id="family-bracket"
-                value={activeBracketId}
-                onChange={(event) => selectBracket(event.target.value)}
-                aria-label="Choose a family bracket"
+            {editingName ? (
+              <form
+                className={styles.renameBracketForm}
+                onSubmit={saveDisplayName}
               >
-                {savedBrackets.map((savedBracket) => (
-                  <option value={savedBracket.id} key={savedBracket.id}>
-                    {savedBracket.display_name}
-                    {savedBracket.is_primary ? " (Primary)" : ""}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className={styles.bracketIconButton}
-                onClick={() => {
-                  setShowAddBracket((visible) => !visible);
-                  setNewBracketName("");
-                }}
-                disabled={locked}
-                aria-label="Add another family bracket"
-                title="Add another family bracket"
-              >
-                <Plus size={17} aria-hidden="true" />
-              </button>
-              {!activeBracket?.is_primary && savedBrackets.length > 1 && (
+                <input
+                  id="family-bracket"
+                  type="text"
+                  value={displayNameDraft}
+                  onChange={(event) =>
+                    setDisplayNameDraft(event.target.value)
+                  }
+                  maxLength={50}
+                  aria-label="Family bracket name"
+                  autoFocus
+                />
                 <button
-                  type="button"
-                  className={`${styles.bracketIconButton} ${styles.deleteBracketButton}`}
-                  onClick={() => void deleteBracket()}
-                  disabled={locked || deletingBracket}
-                  aria-label={`Delete ${displayName} bracket`}
-                  title="Delete this extra bracket"
+                  type="submit"
+                  disabled={savingName}
+                  aria-label="Save bracket name"
                 >
-                  {deletingBracket ? (
+                  {savingName ? (
                     <LoaderCircle className={styles.spinner} size={17} />
                   ) : (
-                    <Trash2 size={17} aria-hidden="true" />
+                    <Check size={17} />
                   )}
                 </button>
-              )}
-            </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDisplayNameDraft(displayName);
+                    setEditingName(false);
+                  }}
+                  aria-label="Cancel bracket name change"
+                >
+                  <X size={17} />
+                </button>
+              </form>
+            ) : (
+              <div className={styles.bracketSelectorRow}>
+                <select
+                  id="family-bracket"
+                  value={activeBracketId}
+                  onChange={(event) => selectBracket(event.target.value)}
+                  aria-label="Choose a family bracket"
+                >
+                  {savedBrackets.map((savedBracket) => (
+                    <option value={savedBracket.id} key={savedBracket.id}>
+                      {savedBracket.display_name}
+                      {savedBracket.is_primary ? " (Primary)" : ""}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className={styles.bracketIconButton}
+                  onClick={() => {
+                    setShowAddBracket(false);
+                    setEditingName(true);
+                  }}
+                  disabled={locked}
+                  aria-label={`Rename ${displayName} bracket`}
+                  title="Rename this bracket"
+                >
+                  <Pencil size={15} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className={styles.bracketIconButton}
+                  onClick={() => {
+                    setShowAddBracket((visible) => !visible);
+                    setNewBracketName("");
+                  }}
+                  disabled={locked}
+                  aria-label="Add another family bracket"
+                  title="Add another family bracket"
+                >
+                  <Plus size={17} aria-hidden="true" />
+                </button>
+                {!activeBracket?.is_primary && savedBrackets.length > 1 && (
+                  <button
+                    type="button"
+                    className={`${styles.bracketIconButton} ${styles.deleteBracketButton}`}
+                    onClick={() => void deleteBracket()}
+                    disabled={locked || deletingBracket}
+                    aria-label={`Delete ${displayName} bracket`}
+                    title="Delete this extra bracket"
+                  >
+                    {deletingBracket ? (
+                      <LoaderCircle className={styles.spinner} size={17} />
+                    ) : (
+                      <Trash2 size={17} aria-hidden="true" />
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {showAddBracket && (
@@ -726,42 +779,6 @@ export default function BracketPage() {
             </form>
           )}
 
-          <span>BRACKET DISPLAY NAME</span>
-          {editingName ? (
-            <form onSubmit={saveDisplayName}>
-              <input
-                type="text"
-                value={displayNameDraft}
-                onChange={(event) => setDisplayNameDraft(event.target.value)}
-                maxLength={50}
-                aria-label="Display name"
-                autoFocus
-              />
-              <button type="submit" disabled={savingName} aria-label="Save display name">
-                {savingName ? <LoaderCircle className={styles.spinner} size={17} /> : <Check size={17} />}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setDisplayNameDraft(displayName);
-                  setEditingName(false);
-                }}
-                aria-label="Cancel display name change"
-              >
-                <X size={17} />
-              </button>
-            </form>
-          ) : (
-            <button
-              type="button"
-              className={styles.displayNameButton}
-              onClick={() => setEditingName(true)}
-              disabled={locked}
-            >
-              <strong>{displayName}</strong>
-              <Pencil size={15} aria-hidden="true" />
-            </button>
-          )}
           <small>Signed in as @{username}</small>
         </div>
 

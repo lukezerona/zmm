@@ -83,7 +83,6 @@
 }
 
 .kicker,
-.identityCard > span,
 .bracketIntro > span {
   color: #31baff;
   font-size: 10px;
@@ -142,8 +141,12 @@
 
 .bracketSelectorRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 38px 38px;
+  grid-template-columns: minmax(0, 1fr) repeat(3, 38px);
   gap: 7px;
+}
+
+.bracketSelectorRow:not(:has(.deleteBracketButton)) {
+  grid-template-columns: minmax(0, 1fr) repeat(2, 38px);
 }
 
 .bracketSelectorRow select {
@@ -174,8 +177,7 @@
   border-color: #663140;
 }
 
-.bracketIconButton:disabled,
-.displayNameButton:disabled {
+.bracketIconButton:disabled {
   cursor: not-allowed;
   opacity: 0.48;
 }
@@ -185,6 +187,10 @@
   grid-template-columns: minmax(0, 1fr) 36px 36px;
   gap: 7px;
   margin: 8px 0 7px;
+}
+
+.identityCard .renameBracketForm {
+  margin: 0;
 }
 
 .identityCard .addBracketForm {
@@ -226,34 +232,6 @@
   color: #a8c0ce;
   background: #0a1a24;
   cursor: pointer;
-}
-
-.displayNameButton {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 7px 0 5px;
-  padding: 2px 0;
-  border: 0;
-  color: #f4f8fb;
-  background: transparent;
-  cursor: text;
-  text-align: left;
-}
-
-.displayNameButton strong {
-  overflow: hidden;
-  font-size: 20px;
-  letter-spacing: -0.02em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.displayNameButton svg {
-  flex: 0 0 auto;
-  color: #37b9f8;
 }
 
 .identityCard small {
@@ -936,34 +914,25 @@
     padding-bottom: 11px;
   }
 
-  .identityCard .bracketSelector label,
-  .identityCard > span {
+  .identityCard .bracketSelector label {
     font-size: 8px;
     letter-spacing: 0.12em;
   }
 
   .identityCard .bracketSelectorRow {
-    grid-template-columns: minmax(0, 1fr) 30px 30px;
+    grid-template-columns: minmax(0, 1fr) repeat(3, 30px);
     gap: 5px;
   }
 
   .identityCard
     .bracketSelectorRow:not(:has(.deleteBracketButton)) {
-    grid-template-columns: minmax(0, 1fr) 30px;
+    grid-template-columns: minmax(0, 1fr) repeat(2, 30px);
   }
 
   .identityCard .bracketSelectorRow select {
     height: 34px;
     padding: 0 24px 0 7px;
     font-size: 11px;
-  }
-
-  .identityCard .displayNameButton {
-    gap: 6px;
-  }
-
-  .identityCard .displayNameButton strong {
-    font-size: 15px;
   }
 
   .identityCard small {
