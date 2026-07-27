@@ -1079,6 +1079,13 @@
     opacity: 0;
   }
 
+  .mobileRoundSharedBackward
+    .mobileRoundOutgoing
+    .championResultRow {
+    visibility: hidden;
+    opacity: 0;
+  }
+
   .mobileRoundSharedForward
     .mobileRoundOutgoing
     [data-mobile-role="preview"],
