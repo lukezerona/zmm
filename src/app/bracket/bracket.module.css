@@ -489,13 +489,16 @@
 }
 
 .teamButton {
+  -webkit-tap-highlight-color: transparent;
   cursor: pointer;
   transition: color 130ms ease, background 130ms ease;
 }
 
-.teamButton:not(:disabled):hover {
-  color: white;
-  background: rgba(32, 169, 233, 0.13);
+@media (hover: hover) and (pointer: fine) {
+  .teamButton:not(:disabled):hover {
+    color: white;
+    background: rgba(32, 169, 233, 0.13);
+  }
 }
 
 .teamButton:disabled {
