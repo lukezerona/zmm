@@ -1057,8 +1057,77 @@
 
   .mobileMatchupList {
     display: grid;
-    gap: 10px;
+    gap: 22px;
     padding: 11px;
+  }
+
+  .mobileMatchupBranch {
+    min-width: 0;
+    display: grid;
+    gap: 0;
+  }
+
+  .mobileMatchupBranch + .mobileMatchupBranch {
+    padding-top: 20px;
+    border-top: 1px solid rgba(48, 149, 198, 0.16);
+  }
+
+  .mobileMatchupBranch > .matchup,
+  .mobileLabeledMatchup {
+    width: calc(100% - 30px);
+  }
+
+  .mobileNextMatchupPreview {
+    position: relative;
+    width: calc(100% - 30px);
+    display: grid;
+    gap: 7px;
+    margin: 13px 0 13px 30px;
+    padding: 10px 0;
+  }
+
+  .mobileNextMatchupPreview::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -15px;
+    width: 1px;
+    background: linear-gradient(
+      transparent,
+      rgba(52, 187, 247, 0.38) 22%,
+      rgba(52, 187, 247, 0.38) 78%,
+      transparent
+    );
+    content: "";
+  }
+
+  .mobileNextMatchupPreview > span,
+  .mobileLabeledMatchup > span {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    color: #4fc8ff;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .mobileNextMatchupPreview > .matchup {
+    border-color: #286584;
+    background: #071b27;
+    box-shadow:
+      0 0 0 1px rgba(43, 171, 231, 0.08),
+      0 8px 22px rgba(0, 0, 0, 0.28);
+  }
+
+  .mobileLabeledMatchup {
+    display: grid;
+    gap: 7px;
+  }
+
+  .mobileLabeledMatchup > span {
+    color: #7799aa;
   }
 
   .mobileBracketFrame .matchup {
@@ -1173,6 +1242,16 @@
 
   .mobileBracketFrame {
     padding: 11px;
+  }
+
+  .mobileMatchupBranch > .matchup,
+  .mobileLabeledMatchup,
+  .mobileNextMatchupPreview {
+    width: calc(100% - 22px);
+  }
+
+  .mobileNextMatchupPreview {
+    margin-left: 22px;
   }
 
   .mobileRoundHeader {
