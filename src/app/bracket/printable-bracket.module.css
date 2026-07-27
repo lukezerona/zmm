@@ -222,7 +222,7 @@
 
 .championSlot {
   position: absolute;
-  bottom: calc(100% + 16px);
+  bottom: calc(100% + 50px);
   left: 0;
   width: 100%;
   display: grid;
