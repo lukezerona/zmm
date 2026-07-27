@@ -538,6 +538,10 @@
   overflow: hidden;
 }
 
+.mobileBracketFrame {
+  display: none;
+}
+
 .bracketCanvas {
   position: relative;
   width: 100%;
@@ -889,45 +893,243 @@
     padding-top: 36px;
   }
 
-  .bracketCanvas {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    padding: 12px;
+  .bracketCanvasFrame {
+    display: none;
   }
 
-  .integratedFinals {
-    position: static;
-    width: 100%;
+  .mobileBracketFrame {
+    position: relative;
+    z-index: 1;
+    width: min(calc(100% - 40px), 1680px);
+    display: block;
+    margin-inline: auto;
+    padding: 14px;
+    border: 1px solid #173c51;
+    border-radius: 18px;
+    background: linear-gradient(
+      155deg,
+      rgba(8, 23, 33, 0.98),
+      rgba(4, 12, 18, 0.99)
+    );
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.24);
+    touch-action: pan-y;
+  }
+
+  .mobileRoundHeader {
+    min-height: 92px;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: auto auto;
+    grid-template-columns: 46px minmax(0, 1fr) 46px;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0 13px;
+    border-bottom: 1px solid rgba(65, 174, 229, 0.18);
+  }
+
+  .mobileRoundHeader > button {
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #245b78;
+    border-radius: 50%;
+    color: #87d8fb;
+    background: #081a24;
+    cursor: pointer;
+  }
+
+  .mobileRoundHeader > button:disabled {
+    color: #385564;
+    border-color: #173241;
+    cursor: default;
+    opacity: 0.55;
+  }
+
+  .mobileRoundHeader > div {
+    min-width: 0;
+    text-align: center;
+  }
+
+  .mobileRoundHeader span {
+    color: #32baff;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.16em;
+  }
+
+  .mobileRoundHeader h2 {
+    margin-top: 3px;
+    font-size: 26px;
+    letter-spacing: -0.04em;
+  }
+
+  .mobileRoundHeader p {
+    margin-top: 3px;
+    color: #7394a6;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .mobileRoundHeader p i {
+    padding-inline: 3px;
+    color: #2eaeea;
+    font-style: normal;
+  }
+
+  .mobileRoundSteps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding-top: 14px;
+  }
+
+  .mobileRoundSteps button {
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: #244657;
+    cursor: pointer;
+    transition: width 150ms ease, background 150ms ease;
+  }
+
+  .mobileRoundSteps .activeRoundStep {
+    width: 30px;
+    background: #36bcf8;
+  }
+
+  .mobileRoundSteps .missingRoundStep {
+    outline: 2px solid #f6b84e;
+    outline-offset: 2px;
+  }
+
+  .mobileSwipeHint {
+    margin-top: 9px;
+    color: #56798b;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .mobileRoundPanel {
+    padding-top: 17px;
+    animation: mobileRoundReveal 180ms ease both;
+  }
+
+  .mobileRegionList {
+    display: grid;
+    gap: 18px;
+  }
+
+  .mobileRegion {
+    overflow: hidden;
+    border: 1px solid #173b4f;
+    border-radius: 13px;
+    background: rgba(4, 14, 21, 0.72);
+  }
+
+  .mobileRegion > header {
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 13px;
+    border-bottom: 1px solid #173849;
+    background: rgba(17, 62, 84, 0.22);
+  }
+
+  .mobileRegion > header h3 {
+    font-size: 15px;
+    letter-spacing: -0.02em;
+  }
+
+  .mobileRegion > header span {
+    color: #64899c;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .mobileMatchupList {
+    display: grid;
+    gap: 10px;
+    padding: 11px;
+  }
+
+  .mobileBracketFrame .matchup {
+    border-radius: 10px;
+  }
+
+  .mobileBracketFrame .teamButton,
+  .mobileBracketFrame .awaitingTeam {
+    min-height: 48px;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 7px;
+    padding: 7px 11px;
+  }
+
+  .mobileBracketFrame .teamButton strong,
+  .mobileBracketFrame .awaitingTeam strong {
+    font-size: 13px;
+  }
+
+  .mobileBracketFrame .teamButton span,
+  .mobileBracketFrame .awaitingTeam span {
+    font-size: 14px;
+  }
+
+  .mobileChampionship {
     gap: 14px;
-    padding: 18px 0 0;
-    border-top: 1px solid rgba(58, 158, 208, 0.22);
-    transform: none;
   }
 
-  .integratedFinals > .finalFourSlot:first-child {
-    grid-column: 1;
-    grid-row: 1;
-    align-self: stretch;
-    margin-bottom: 0;
+  .mobileChampionship > .compactMatchup > :nth-child(2),
+  .mobileChampionship > .compactMatchup > :nth-child(3) {
+    min-height: 64px;
   }
 
-  .integratedFinals > .finalFourSlot:last-child {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: stretch;
+  .mobileChampionship .championResultRow {
+    grid-template-columns: minmax(0, 1fr) 104px;
+  }
+
+  .mobileChampionship .championCard {
+    min-height: 88px;
     margin-top: 0;
   }
 
-  .integratedFinals > .championshipColumn {
-    width: min(100%, 460px);
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-self: center;
-    transform: none;
+  .mobileChampionship .totalPoints input {
+    min-height: 64px;
+  }
+
+  .mobileRoundFooter {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(65, 174, 229, 0.18);
+  }
+
+  .mobileRoundFooter button {
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid #245b78;
+    border-radius: 10px;
+    color: #9ddffb;
+    background: #081a24;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .mobileRoundFooter button:disabled {
+    color: #3e5b69;
+    border-color: #173241;
+    cursor: default;
+    opacity: 0.55;
   }
 
   .saveFooter {
@@ -945,6 +1147,7 @@
   .bracketToolbar,
   .bracketIntro,
   .bracketCanvasFrame,
+  .mobileBracketFrame,
   .regionsGrid,
   .finalStage,
   .saveFooter,
@@ -965,7 +1168,56 @@
     padding: 16px;
   }
 
-  .canvasRegionRounds {
-    gap: 4px;
+  .mobileBracketFrame {
+    padding: 11px;
+  }
+
+  .mobileRoundHeader {
+    grid-template-columns: 42px minmax(0, 1fr) 42px;
+    gap: 7px;
+  }
+
+  .mobileRoundHeader > button {
+    width: 42px;
+    height: 42px;
+  }
+
+  .mobileRoundHeader h2 {
+    font-size: 24px;
+  }
+
+  .mobileChampionship .championResultRow {
+    grid-template-columns: 1fr;
+  }
+
+  .mobileChampionship .totalPoints {
+    width: min(180px, 100%);
+    margin-inline: auto;
+  }
+
+  .mobileChampionship .totalPoints input {
+    min-height: 58px;
+  }
+}
+
+@keyframes mobileRoundReveal {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobileRoundPanel {
+    animation: none;
+  }
+
+  .mobileRoundSteps button {
+    transition: none;
   }
 }
