@@ -1017,7 +1017,49 @@
 
   .mobileRoundPanel {
     padding-top: 17px;
-    animation: mobileRoundReveal 180ms ease both;
+  }
+
+  .mobileRoundViewport {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .mobileRoundSlide {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mobileRoundTransitioning .mobileRoundSlide {
+    pointer-events: none;
+  }
+
+  .mobileRoundOutgoing {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+  }
+
+  .mobileRoundIncoming {
+    position: relative;
+    z-index: 2;
+  }
+
+  .mobileRoundExitLeft {
+    animation: mobileRoundExitLeft 430ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  .mobileRoundEnterRight {
+    animation: mobileRoundEnterRight 430ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  .mobileRoundExitRight {
+    animation: mobileRoundExitRight 430ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  .mobileRoundEnterLeft {
+    animation: mobileRoundEnterLeft 430ms cubic-bezier(0.4, 0, 0.2, 1) both;
   }
 
   .mobileRegionList {
@@ -1254,21 +1296,52 @@
   }
 }
 
-@keyframes mobileRoundReveal {
+@keyframes mobileRoundExitLeft {
   from {
-    opacity: 0;
-    transform: translateX(12px);
+    transform: translateX(0);
   }
 
   to {
-    opacity: 1;
+    transform: translateX(-110%);
+  }
+}
+
+@keyframes mobileRoundEnterRight {
+  from {
+    transform: translateX(110%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes mobileRoundExitRight {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(110%);
+  }
+}
+
+@keyframes mobileRoundEnterLeft {
+  from {
+    transform: translateX(-110%);
+  }
+
+  to {
     transform: translateX(0);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mobileRoundPanel {
-    animation: none;
+  .mobileRoundExitLeft,
+  .mobileRoundEnterRight,
+  .mobileRoundExitRight,
+  .mobileRoundEnterLeft {
+    animation-duration: 1ms;
   }
 
   .mobileRoundSteps button {

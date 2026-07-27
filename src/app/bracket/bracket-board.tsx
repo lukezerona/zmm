@@ -62,6 +62,11 @@ type RegionalRoundId = Exclude<
   MobileRound["id"],
   "finalFour" | "championship"
 >;
+type RoundTransition = {
+  fromIndex: number;
+  toIndex: number;
+  direction: -1 | 1;
+};
 
 const NEXT_REGIONAL_ROUND: Record<
   Exclude<RegionalRoundId, "elite8">,
@@ -241,6 +246,8 @@ function MobileBracketBoard({
   showMissing = false,
 }: BracketBoardProps) {
   const [activeRoundIndex, setActiveRoundIndex] = useState(0);
+  const [roundTransition, setRoundTransition] =
+    useState<RoundTransition | null>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const activeRound = MOBILE_ROUNDS[activeRoundIndex];
   const orderedRegions = [
@@ -271,13 +278,23 @@ function MobileBracketBoard({
     );
   }
 
-  function moveRound(direction: -1 | 1) {
-    setActiveRoundIndex((current) =>
-      Math.min(
-        MOBILE_ROUNDS.length - 1,
-        Math.max(0, current + direction),
-      ),
+  function showRound(targetIndex: number) {
+    const nextIndex = Math.min(
+      MOBILE_ROUNDS.length - 1,
+      Math.max(0, targetIndex),
     );
+    if (nextIndex === activeRoundIndex || roundTransition) return;
+
+    setRoundTransition({
+      fromIndex: activeRoundIndex,
+      toIndex: nextIndex,
+      direction: nextIndex > activeRoundIndex ? 1 : -1,
+    });
+    setActiveRoundIndex(nextIndex);
+  }
+
+  function moveRound(direction: -1 | 1) {
+    showRound(activeRoundIndex + direction);
   }
 
   function handleTouchStart(event: TouchEvent<HTMLElement>) {
@@ -497,6 +514,14 @@ function MobileBracketBoard({
     );
   }
 
+  function renderRound(round: MobileRound) {
+    return round.id === "finalFour"
+      ? finalFourRound()
+      : round.id === "championship"
+        ? championshipRound()
+        : regionalRound(round.id);
+  }
+
   return (
     <section
       className={styles.mobileBracketFrame}
@@ -549,7 +574,7 @@ function MobileBracketBoard({
               ]
                 .filter(Boolean)
                 .join(" ")}
-              onClick={() => setActiveRoundIndex(index)}
+              onClick={() => showRound(index)}
               aria-label={`Show ${round.label}${
                 hasMissing ? ", missing picks" : ""
               }`}
@@ -561,12 +586,55 @@ function MobileBracketBoard({
 
       <p className={styles.mobileSwipeHint}>Swipe left or right to change rounds</p>
 
-      <div className={styles.mobileRoundPanel} key={activeRound.id}>
-        {activeRound.id === "finalFour"
-          ? finalFourRound()
-          : activeRound.id === "championship"
-            ? championshipRound()
-            : regionalRound(activeRound.id)}
+      <div
+        className={`${styles.mobileRoundViewport} ${
+          roundTransition ? styles.mobileRoundTransitioning : ""
+        }`}
+        aria-live="polite"
+      >
+        {roundTransition ? (
+          <>
+            <div
+              className={[
+                styles.mobileRoundPanel,
+                styles.mobileRoundSlide,
+                styles.mobileRoundOutgoing,
+                roundTransition.direction === 1
+                  ? styles.mobileRoundExitLeft
+                  : styles.mobileRoundExitRight,
+              ].join(" ")}
+              key={`outgoing-${roundTransition.fromIndex}`}
+              aria-hidden="true"
+            >
+              {renderRound(MOBILE_ROUNDS[roundTransition.fromIndex])}
+            </div>
+            <div
+              className={[
+                styles.mobileRoundPanel,
+                styles.mobileRoundSlide,
+                styles.mobileRoundIncoming,
+                roundTransition.direction === 1
+                  ? styles.mobileRoundEnterRight
+                  : styles.mobileRoundEnterLeft,
+              ].join(" ")}
+              key={`incoming-${roundTransition.toIndex}`}
+              onAnimationEnd={(event) => {
+                if (event.target === event.currentTarget) {
+                  setRoundTransition(null);
+                }
+              }}
+            >
+              {renderRound(MOBILE_ROUNDS[roundTransition.toIndex])}
+            </div>
+          </>
+        ) : (
+          <div
+            className={`${styles.mobileRoundPanel} ${styles.mobileRoundSlide}`}
+            key={activeRound.id}
+          >
+            {renderRound(activeRound)}
+          </div>
+        )}
       </div>
 
       <nav className={styles.mobileRoundFooter} aria-label="Round navigation">
