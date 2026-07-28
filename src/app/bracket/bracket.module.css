@@ -467,8 +467,8 @@
 
 .clearPickButton {
   position: absolute;
-  top: 3px;
-  right: 3px;
+  top: 50%;
+  right: 4px;
   z-index: 3;
   width: 18px;
   height: 18px;
@@ -481,6 +481,7 @@
   background: #42131f;
   box-shadow: 0 2px 7px rgba(0, 0, 0, 0.42);
   cursor: pointer;
+  transform: translateY(-50%);
   transition:
     color 130ms ease,
     background 130ms ease,
@@ -490,7 +491,7 @@
 .clearPickButton:hover {
   color: #ffffff;
   background: #7b1f33;
-  transform: scale(1.08);
+  transform: translateY(-50%) scale(1.08);
 }
 
 .clearPickButton:focus-visible {
@@ -506,6 +507,19 @@
     0 7px 20px rgba(0, 0, 0, 0.28);
 }
 
+.teamSlot {
+  position: relative;
+  width: 100%;
+}
+
+.teamSlot + .teamSlot {
+  border-top: 1px solid #122e3e;
+}
+
+.teamSlot:has(.clearPickButton) .teamButton {
+  padding-right: 28px;
+}
+
 .teamButton,
 .awaitingTeam {
   width: 100%;
@@ -519,13 +533,6 @@
   color: #adbfca;
   background: transparent;
   text-align: left;
-}
-
-.teamButton + .teamButton,
-.teamButton + .awaitingTeam,
-.awaitingTeam + .teamButton,
-.awaitingTeam + .awaitingTeam {
-  border-top: 1px solid #122e3e;
 }
 
 .teamButton {
@@ -729,11 +736,8 @@
   border-radius: 10px;
 }
 
-.championshipColumn > .compactMatchup > :nth-child(2) {
-  min-height: 70px;
-}
-
-.championshipColumn > .compactMatchup > :nth-child(3) {
+.championshipColumn > .compactMatchup > .teamSlot > .teamButton,
+.championshipColumn > .compactMatchup > .teamSlot > .awaitingTeam {
   min-height: 70px;
 }
 
@@ -1468,8 +1472,8 @@
     gap: 14px;
   }
 
-  .mobileChampionship > .compactMatchup > :nth-child(2),
-  .mobileChampionship > .compactMatchup > :nth-child(3) {
+  .mobileChampionship > .compactMatchup > .teamSlot > .teamButton,
+  .mobileChampionship > .compactMatchup > .teamSlot > .awaitingTeam {
     min-height: 64px;
   }
 

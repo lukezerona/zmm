@@ -116,42 +116,52 @@ function MatchCard({
       <span className={styles.srOnly}>
         Round {matchup.roundNumber}, matchup {matchup.matchupIndex + 1}
       </span>
-      {hasValidPick && !readOnly ? (
-        <button
-          type="button"
-          className={styles.clearPickButton}
-          onClick={() => onClearPick(matchup.id)}
-          aria-label={`Clear pick for round ${matchup.roundNumber}, matchup ${
-            matchup.matchupIndex + 1
-          }`}
-          title="Clear this pick"
-        >
-          <X size={12} strokeWidth={3} aria-hidden="true" />
-        </button>
-      ) : null}
-      {matchup.options.map((entry, slotIndex) =>
-        entry ? (
-          <button
-            key={entry.id}
-            type="button"
-            className={`${styles.teamButton} ${
-              pickedId === entry.id ? styles.selectedTeam : ""
-            }`}
-            onClick={() => onPick(matchup.id, entry.id)}
-            aria-pressed={pickedId === entry.id}
-            disabled={readOnly}
-            title={entry.isPlayIn ? `Play-in slot: ${entry.name}` : entry.name}
+      {matchup.options.map((entry, slotIndex) => {
+        const isSelected = entry ? pickedId === entry.id : false;
+
+        return (
+          <div
+            className={styles.teamSlot}
+            key={entry?.id ?? `${matchup.id}-${slotIndex}`}
           >
-            <strong>#{entry.seed}</strong>
-            <span>{entry.name}</span>
-          </button>
-        ) : (
-          <div className={styles.awaitingTeam} key={`${matchup.id}-${slotIndex}`}>
-            <strong>—</strong>
-            <span>Awaiting pick</span>
+            {entry ? (
+              <>
+                <button
+                  type="button"
+                  className={`${styles.teamButton} ${
+                    isSelected ? styles.selectedTeam : ""
+                  }`}
+                  onClick={() => onPick(matchup.id, entry.id)}
+                  aria-pressed={isSelected}
+                  disabled={readOnly}
+                  title={
+                    entry.isPlayIn ? `Play-in slot: ${entry.name}` : entry.name
+                  }
+                >
+                  <strong>#{entry.seed}</strong>
+                  <span>{entry.name}</span>
+                </button>
+                {isSelected && !readOnly ? (
+                  <button
+                    type="button"
+                    className={styles.clearPickButton}
+                    onClick={() => onClearPick(matchup.id)}
+                    aria-label={`Clear ${entry.name} as the winner`}
+                    title={`Clear ${entry.name}`}
+                  >
+                    <X size={12} strokeWidth={3} aria-hidden="true" />
+                  </button>
+                ) : null}
+              </>
+            ) : (
+              <div className={styles.awaitingTeam}>
+                <strong>—</strong>
+                <span>Awaiting pick</span>
+              </div>
+            )}
           </div>
-        ),
-      )}
+        );
+      })}
     </article>
   );
 }
