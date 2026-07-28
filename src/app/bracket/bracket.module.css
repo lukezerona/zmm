@@ -243,9 +243,13 @@
   cursor: pointer;
 }
 
-.identityCard small {
-  color: #6d8797;
-  font-size: 11px;
+.signedInAs {
+  display: block;
+  color: #8ba8b8;
+  font-size: 14px;
+  font-weight: 720;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
 }
 
 .bracketToolbar {
@@ -989,10 +993,9 @@
     font-size: 11px;
   }
 
-  .identityCard small {
-    display: block;
+  .identityCard .signedInAs {
     overflow: hidden;
-    font-size: 9px;
+    font-size: 12px;
     text-overflow: ellipsis;
     white-space: nowrap;
   }

@@ -842,7 +842,9 @@ export default function BracketPage() {
             </form>
           )}
 
-          <small>Signed in as @{username}</small>
+          <small className={styles.signedInAs}>
+            Signed in as @{username}
+          </small>
         </div>
 
         <div
