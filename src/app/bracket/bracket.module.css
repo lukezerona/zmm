@@ -915,13 +915,14 @@
   }
 
   .hero {
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     align-items: stretch;
     gap: 10px;
     padding-top: 45px;
   }
 
   .hero > div:first-child {
+    order: 1;
     grid-column: 1 / -1;
     margin-bottom: 15px;
   }
@@ -945,10 +946,15 @@
   }
 
   .mobileProgressCard {
+    order: 2;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     gap: 10px;
+  }
+
+  .identityCard {
+    order: 3;
   }
 
   .mobileProgressCard .progressCopy {
