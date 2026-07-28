@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState, type TouchEvent } from "react";
-import { ChevronLeft, ChevronRight, Trophy } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trophy, X } from "lucide-react";
 import {
   BracketMatchup,
   DerivedBracket,
@@ -82,6 +82,7 @@ type MatchCardProps = {
   matchup: BracketMatchup;
   pickedId?: string;
   onPick: (matchupId: string, entryId: string) => void;
+  onClearPick: (matchupId: string) => void;
   compact?: boolean;
   readOnly?: boolean;
   showMissing?: boolean;
@@ -92,6 +93,7 @@ function MatchCard({
   matchup,
   pickedId,
   onPick,
+  onClearPick,
   compact = false,
   readOnly = false,
   showMissing = false,
@@ -114,6 +116,19 @@ function MatchCard({
       <span className={styles.srOnly}>
         Round {matchup.roundNumber}, matchup {matchup.matchupIndex + 1}
       </span>
+      {hasValidPick && !readOnly ? (
+        <button
+          type="button"
+          className={styles.clearPickButton}
+          onClick={() => onClearPick(matchup.id)}
+          aria-label={`Clear pick for round ${matchup.roundNumber}, matchup ${
+            matchup.matchupIndex + 1
+          }`}
+          title="Clear this pick"
+        >
+          <X size={12} strokeWidth={3} aria-hidden="true" />
+        </button>
+      ) : null}
       {matchup.options.map((entry, slotIndex) =>
         entry ? (
           <button
@@ -146,6 +161,7 @@ type RegionBracketProps = {
   bracket: DerivedBracket;
   picks: PickMap;
   onPick: (matchupId: string, entryId: string) => void;
+  onClearPick: (matchupId: string) => void;
   side: "left" | "right";
   roundDates: TournamentModel["roundDates"];
   showHeading?: boolean;
@@ -158,6 +174,7 @@ function RegionBracket({
   bracket,
   picks,
   onPick,
+  onClearPick,
   side,
   roundDates,
   showHeading = true,
@@ -216,6 +233,7 @@ function RegionBracket({
                   matchup={matchup}
                   pickedId={picks[matchup.id]}
                   onPick={onPick}
+                  onClearPick={onClearPick}
                   readOnly={readOnly}
                   showMissing={showMissing}
                 />
@@ -232,6 +250,7 @@ type BracketBoardProps = {
   bracket: DerivedBracket;
   picks: PickMap;
   onPick: (matchupId: string, entryId: string) => void;
+  onClearPick: (matchupId: string) => void;
   model: TournamentModel;
   tiebreaker: string;
   onTiebreakerChange: (value: string) => void;
@@ -243,6 +262,7 @@ function MobileBracketBoard({
   bracket,
   picks,
   onPick,
+  onClearPick,
   model,
   tiebreaker,
   onTiebreakerChange,
@@ -489,6 +509,7 @@ function MobileBracketBoard({
                       matchup={matchups[index * 2]}
                       pickedId={picks[matchups[index * 2].id]}
                       onPick={onPick}
+                      onClearPick={onClearPick}
                       readOnly={readOnly}
                       showMissing={showMissing}
                       mobileRole="current"
@@ -503,6 +524,7 @@ function MobileBracketBoard({
                       matchup={matchups[index * 2 + 1]}
                       pickedId={picks[matchups[index * 2 + 1].id]}
                       onPick={onPick}
+                      onClearPick={onClearPick}
                       readOnly={readOnly}
                       showMissing={showMissing}
                       mobileRole="current"
@@ -582,6 +604,7 @@ function MobileBracketBoard({
           matchup={matchup}
           pickedId={picks[matchup.id]}
           onPick={onPick}
+          onClearPick={onClearPick}
           compact={showChampionResult}
           readOnly={readOnly}
           showMissing={showMissing}
@@ -606,6 +629,7 @@ function MobileBracketBoard({
           matchup={matchup}
           pickedId={picks[matchup.id]}
           onPick={onPick}
+          onClearPick={onClearPick}
           readOnly={readOnly}
           showMissing={showMissing}
           mobileRole="current"
@@ -697,6 +721,7 @@ function MobileBracketBoard({
           matchup={bracket.championship}
           pickedId={picks[bracket.championship.id]}
           onPick={onPick}
+          onClearPick={onClearPick}
           compact
           readOnly={readOnly}
           showMissing={showMissing}
@@ -871,6 +896,7 @@ export function BracketBoard({
   bracket,
   picks,
   onPick,
+  onClearPick,
   model,
   tiebreaker,
   onTiebreakerChange,
@@ -891,6 +917,7 @@ export function BracketBoard({
         bracket={bracket}
         picks={picks}
         onPick={onPick}
+        onClearPick={onClearPick}
         model={model}
         tiebreaker={tiebreaker}
         onTiebreakerChange={onTiebreakerChange}
@@ -905,6 +932,7 @@ export function BracketBoard({
             bracket={bracket}
             picks={picks}
             onPick={onPick}
+            onClearPick={onClearPick}
             side="left"
             roundDates={roundDates}
             readOnly={readOnly}
@@ -915,6 +943,7 @@ export function BracketBoard({
             bracket={bracket}
             picks={picks}
             onPick={onPick}
+            onClearPick={onClearPick}
             side="right"
             roundDates={roundDates}
             readOnly={readOnly}
@@ -925,6 +954,7 @@ export function BracketBoard({
             bracket={bracket}
             picks={picks}
             onPick={onPick}
+            onClearPick={onClearPick}
             side="left"
             roundDates={roundDates}
             showHeading={false}
@@ -936,6 +966,7 @@ export function BracketBoard({
             bracket={bracket}
             picks={picks}
             onPick={onPick}
+            onClearPick={onClearPick}
             side="right"
             roundDates={roundDates}
             showHeading={false}
@@ -953,6 +984,7 @@ export function BracketBoard({
                 matchup={bracket.finalFour[0]}
                 pickedId={picks[bracket.finalFour[0].id]}
                 onPick={onPick}
+                onClearPick={onClearPick}
                 compact
                 readOnly={readOnly}
                 showMissing={showMissing}
@@ -968,6 +1000,7 @@ export function BracketBoard({
                 matchup={bracket.championship}
                 pickedId={picks[bracket.championship.id]}
                 onPick={onPick}
+                onClearPick={onClearPick}
                 compact
                 readOnly={readOnly}
                 showMissing={showMissing}
@@ -1018,6 +1051,7 @@ export function BracketBoard({
                 matchup={bracket.finalFour[1]}
                 pickedId={picks[bracket.finalFour[1].id]}
                 onPick={onPick}
+                onClearPick={onClearPick}
                 compact
                 readOnly={readOnly}
                 showMissing={showMissing}

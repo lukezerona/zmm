@@ -382,6 +382,18 @@ export default function BracketPage() {
     setMessage("");
   }
 
+  function clearWinner(matchupId: string) {
+    if (!model || locked) return;
+
+    setPicks((current) => {
+      const nextPicks = { ...current };
+      delete nextPicks[matchupId];
+      return sanitizePicks(model, nextPicks);
+    });
+    setDirty(true);
+    setMessage("");
+  }
+
   async function saveDisplayName(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const client = supabase;
@@ -954,6 +966,7 @@ export default function BracketPage() {
         bracket={bracket}
         picks={picks}
         onPick={chooseWinner}
+        onClearPick={clearWinner}
         model={model}
         tiebreaker={tiebreaker}
         onTiebreakerChange={(value) => {

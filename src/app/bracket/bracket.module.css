@@ -442,11 +442,45 @@
 }
 
 .matchup {
+  position: relative;
   overflow: hidden;
   border: 1px solid #16384a;
   border-radius: 8px;
   background: #06131c;
   box-shadow: 0 5px 14px rgba(0, 0, 0, 0.2);
+}
+
+.clearPickButton {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  z-index: 3;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255, 139, 159, 0.7);
+  border-radius: 999px;
+  color: #ffd8df;
+  background: #42131f;
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.42);
+  cursor: pointer;
+  transition:
+    color 130ms ease,
+    background 130ms ease,
+    transform 130ms ease;
+}
+
+.clearPickButton:hover {
+  color: #ffffff;
+  background: #7b1f33;
+  transform: scale(1.08);
+}
+
+.clearPickButton:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 1px;
 }
 
 .missingMatchup {
