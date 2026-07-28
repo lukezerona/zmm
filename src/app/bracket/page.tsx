@@ -661,7 +661,9 @@ export default function BracketPage() {
     setSaveSucceeded(true);
     if (remainingPicks === 0 && total !== null) {
       setShowMissingPicks(false);
-      setMessage("Bracket saved—your champion and tiebreaker are set.");
+      setMessage(
+        "Bracket saved! Please send the $10 entry fee on Venmo to @Luke-Zerona.",
+      );
       return;
     }
 
