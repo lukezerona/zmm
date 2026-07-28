@@ -1501,6 +1501,14 @@
   font-weight: 750;
 }
 
+.bracketViewerToolbar select:disabled {
+  border-color: #254655;
+  color: #718a96;
+  background: #07131a;
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
 .bracketViewerControls {
   display: flex;
   flex-direction: row !important;

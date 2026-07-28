@@ -94,14 +94,20 @@ export function TournamentBracketViewer({
           <strong>{selectedBracketName}</strong>
         </div>
         <div className={styles.bracketViewerControls}>
-          {!masterOnly && (
-            <label>
-              <span>Choose a bracket</span>
-              <select
-                value={selectedValue}
-                onChange={(event) => setSelectedValue(event.target.value)}
-              >
-                <option value={MASTER_VALUE}>Master bracket</option>
+          <label>
+            <span>Choose a bracket</span>
+            <select
+              value={selectedValue}
+              onChange={(event) => setSelectedValue(event.target.value)}
+              disabled={masterOnly}
+              title={
+                masterOnly
+                  ? "Family brackets become available after entries lock."
+                  : undefined
+              }
+            >
+              <option value={MASTER_VALUE}>Master bracket</option>
+              {!masterOnly && (
                 <optgroup label="Family brackets">
                   {orderedBrackets.map((savedBracket) => {
                     return (
@@ -115,9 +121,9 @@ export function TournamentBracketViewer({
                     );
                   })}
                 </optgroup>
-              </select>
-            </label>
-          )}
+              )}
+            </select>
+          </label>
           <button
             type="button"
             className={styles.printBracketButton}
