@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   Check,
   Clock3,
+  Copy,
   LoaderCircle,
   LogOut,
   Pencil,
@@ -90,7 +91,9 @@ export default function BracketPage() {
   const [activeBracketId, setActiveBracketId] = useState("");
   const [showAddBracket, setShowAddBracket] = useState(false);
   const [newBracketName, setNewBracketName] = useState("");
-  const [addingBracket, setAddingBracket] = useState(false);
+  const [creatingBracketMode, setCreatingBracketMode] = useState<
+    "blank" | "copy" | null
+  >(null);
   const [deletingBracket, setDeletingBracket] = useState(false);
   const [seasonYear, setSeasonYear] = useState(
     CREATION_TEST_SEASON_YEAR,
@@ -431,6 +434,10 @@ export default function BracketPage() {
     event.preventDefault();
     const client = supabase;
     const cleanName = newBracketName.trim();
+    const submitter = (event.nativeEvent as SubmitEvent)
+      .submitter as HTMLButtonElement | null;
+    const creationMode = submitter?.value === "copy" ? "copy" : "blank";
+    const copyCurrent = creationMode === "copy";
 
     if (
       !client ||
@@ -441,7 +448,21 @@ export default function BracketPage() {
       setMessage("Display names must be between 1 and 50 characters.");
       return;
     }
+    const copiedTiebreaker =
+      copyCurrent && tiebreaker !== "" ? Number(tiebreaker) : null;
     if (
+      copiedTiebreaker !== null &&
+      (!Number.isInteger(copiedTiebreaker) ||
+        copiedTiebreaker < 0 ||
+        copiedTiebreaker > 400)
+    ) {
+      setMessage(
+        "Enter a final-game total between 0 and 400 before copying this bracket.",
+      );
+      return;
+    }
+    if (
+      !copyCurrent &&
       dirty &&
       !window.confirm(
         "This bracket has unsaved changes. Create a new bracket and discard them?",
@@ -450,21 +471,21 @@ export default function BracketPage() {
       return;
     }
 
-    setAddingBracket(true);
+    setCreatingBracketMode(creationMode);
     const { data: createdBracket, error: createError } = await client
       .from("brackets")
       .insert({
         user_id: userId,
         season_year: seasonYear,
         display_name: cleanName,
-        picks: {},
-        tiebreaker_total: null,
+        picks: copyCurrent ? picks : {},
+        tiebreaker_total: copiedTiebreaker,
       })
       .select(
         "id, user_id, season_year, display_name, is_primary, picks, tiebreaker_total, created_at, updated_at",
       )
       .single();
-    setAddingBracket(false);
+    setCreatingBracketMode(null);
 
     if (createError || !createdBracket) {
       setMessage(
@@ -479,7 +500,11 @@ export default function BracketPage() {
     setSavedBrackets((current) => [...current, savedBracket]);
     setNewBracketName("");
     openSavedBracket(savedBracket);
-    setMessage(`Blank bracket created for ${savedBracket.display_name}.`);
+    setMessage(
+      copyCurrent
+        ? `Current bracket copied for ${savedBracket.display_name}.`
+        : `Blank bracket created for ${savedBracket.display_name}.`,
+    );
   }
 
   async function deleteBracket() {
@@ -768,13 +793,32 @@ export default function BracketPage() {
                 autoFocus
                 required
               />
-              <button type="submit" disabled={addingBracket}>
-                {addingBracket ? (
+              <button
+                type="submit"
+                name="creationMode"
+                value="blank"
+                disabled={creatingBracketMode !== null}
+              >
+                {creatingBracketMode === "blank" ? (
                   <LoaderCircle className={styles.spinner} size={17} />
                 ) : (
                   <Plus size={17} />
                 )}
-                Create blank bracket
+                Create blank
+              </button>
+              <button
+                type="submit"
+                name="creationMode"
+                value="copy"
+                disabled={creatingBracketMode !== null}
+                title={`Copy ${displayName}'s current picks and tiebreaker`}
+              >
+                {creatingBracketMode === "copy" ? (
+                  <LoaderCircle className={styles.spinner} size={17} />
+                ) : (
+                  <Copy size={17} />
+                )}
+                Copy current
               </button>
             </form>
           )}

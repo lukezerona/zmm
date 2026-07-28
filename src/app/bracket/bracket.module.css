@@ -194,15 +194,20 @@
 }
 
 .identityCard .addBracketForm {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: -4px 0 17px;
   padding-bottom: 15px;
   border-bottom: 1px solid #163444;
 }
 
+.identityCard .addBracketForm input {
+  grid-column: 1 / -1;
+}
+
 .identityCard .addBracketForm button {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   padding: 0 12px;
   color: white;
@@ -210,6 +215,10 @@
   font-size: 12px;
   font-weight: 850;
   white-space: nowrap;
+}
+
+.identityCard .addBracketForm button svg {
+  flex: 0 0 auto;
 }
 
 .identityCard input {
@@ -949,7 +958,7 @@
   }
 
   .identityCard .addBracketForm {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .identityCard .addBracketForm button {
