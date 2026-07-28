@@ -30,6 +30,15 @@ export type PoolBracket = {
   updated_at: string;
 };
 
+export type TournamentEntry = {
+  bracket_id: string;
+  season_year: number;
+  owner_user_id: string;
+  display_name: string;
+  joined_at: string;
+  updated_at: string;
+};
+
 export type LeaderboardEntry = {
   bracketId: string;
   ownerUserId: string;

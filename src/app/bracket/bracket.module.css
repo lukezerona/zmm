@@ -47,6 +47,17 @@
   gap: 8px;
 }
 
+.tournamentCentralButton {
+  border-color: rgba(47, 174, 231, 0.42) !important;
+  color: #bceaff !important;
+  background: rgba(10, 91, 128, 0.22) !important;
+}
+
+.tournamentCentralButton:hover {
+  border-color: rgba(73, 201, 255, 0.72) !important;
+  color: #ffffff !important;
+}
+
 .header button,
 .loading button {
   display: inline-flex;
@@ -1597,6 +1608,10 @@
   .header button {
     padding: 9px 11px;
     font-size: 11px;
+  }
+
+  .tournamentCentralButton span {
+    display: none;
   }
 
   .identityCard {

@@ -12,7 +12,10 @@ import {
   Trophy,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { getTournamentLifecycle } from "@/lib/tournament-lifecycle";
+import {
+  getTournamentLifecycle,
+  TournamentLifecycle,
+} from "@/lib/tournament-lifecycle";
 import {
   EspnGameRow,
   PickMap,
@@ -23,10 +26,12 @@ import { buildTournamentModel, sanitizePicks } from "../bracket/bracket-utils";
 import { AccountMenu } from "./account-menu";
 import { Leaderboard } from "./leaderboard";
 import { TournamentBracketViewer } from "./tournament-bracket-viewer";
+import { TournamentLobby } from "./tournament-lobby";
 import { TournamentViewSwitcher } from "./view-switcher";
 import {
   PoolBracket,
   PoolProfile,
+  TournamentEntry,
   TournamentGame,
 } from "./tournament-types";
 import { buildLeaderboard } from "./tournament-utils";
@@ -72,8 +77,10 @@ export default function MarchMadnessPage() {
   const [profile, setProfile] = useState<PoolProfile | null>(null);
   const [profiles, setProfiles] = useState<PoolProfile[]>([]);
   const [brackets, setBrackets] = useState<PoolBracket[]>([]);
+  const [entries, setEntries] = useState<TournamentEntry[]>([]);
   const [games, setGames] = useState<TournamentGame[]>([]);
   const [model, setModel] = useState<TournamentModel | null>(null);
+  const [lifecycle, setLifecycle] = useState<TournamentLifecycle | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -114,20 +121,102 @@ export default function MarchMadnessPage() {
         return false;
       }
 
-      if (lifecycle.phase === "picks_open") {
-        router.replace("/bracket");
+      const lobbyPhase =
+        lifecycle.phase === "setup" || lifecycle.phase === "picks_open";
+      const activeSeasonYear = lobbyPhase
+        ? (lifecycle.configuredSeasonYear ?? lifecycle.seasonYear)
+        : (lifecycle.seasonYear ?? lifecycle.configuredSeasonYear);
+      if (activeSeasonYear === null) {
+        if (showPageError && mountedRef.current) {
+          setError("The next tournament season is not configured yet.");
+        }
+        return false;
+      }
+
+      seasonYearRef.current = activeSeasonYear;
+
+      if (
+        lifecycle.phase === "setup" ||
+        lifecycle.phase === "picks_open"
+      ) {
+        const [profilesResult, entriesResult, bracketsResult] =
+          await Promise.all([
+            client
+              .from("profiles")
+              .select("user_id, username")
+              .order("username"),
+            client
+              .from("tournament_entries")
+              .select(
+                "bracket_id, season_year, owner_user_id, display_name, joined_at, updated_at",
+              )
+              .eq("season_year", activeSeasonYear)
+              .order("joined_at")
+              .order("bracket_id"),
+            client
+              .from("brackets")
+              .select(
+                "id, user_id, season_year, display_name, is_primary, picks, tiebreaker_total, updated_at",
+              )
+              .eq("season_year", activeSeasonYear)
+              .eq("user_id", userData.user.id)
+              .order("is_primary", { ascending: false })
+              .order("created_at"),
+          ]);
+
+        if (
+          profilesResult.error ||
+          entriesResult.error ||
+          bracketsResult.error
+        ) {
+          console.error("[dashboard] Could not load tournament lobby", {
+            profiles: profilesResult.error?.message,
+            entries: entriesResult.error?.message,
+            brackets: bracketsResult.error?.message,
+          });
+          if (showPageError && mountedRef.current) {
+            setError("Tournament Central is temporarily unavailable.");
+          }
+          return false;
+        }
+
+        const loadedProfiles = profilesResult.data as PoolProfile[];
+        const currentProfile = loadedProfiles.find(
+          (candidate) => candidate.user_id === userData.user.id,
+        );
+        if (!currentProfile) {
+          router.replace("/accept-invite");
+          return false;
+        }
+
+        if (!mountedRef.current) return false;
+        setUserId(userData.user.id);
+        setIsCommissioner(
+          userData.user.app_metadata?.role === "commissioner",
+        );
+        setProfile(currentProfile);
+        setProfiles(loadedProfiles);
+        setEntries(entriesResult.data as TournamentEntry[]);
+        setBrackets(
+          (bracketsResult.data as RawBracket[]).map((bracket) => ({
+            ...bracket,
+            picks: pickMap(bracket.picks),
+          })),
+        );
+        setGames([]);
+        setModel(null);
+        setLifecycle(lifecycle);
+        setLastUpdated(new Date());
+        setError("");
         return true;
       }
 
-      if (lifecycle.seasonYear === null || !lifecycle.fieldReady) {
+      if (!lifecycle.fieldReady) {
         if (showPageError && mountedRef.current) {
           setError("The tournament bracket is not ready yet.");
         }
         return false;
       }
-
-      const activeSeasonYear = lifecycle.seasonYear;
-      seasonYearRef.current = activeSeasonYear;
 
       const [profilesResult, bracketsResult, gamesResult, pairingResult] =
         await Promise.all([
@@ -204,9 +293,11 @@ export default function MarchMadnessPage() {
         );
         setProfile(currentProfile);
         setProfiles(loadedProfiles);
+        setEntries([]);
         setBrackets(loadedBrackets);
         setGames(loadedGames);
         setModel(tournament);
+        setLifecycle(lifecycle);
         setLastUpdated(new Date());
         setError("");
         return true;
@@ -236,9 +327,11 @@ export default function MarchMadnessPage() {
       return false;
     }
 
-    if (lifecycle.phase === "picks_open") {
-      router.replace("/bracket");
-      return true;
+    if (
+      lifecycle.phase === "setup" ||
+      lifecycle.phase === "picks_open"
+    ) {
+      return fetchDashboard(false);
     }
 
     if (
@@ -294,7 +387,7 @@ export default function MarchMadnessPage() {
       console.error("[dashboard] Tournament game refresh failed", refreshError);
       return false;
     }
-  }, [fetchDashboard, router]);
+  }, [fetchDashboard]);
 
   const requestRefresh = useCallback(
     async (kind: RefreshKind, initial = false) => {
@@ -418,6 +511,15 @@ export default function MarchMadnessPage() {
         { event: "*", schema: "public", table: "espn_games" },
         scheduleGamesRefresh,
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "tournament_entries",
+        },
+        () => void requestRefresh("dashboard"),
+      )
       .subscribe((status) => {
         if (!mountedRef.current) return;
         if (status === "SUBSCRIBED") {
@@ -487,6 +589,8 @@ export default function MarchMadnessPage() {
       : liveUpdateStatus === "updating"
         ? styles.liveUpdating
         : styles.liveReconnecting;
+  const lobbyMode =
+    lifecycle?.phase === "setup" || lifecycle?.phase === "picks_open";
 
   async function signOut() {
     await supabase?.auth.signOut();
@@ -503,7 +607,7 @@ export default function MarchMadnessPage() {
     );
   }
 
-  if (error || !profile || !model) {
+  if (error || !profile || !lifecycle || (!lobbyMode && !model)) {
     return (
       <main className={styles.loading}>
         <Trophy size={38} />
@@ -534,7 +638,10 @@ export default function MarchMadnessPage() {
             priority
           />
         </a>
-        <TournamentViewSwitcher activeView="brackets" />
+        <TournamentViewSwitcher
+          activeView="brackets"
+          spreadsheetAvailable={!lobbyMode}
+        />
         <AccountMenu
           profile={profile}
           isCommissioner={isCommissioner}
@@ -542,6 +649,22 @@ export default function MarchMadnessPage() {
         />
       </header>
 
+      {lobbyMode ? (
+        <TournamentLobby
+          lifecycle={lifecycle}
+          seasonYear={
+            lifecycle.configuredSeasonYear ??
+            lifecycle.seasonYear ??
+            new Date().getFullYear()
+          }
+          profile={profile}
+          entries={entries}
+          profiles={profiles}
+          ownBrackets={brackets}
+          userId={userId}
+        />
+      ) : (
+        <>
       <section className={styles.hero} id="top">
         <div>
           <h1>
@@ -579,7 +702,7 @@ export default function MarchMadnessPage() {
       >
         <div className={styles.bracketPane} id="brackets">
           <TournamentBracketViewer
-            model={model}
+            model={model!}
             games={games}
             brackets={brackets}
             currentUserId={userId}
@@ -637,6 +760,8 @@ export default function MarchMadnessPage() {
         </aside>
       </section>
 
+        </>
+      )}
     </main>
   );
 }

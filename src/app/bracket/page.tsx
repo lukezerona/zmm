@@ -7,6 +7,7 @@ import {
   Check,
   Clock3,
   Copy,
+  LayoutDashboard,
   LoaderCircle,
   LogOut,
   Pencil,
@@ -757,6 +758,20 @@ export default function BracketPage() {
           priority
         />
         <div className={styles.headerActions}>
+          <button
+            type="button"
+            className={styles.tournamentCentralButton}
+            onClick={() =>
+              window.open(
+                "/march-madness",
+                "_blank",
+                "noopener,noreferrer",
+              )
+            }
+          >
+            <LayoutDashboard size={17} aria-hidden="true" />
+            <span>Tournament Central</span>
+          </button>
           {isCommissioner && (
             <button type="button" onClick={openCommissioner}>
               <ShieldCheck size={17} /> Commissioner
