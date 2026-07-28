@@ -115,8 +115,7 @@
   grid-row: 1;
 }
 
-.kicker,
-.bracketIntro > span {
+.kicker {
   color: #31baff;
   font-size: 10px;
   font-weight: 900;
@@ -409,6 +408,15 @@
 
 .bracketIntro {
   padding: 48px 0 18px;
+}
+
+.bracketIntro h1 {
+  margin: 0;
+  color: #f5fbff;
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 1;
 }
 
 .finalHeading h2 {

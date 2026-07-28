@@ -1112,7 +1112,7 @@ export default function BracketPage() {
       )}
 
       <section className={styles.bracketIntro}>
-        <span>MAKE YOUR PICKS</span>
+        <h1>Make your picks</h1>
       </section>
 
       <BracketBoard
