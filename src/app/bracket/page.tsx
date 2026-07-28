@@ -476,11 +476,10 @@ export default function BracketPage() {
     if (
       copiedTiebreaker !== null &&
       (!Number.isInteger(copiedTiebreaker) ||
-        copiedTiebreaker < 0 ||
-        copiedTiebreaker > 400)
+        copiedTiebreaker < 0)
     ) {
       setMessage(
-        "Enter a final-game total between 0 and 400 before copying this bracket.",
+        "Enter a nonnegative whole-number final-game total before copying this bracket.",
       );
       return;
     }
@@ -584,9 +583,9 @@ export default function BracketPage() {
     }
 
     const total = tiebreaker === "" ? null : Number(tiebreaker);
-    if (total !== null && (!Number.isInteger(total) || total < 0 || total > 400)) {
+    if (total !== null && (!Number.isInteger(total) || total < 0)) {
       setShowMissingPicks(true);
-      setMessage("Enter a final-game total between 0 and 400.");
+      setMessage("Enter a nonnegative whole-number final-game total.");
       return;
     }
 

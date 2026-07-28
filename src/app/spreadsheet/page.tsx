@@ -443,9 +443,7 @@ export default function SpreadsheetPage() {
   const projectedTiebreakerTotal = useMemo(() => {
     if (rainManTiebreaker === "") return null;
     const total = Number(rainManTiebreaker);
-    return Number.isInteger(total) && total >= 0 && total <= 400
-      ? total
-      : null;
+    return Number.isInteger(total) && total >= 0 ? total : null;
   }, [rainManTiebreaker]);
   const projectedLeaderboard = useMemo(
     () =>
@@ -794,7 +792,7 @@ export default function SpreadsheetPage() {
                       className={styles.rainManTiebreaker}
                       type="number"
                       min="0"
-                      max="400"
+                      step="1"
                       inputMode="numeric"
                       value={rainManTiebreaker}
                       onChange={(event) =>

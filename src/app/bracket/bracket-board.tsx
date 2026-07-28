@@ -581,7 +581,7 @@ function MobileBracketBoard({
           <input
             type="number"
             min="0"
-            max="400"
+            step="1"
             inputMode="numeric"
             value={tiebreaker}
             onChange={(event) => onTiebreakerChange(event.target.value)}
@@ -1036,7 +1036,7 @@ export function BracketBoard({
                   <input
                     type="number"
                     min="0"
-                    max="400"
+                    step="1"
                     inputMode="numeric"
                     value={tiebreaker}
                     onChange={(event) =>
