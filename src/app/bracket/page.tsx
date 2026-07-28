@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Check,
@@ -85,6 +85,7 @@ function countdownLabel(milliseconds: number) {
 
 export default function BracketPage() {
   const router = useRouter();
+  const allowUnsavedExitRef = useRef(false);
   const [userId, setUserId] = useState("");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -119,6 +120,19 @@ export default function BracketPage() {
   const [error, setError] = useState("");
   const [showPrintOptions, setShowPrintOptions] = useState(false);
   const [printMode, setPrintMode] = useState<PrintBracketMode>("blank");
+
+  useEffect(() => {
+    if (!dirty) return;
+
+    function warnBeforeLeaving(event: BeforeUnloadEvent) {
+      if (allowUnsavedExitRef.current) return;
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [dirty]);
 
   useEffect(() => {
     let active = true;
@@ -656,7 +670,26 @@ export default function BracketPage() {
   }
 
   async function signOut() {
-    await supabase?.auth.signOut();
+    if (
+      dirty &&
+      !window.confirm(
+        "This bracket has unsaved changes. Sign out and discard them?",
+      )
+    ) {
+      return;
+    }
+
+    const client = supabase;
+    if (!client) return;
+
+    allowUnsavedExitRef.current = true;
+    const { error: signOutError } = await client.auth.signOut();
+    if (signOutError) {
+      allowUnsavedExitRef.current = false;
+      setMessage("We couldn’t sign you out. Please try again.");
+      return;
+    }
+
     router.replace("/");
     router.refresh();
   }
