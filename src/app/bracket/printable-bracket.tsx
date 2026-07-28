@@ -55,6 +55,14 @@ function subscribeToClient() {
   return () => {};
 }
 
+function isPhonePrintSource() {
+  const shortestScreenSide = Math.min(window.screen.width, window.screen.height);
+  return (
+    shortestScreenSide <= 600 &&
+    window.matchMedia("(pointer: coarse)").matches
+  );
+}
+
 function centerFor(index: number, count: number) {
   return ((index + 0.5) / count) * 100;
 }
@@ -290,9 +298,10 @@ export function PrintableBracket({
   if (!canUseDocument) return null;
 
   const roundDates = model.roundDates;
+  const printDevice = isPhonePrintSource() ? "phone" : "desktop";
 
   return createPortal(
-    <div id="zmm-print-root">
+    <div id="zmm-print-root" data-print-device={printDevice}>
       <article className={styles.sheet}>
         <header className={styles.roundHeaders}>
           {ROUND_HEADERS.map(([label, dateKey], index) => (

@@ -353,6 +353,54 @@
     print-color-adjust: exact;
   }
 
+  :global(#zmm-print-root[data-print-device="phone"]) {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 10.6in;
+    height: 8.1in;
+    max-width: none;
+    max-height: none;
+  }
+
+  :global(#zmm-print-root[data-print-device="phone"]) .sheet {
+    width: 10.6in;
+    height: 8.1in;
+  }
+
+  :global(#zmm-print-root[data-print-device="phone"]) .firstRoundTeam {
+    grid-template-columns: 20px minmax(0, 1fr);
+    padding-inline: 1px;
+  }
+
+  :global(#zmm-print-root[data-print-device="phone"])
+    .region:not(.regionRight)
+    .firstRoundMatchup {
+    left: 0 !important;
+    width: 28% !important;
+  }
+
+  :global(#zmm-print-root[data-print-device="phone"])
+    .regionRight
+    .firstRoundMatchup {
+    left: 72% !important;
+    width: 28% !important;
+  }
+
+  :global(#zmm-print-root[data-print-device="phone"]) .firstRoundTeam span {
+    font-size: 6pt;
+    letter-spacing: -0.01em;
+  }
+
+  :global(#zmm-print-root[data-print-device="phone"]) .filledMatchup > div {
+    grid-template-columns: 17px minmax(0, 1fr);
+    padding-inline: 1px;
+  }
+
+  :global(#zmm-print-root[data-print-device="phone"]) .filledMatchup span {
+    font-size: 5.4pt;
+    letter-spacing: -0.01em;
+  }
+
   .sheet {
     break-after: avoid;
     break-inside: avoid;
