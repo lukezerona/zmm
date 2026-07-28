@@ -4,7 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CloudRain, LoaderCircle, RefreshCw, Trophy } from "lucide-react";
+import {
+  CloudRain,
+  LoaderCircle,
+  RefreshCw,
+  ShieldCheck,
+  Trophy,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getTournamentLifecycle } from "@/lib/tournament-lifecycle";
 import {
@@ -595,11 +601,27 @@ export default function SpreadsheetPage() {
           />
         </Link>
         <TournamentViewSwitcher activeView="spreadsheet" />
-        <AccountMenu
-          profile={profile}
-          isCommissioner={isCommissioner}
-          onSignOut={signOut}
-        />
+        <div className={headerStyles.headerUserActions}>
+          {isCommissioner && (
+            <Link
+              className={headerStyles.headerCommissionerButton}
+              href={{
+                pathname: "/commissioner",
+                query: { returnTo: "/spreadsheet" },
+              }}
+            >
+              <ShieldCheck size={16} aria-hidden="true" />
+              Commissioner
+            </Link>
+          )}
+          <AccountMenu
+            profile={profile}
+            isCommissioner={isCommissioner}
+            commissionerReturnTo="/spreadsheet"
+            commissionerShortcutVisible
+            onSignOut={signOut}
+          />
+        </div>
       </header>
 
       <section

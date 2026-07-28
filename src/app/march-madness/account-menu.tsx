@@ -14,10 +14,14 @@ import styles from "./march-madness.module.css";
 export function AccountMenu({
   profile,
   isCommissioner,
+  commissionerReturnTo = "/march-madness",
+  commissionerShortcutVisible = false,
   onSignOut,
 }: {
   profile: PoolProfile;
   isCommissioner?: boolean;
+  commissionerReturnTo?: string;
+  commissionerShortcutVisible?: boolean;
   onSignOut: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
@@ -112,8 +116,15 @@ export function AccountMenu({
 
           {isCommissioner && (
             <Link
-              className={styles.commissionerLink}
-              href="/commissioner"
+              className={`${styles.commissionerLink} ${
+                commissionerShortcutVisible
+                  ? styles.commissionerMenuMobileOnly
+                  : ""
+              }`}
+              href={{
+                pathname: "/commissioner",
+                query: { returnTo: commissionerReturnTo },
+              }}
               onClick={() => setOpen(false)}
             >
               <ShieldCheck size={16} aria-hidden="true" />

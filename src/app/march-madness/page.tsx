@@ -11,6 +11,7 @@ import {
   LoaderCircle,
   Radio,
   RefreshCw,
+  ShieldCheck,
   Trophy,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -607,11 +608,27 @@ export default function MarchMadnessPage() {
           activeView="brackets"
           spreadsheetAvailable={!preTournamentMode}
         />
-        <AccountMenu
-          profile={profile}
-          isCommissioner={isCommissioner}
-          onSignOut={signOut}
-        />
+        <div className={styles.headerUserActions}>
+          {isCommissioner && (
+            <Link
+              className={styles.headerCommissionerButton}
+              href={{
+                pathname: "/commissioner",
+                query: { returnTo: "/march-madness" },
+              }}
+            >
+              <ShieldCheck size={16} aria-hidden="true" />
+              Commissioner
+            </Link>
+          )}
+          <AccountMenu
+            profile={profile}
+            isCommissioner={isCommissioner}
+            commissionerReturnTo="/march-madness"
+            commissionerShortcutVisible
+            onSignOut={signOut}
+          />
+        </div>
       </header>
 
       <section className={styles.hero} id="top">

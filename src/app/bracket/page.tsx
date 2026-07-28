@@ -722,7 +722,7 @@ export default function BracketPage() {
     }
 
     allowUnsavedExitRef.current = true;
-    router.push("/commissioner");
+    router.push("/commissioner?returnTo=%2Fbracket");
   }
 
   function openTournamentCentral() {

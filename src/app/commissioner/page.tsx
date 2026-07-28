@@ -2,7 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -44,6 +50,34 @@ type PaymentDraft = {
 
 type PaymentFilter = "all" | "paid" | "unpaid";
 
+type ReturnDestination = {
+  href: string;
+  label: string;
+};
+
+const DEFAULT_RETURN_DESTINATION: ReturnDestination = {
+  href: "/march-madness",
+  label: "Brackets",
+};
+
+const RETURN_DESTINATIONS: Record<string, ReturnDestination> = {
+  "/march-madness": DEFAULT_RETURN_DESTINATION,
+  "/spreadsheet": { href: "/spreadsheet", label: "Spreadsheet" },
+  "/bracket": { href: "/bracket", label: "Create bracket" },
+  "/history": { href: "/history", label: "History" },
+};
+
+function subscribeToReturnDestination() {
+  return () => undefined;
+}
+
+function getReturnDestination() {
+  const returnTo = new URLSearchParams(window.location.search).get("returnTo");
+  return returnTo
+    ? (RETURN_DESTINATIONS[returnTo] ?? DEFAULT_RETURN_DESTINATION)
+    : DEFAULT_RETURN_DESTINATION;
+}
+
 function draftFromBracket(bracket: CommissionerBracket): PaymentDraft {
   return {
     isPaid: bracket.isPaid,
@@ -74,6 +108,11 @@ export default function CommissionerPage() {
   const [filter, setFilter] = useState<PaymentFilter>("all");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const returnDestination = useSyncExternalStore(
+    subscribeToReturnDestination,
+    getReturnDestination,
+    () => DEFAULT_RETURN_DESTINATION,
+  );
 
   const accessToken = useCallback(async () => {
     const client = supabase;
@@ -314,7 +353,9 @@ export default function CommissionerPage() {
         <ShieldCheck size={42} />
         <strong>Commissioner access required</strong>
         <span>This screen is only available to the ZMM commissioner.</span>
-        <Link href="/march-madness">Return to the tournament</Link>
+        <Link href={returnDestination.href}>
+          Return to {returnDestination.label}
+        </Link>
       </main>
     );
   }
@@ -330,9 +371,9 @@ export default function CommissionerPage() {
           priority
         />
         <div className={styles.headerActions}>
-          <Link href="/march-madness">
+          <Link href={returnDestination.href}>
             <ArrowLeft size={16} aria-hidden="true" />
-            Tournament
+            {returnDestination.label}
           </Link>
           <button type="button" onClick={signOut}>
             <LogOut size={16} aria-hidden="true" />

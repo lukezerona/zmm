@@ -105,6 +105,39 @@
   justify-self: end;
 }
 
+.headerUserActions {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerUserActions .accountMenu {
+  grid-column: auto;
+  justify-self: auto;
+}
+
+.headerCommissionerButton {
+  height: 39px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid rgba(43, 164, 218, 0.4);
+  border-radius: 9px;
+  color: #bceaff;
+  text-decoration: none;
+  background: rgba(13, 95, 133, 0.2);
+}
+
+.headerCommissionerButton:hover {
+  border-color: rgba(72, 195, 247, 0.65);
+  color: #f1fbff;
+  background: rgba(17, 117, 162, 0.28);
+}
+
 .accountTrigger {
   max-width: 170px;
   height: 39px;
@@ -270,6 +303,10 @@
   border-color: rgba(72, 195, 247, 0.65);
   color: #f1fbff;
   background: rgba(17, 117, 162, 0.28);
+}
+
+.commissionerMenuMobileOnly {
+  display: none;
 }
 
 .accountSignOut:hover {
@@ -1778,6 +1815,18 @@
   .accountTrigger {
     max-width: 72px;
     padding-inline: 9px;
+  }
+
+  .headerCommissionerButton {
+    display: none;
+  }
+
+  .headerUserActions {
+    gap: 0;
+  }
+
+  .commissionerMenuMobileOnly {
+    display: inline-flex;
   }
 
   .desktopViewLabel {

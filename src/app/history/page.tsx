@@ -344,6 +344,7 @@ export default function HistoryPage() {
         <AccountMenu
           profile={profile}
           isCommissioner={isCommissioner}
+          commissionerReturnTo="/history"
           onSignOut={signOut}
         />
       </header>
