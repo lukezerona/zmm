@@ -26,12 +26,14 @@ export function TournamentBracketViewer({
   brackets,
   currentUserId,
   leaderboardRows,
+  masterOnly = false,
 }: {
   model: TournamentModel;
   games: TournamentGame[];
   brackets: PoolBracket[];
   currentUserId: string;
   leaderboardRows: LeaderboardEntry[];
+  masterOnly?: boolean;
 }) {
   const orderedBrackets = useMemo(() => {
     const rankByBracket = new Map(
@@ -92,28 +94,30 @@ export function TournamentBracketViewer({
           <strong>{selectedBracketName}</strong>
         </div>
         <div className={styles.bracketViewerControls}>
-          <label>
-            <span>Choose a bracket</span>
-            <select
-              value={selectedValue}
-              onChange={(event) => setSelectedValue(event.target.value)}
-            >
-              <option value={MASTER_VALUE}>Master bracket</option>
-              <optgroup label="Family brackets">
-                {orderedBrackets.map((savedBracket) => {
-                  return (
-                    <option
-                      value={savedBracket.id}
-                      key={savedBracket.id}
-                    >
-                      {savedBracket.display_name}
-                      {savedBracket.user_id === currentUserId ? " (You)" : ""}
-                    </option>
-                  );
-                })}
-              </optgroup>
-            </select>
-          </label>
+          {!masterOnly && (
+            <label>
+              <span>Choose a bracket</span>
+              <select
+                value={selectedValue}
+                onChange={(event) => setSelectedValue(event.target.value)}
+              >
+                <option value={MASTER_VALUE}>Master bracket</option>
+                <optgroup label="Family brackets">
+                  {orderedBrackets.map((savedBracket) => {
+                    return (
+                      <option
+                        value={savedBracket.id}
+                        key={savedBracket.id}
+                      >
+                        {savedBracket.display_name}
+                        {savedBracket.user_id === currentUserId ? " (You)" : ""}
+                      </option>
+                    );
+                  })}
+                </optgroup>
+              </select>
+            </label>
+          )}
           <button
             type="button"
             className={styles.printBracketButton}
@@ -142,7 +146,7 @@ export function TournamentBracketViewer({
       {selectedValue === MASTER_VALUE ? (
         <TournamentBracketCanvas
           model={model}
-          view={{ type: "master", games }}
+          view={{ type: "master", games, fieldOnly: masterOnly }}
         />
       ) : selectedBracket && playerBracket ? (
         <TournamentBracketCanvas

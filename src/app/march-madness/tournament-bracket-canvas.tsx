@@ -38,6 +38,7 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
 type MasterView = {
   type: "master";
   games: TournamentGame[];
+  fieldOnly?: boolean;
 };
 
 type PlayerView = {
@@ -399,6 +400,11 @@ function RegionBracket({
                     roundNumber={matchup.roundNumber}
                     game={gameIndex.get(matchup.id)}
                     teamOrder={teamOrder}
+                    projectedOptions={
+                      view.fieldOnly && matchup.roundNumber === 1
+                        ? matchup.options
+                        : undefined
+                    }
                   />
                 ) : (
                   <PlayerPickCard

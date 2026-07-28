@@ -725,6 +725,20 @@ export default function BracketPage() {
     router.push("/commissioner");
   }
 
+  function openTournamentCentral() {
+    if (
+      dirty &&
+      !window.confirm(
+        "This bracket has unsaved changes. Open Tournament Central and discard them?",
+      )
+    ) {
+      return;
+    }
+
+    allowUnsavedExitRef.current = true;
+    router.push("/march-madness");
+  }
+
   if (loading) {
     return (
       <main className={styles.loading}>
@@ -766,13 +780,7 @@ export default function BracketPage() {
           <button
             type="button"
             className={styles.tournamentCentralButton}
-            onClick={() =>
-              window.open(
-                "/march-madness",
-                "_blank",
-                "noopener,noreferrer",
-              )
-            }
+            onClick={openTournamentCentral}
           >
             <LayoutDashboard size={17} aria-hidden="true" />
             <span>Tournament Central</span>

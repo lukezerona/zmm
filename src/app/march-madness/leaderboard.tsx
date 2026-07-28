@@ -16,20 +16,30 @@ function RankIcon({ rank }: { rank: number }) {
 export function Leaderboard({
   rows,
   currentUserId,
+  hidePrivatePicks = false,
 }: {
   rows: LeaderboardEntry[];
   currentUserId: string;
+  hidePrivatePicks?: boolean;
 }) {
   return (
     <div className={styles.leaderboardTableViewport}>
-      <table className={styles.compactLeaderboardTable}>
+      <table
+        className={`${styles.compactLeaderboardTable} ${
+          hidePrivatePicks ? styles.preTournamentLeaderboardTable : ""
+        }`}
+      >
         <colgroup>
           <col className={styles.placeColumn} />
           <col className={styles.nameColumn} />
           <col className={styles.pointsColumn} />
           <col className={styles.possibleColumn} />
-          <col className={styles.championColumn} />
-          <col className={styles.tiebreakerColumn} />
+          {!hidePrivatePicks && (
+            <>
+              <col className={styles.championColumn} />
+              <col className={styles.tiebreakerColumn} />
+            </>
+          )}
           <col className={styles.correctColumn} />
           <col className={styles.moneyColumn} />
         </colgroup>
@@ -39,8 +49,12 @@ export function Leaderboard({
             <th scope="col" data-short="Name">Name</th>
             <th scope="col" data-short="Pts">Points</th>
             <th scope="col" data-short="Poss.">Possible left</th>
-            <th scope="col" data-short="Champ">Champion</th>
-            <th scope="col" data-short="TB">Break</th>
+            {!hidePrivatePicks && (
+              <>
+                <th scope="col" data-short="Champ">Champion</th>
+                <th scope="col" data-short="TB">Break</th>
+              </>
+            )}
             <th scope="col" data-short="Pick %">Correct</th>
             <th scope="col" data-short="$">Money</th>
           </tr>
@@ -76,35 +90,40 @@ export function Leaderboard({
                 </td>
                 <td className={styles.tablePoints}>{entry.points}</td>
                 <td>{entry.possiblePointsRemaining}</td>
-                <td>
-                  <div className={styles.tableChampionCell}>
-                    <span
-                      className={`${styles.championPick} ${
-                        entry.championWon
-                          ? styles.winningChampionPick
-                          : entry.championEliminated
-                            ? styles.eliminatedChampionPick
-                            : ""
-                      }`}
-                    >
-                      <Trophy size={14} aria-hidden="true" />
-                      {entry.champion}
-                    </span>
-                    {entry.championWon && (
-                      <span className={styles.championWonLabel}>
-                        <BadgeCheck size={12} aria-hidden="true" />
-                        Champion
-                      </span>
-                    )}
-                    {!entry.championWon && entry.championEliminated && (
-                      <span className={styles.eliminatedLabel}>
-                        <CircleX size={12} aria-hidden="true" />
-                        Eliminated
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td>{entry.tiebreaker ?? "—"}</td>
+                {!hidePrivatePicks && (
+                  <>
+                    <td>
+                      <div className={styles.tableChampionCell}>
+                        <span
+                          className={`${styles.championPick} ${
+                            entry.championWon
+                              ? styles.winningChampionPick
+                              : entry.championEliminated
+                                ? styles.eliminatedChampionPick
+                                : ""
+                          }`}
+                        >
+                          <Trophy size={14} aria-hidden="true" />
+                          {entry.champion}
+                        </span>
+                        {entry.championWon && (
+                          <span className={styles.championWonLabel}>
+                            <BadgeCheck size={12} aria-hidden="true" />
+                            Champion
+                          </span>
+                        )}
+                        {!entry.championWon &&
+                          entry.championEliminated && (
+                            <span className={styles.eliminatedLabel}>
+                              <CircleX size={12} aria-hidden="true" />
+                              Eliminated
+                            </span>
+                          )}
+                      </div>
+                    </td>
+                    <td>{entry.tiebreaker ?? "—"}</td>
+                  </>
+                )}
                 <td>
                   <strong>{entry.correctPercentage.toFixed(1)}%</strong>
                   <span className={styles.correctCount}>

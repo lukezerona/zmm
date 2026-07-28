@@ -5,7 +5,7 @@ export function TournamentViewSwitcher({
   activeView,
   spreadsheetAvailable = true,
 }: {
-  activeView: "brackets" | "spreadsheet" | "history";
+  activeView: "brackets" | "spreadsheet" | null;
   spreadsheetAvailable?: boolean;
 }) {
   return (
@@ -15,8 +15,8 @@ export function TournamentViewSwitcher({
         href="/march-madness"
         aria-current={activeView === "brackets" ? "page" : undefined}
       >
-        <span className={styles.desktopViewLabel}>Tournament</span>
-        <span className={styles.mobileViewLabel}>Current</span>
+        <span className={styles.desktopViewLabel}>Brackets</span>
+        <span className={styles.mobileViewLabel}>Brackets</span>
       </Link>
       {spreadsheetAvailable ? (
         <Link
@@ -27,7 +27,7 @@ export function TournamentViewSwitcher({
           aria-current={activeView === "spreadsheet" ? "page" : undefined}
         >
           <span className={styles.desktopViewLabel}>Spreadsheet</span>
-          <span className={styles.mobileViewLabel}>Sheet</span>
+          <span className={styles.mobileViewLabel}>Spreadsheet</span>
         </Link>
       ) : (
         <span
@@ -36,16 +36,9 @@ export function TournamentViewSwitcher({
           title="The spreadsheet opens after entries lock."
         >
           <span className={styles.desktopViewLabel}>Spreadsheet</span>
-          <span className={styles.mobileViewLabel}>Sheet</span>
+          <span className={styles.mobileViewLabel}>Spreadsheet</span>
         </span>
       )}
-      <Link
-        className={activeView === "history" ? styles.activeView : undefined}
-        href="/history"
-        aria-current={activeView === "history" ? "page" : undefined}
-      >
-        History
-      </Link>
     </nav>
   );
 }

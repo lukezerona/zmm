@@ -292,8 +292,9 @@
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
+  gap: 24px;
   padding: 64px 0 30px;
   scroll-margin-top: 90px;
 }
@@ -308,6 +309,27 @@
 .hero h1 em {
   color: #28b4fb;
   font-style: normal;
+}
+
+.historyAction {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid #225a78;
+  border-radius: 10px;
+  color: #a9d9ed;
+  background: #071923;
+  font-size: 12px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.historyAction:hover {
+  border-color: #43c8ff;
+  color: #ffffff;
 }
 
 .lobbyHero {
@@ -1088,6 +1110,30 @@
   width: 13.5%;
 }
 
+.preTournamentLeaderboardTable .placeColumn {
+  width: 10%;
+}
+
+.preTournamentLeaderboardTable .nameColumn {
+  width: 25%;
+}
+
+.preTournamentLeaderboardTable .pointsColumn {
+  width: 12%;
+}
+
+.preTournamentLeaderboardTable .possibleColumn {
+  width: 17%;
+}
+
+.preTournamentLeaderboardTable .correctColumn {
+  width: 18%;
+}
+
+.preTournamentLeaderboardTable .moneyColumn {
+  width: 18%;
+}
+
 .compactLeaderboardTable th,
 .compactLeaderboardTable td {
   overflow: hidden;
@@ -1753,7 +1799,13 @@
   }
 
   .hero {
+    grid-template-columns: 1fr;
+    align-items: stretch;
     padding-top: 46px;
+  }
+
+  .historyAction {
+    width: 100%;
   }
 
   .lobbyHero,

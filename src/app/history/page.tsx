@@ -329,7 +329,7 @@ export default function HistoryPage() {
           />
         </a>
         <TournamentViewSwitcher
-          activeView="history"
+          activeView={null}
           spreadsheetAvailable={spreadsheetAvailable}
         />
         <AccountMenu

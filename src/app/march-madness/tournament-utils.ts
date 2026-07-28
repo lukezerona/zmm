@@ -11,6 +11,7 @@ import {
   LeaderboardEntry,
   PoolBracket,
   PoolProfile,
+  TournamentEntry,
   TournamentGame,
 } from "./tournament-types";
 
@@ -22,6 +23,12 @@ export const ROUND_POINTS: Record<number, number> = {
   5: 16,
   6: 32,
 };
+
+const MAX_TOURNAMENT_POINTS = Object.entries(ROUND_POINTS).reduce(
+  (total, [roundNumber, points]) =>
+    total + 2 ** (6 - Number(roundNumber)) * points,
+  0,
+);
 
 const FIRST_ROUND_SEED_PAIRS = [
   [1, 16],
@@ -310,6 +317,45 @@ export function allocatePrizePayouts(
   }
 
   return sorted;
+}
+
+export function buildPreTournamentLeaderboard(
+  entries: TournamentEntry[],
+  profiles: PoolProfile[],
+  buyIn = 10,
+) {
+  const profileByUser = new Map(
+    profiles.map((profile) => [profile.user_id, profile]),
+  );
+  const pot = entries.length * buyIn;
+  const rows = entries.map(
+    (entry): LeaderboardEntry => ({
+      bracketId: entry.bracket_id,
+      ownerUserId: entry.owner_user_id,
+      username:
+        profileByUser.get(entry.owner_user_id)?.username ?? "player",
+      displayName: entry.display_name,
+      rank: 0,
+      points: 0,
+      possiblePointsRemaining: MAX_TOURNAMENT_POINTS,
+      champion: "",
+      championEliminated: false,
+      championWon: false,
+      tiebreaker: null,
+      correctPicks: 0,
+      completedGames: 0,
+      correctPercentage: 0,
+      prize: 0,
+      tiebreakerDistance: null,
+    }),
+  );
+
+  return {
+    rows: allocatePrizePayouts(rows, false, pot),
+    championshipComplete: false,
+    championshipTotal: null,
+    pot,
+  };
 }
 
 function buildLeaderboardForOutcome(
