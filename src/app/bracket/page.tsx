@@ -45,6 +45,9 @@ import {
 import styles from "./bracket.module.css";
 
 const TOTAL_PICKS = 63;
+const VENMO_PAYMENT_MESSAGE =
+  "Bracket saved! Please send the $10 entry fee on Venmo to @Luke-Zerona.";
+const VENMO_PROFILE_URL = "https://venmo.com/u/Luke-Zerona";
 
 type Profile = {
   username: string;
@@ -661,9 +664,7 @@ export default function BracketPage() {
     setSaveSucceeded(true);
     if (remainingPicks === 0 && total !== null) {
       setShowMissingPicks(false);
-      setMessage(
-        "Bracket saved! Please send the $10 entry fee on Venmo to @Luke-Zerona.",
-      );
+      setMessage(VENMO_PAYMENT_MESSAGE);
       return;
     }
 
@@ -1072,7 +1073,21 @@ export default function BracketPage() {
           }`}
           role={isWarning ? "alert" : "status"}
         >
-          {message}
+          {message === VENMO_PAYMENT_MESSAGE ? (
+            <>
+              Bracket saved! Please send the $10 entry fee on Venmo to{" "}
+              <a
+                href={VENMO_PROFILE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                @Luke-Zerona
+              </a>
+              .
+            </>
+          ) : (
+            message
+          )}
         </p>
       )}
 

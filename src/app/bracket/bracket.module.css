@@ -383,6 +383,18 @@
   font-size: 16px;
 }
 
+.statusMessage a {
+  color: #39bdf7;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.statusMessage a:hover {
+  color: #ffffff;
+}
+
 .warningMessage {
   border-color: rgba(255, 181, 71, 0.45);
   color: #ffd18b;
