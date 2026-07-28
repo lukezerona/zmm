@@ -676,7 +676,6 @@ export default function BracketPage() {
       <section className={styles.hero}>
         <div>
           <span className={styles.kicker}>{seasonYear} FAMILY TOURNAMENT</span>
-          <h1>Build your bracket, <em>@{username}</em>.</h1>
         </div>
 
         <div className={styles.identityCard}>
