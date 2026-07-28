@@ -61,6 +61,7 @@
 }
 
 .hero,
+.controlArea,
 .bracketToolbar,
 .bracketIntro,
 .bracketCanvasFrame,
@@ -75,11 +76,26 @@
 }
 
 .hero {
+  padding: 62px 0 24px;
+}
+
+.controlArea {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
-  align-items: end;
+  align-items: stretch;
   gap: 42px;
-  padding: 62px 0 36px;
+}
+
+.controlArea > .bracketToolbar {
+  width: 100%;
+  grid-column: 1;
+  grid-row: 1;
+  margin: 0;
+}
+
+.controlArea > .identityCard {
+  grid-column: 2;
+  grid-row: 1;
 }
 
 .kicker,
@@ -915,16 +931,27 @@
   }
 
   .hero {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    align-items: stretch;
-    gap: 10px;
     padding-top: 45px;
   }
 
   .hero > div:first-child {
-    order: 1;
-    grid-column: 1 / -1;
-    margin-bottom: 15px;
+    margin-bottom: 0;
+  }
+
+  .controlArea {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .controlArea > .mobileProgressCard {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .controlArea > .identityCard {
+    grid-column: 2;
+    grid-row: 1;
   }
 
   .hero h1 {
@@ -946,15 +973,10 @@
   }
 
   .mobileProgressCard {
-    order: 2;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     gap: 10px;
-  }
-
-  .identityCard {
-    order: 3;
   }
 
   .mobileProgressCard .progressCopy {
@@ -1538,6 +1560,7 @@
 
 @media (max-width: 480px) {
   .hero,
+  .controlArea,
   .bracketToolbar,
   .bracketIntro,
   .bracketCanvasFrame,

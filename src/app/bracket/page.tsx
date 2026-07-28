@@ -697,7 +697,9 @@ export default function BracketPage() {
         <div>
           <span className={styles.kicker}>{seasonYear} FAMILY TOURNAMENT</span>
         </div>
+      </section>
 
+      <div className={styles.controlArea}>
         <div className={styles.identityCard}>
           <div className={styles.bracketSelector}>
             <label htmlFor="family-bracket">FAMILY BRACKET</label>
@@ -914,9 +916,11 @@ export default function BracketPage() {
             </button>
           </div>
         </div>
-      </section>
 
-      <section className={styles.bracketToolbar} aria-label="Bracket progress">
+        <section
+          className={styles.bracketToolbar}
+          aria-label="Bracket progress"
+        >
         <div className={styles.progressCopy}>
           <span>{completedPicks} of {TOTAL_PICKS} picks complete</span>
           <div className={styles.progressTrack}>
@@ -974,7 +978,8 @@ export default function BracketPage() {
                   : "Save bracket"}
           </button>
         </div>
-      </section>
+        </section>
+      </div>
 
       {locked && (
         <p
