@@ -356,8 +356,8 @@
   :global(#zmm-print-root[data-print-device="phone"]) {
     position: absolute;
     inset: 0 auto auto 0;
-    width: 10.6in;
-    height: 8in;
+    width: 8.48in;
+    height: 6.4in;
     max-width: none;
     max-height: none;
   }
@@ -365,6 +365,8 @@
   :global(#zmm-print-root[data-print-device="phone"]) .sheet {
     width: 10.6in;
     height: 8in;
+    transform: scale(0.8);
+    transform-origin: top left;
   }
 
   :global(#zmm-print-root[data-print-device="phone"]) .footer {
