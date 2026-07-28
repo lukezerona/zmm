@@ -594,7 +594,7 @@ export default function MarchMadnessPage() {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <a href="#top" aria-label="Zerona March Madness home">
+        <Link href="/march-madness" aria-label="Zerona March Madness home">
           <Image
             src="/zmm-logo.png"
             alt="Zerona March Madness"
@@ -602,7 +602,7 @@ export default function MarchMadnessPage() {
             height={483}
             priority
           />
-        </a>
+        </Link>
         <TournamentViewSwitcher
           activeView="brackets"
           spreadsheetAvailable={!preTournamentMode}

@@ -606,6 +606,13 @@
   gap: 7px;
 }
 
+.historyControls {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 .historyYearPicker span {
   color: #7392a2;
   font-size: 9px;
@@ -1830,6 +1837,12 @@
 
   .historyYearPicker {
     width: 100%;
+  }
+
+  .historyControls {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .summaryGrid {

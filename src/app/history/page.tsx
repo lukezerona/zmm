@@ -1,9 +1,16 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, LoaderCircle, Trophy, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  LoaderCircle,
+  Trophy,
+  Users,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getTournamentLifecycle } from "@/lib/tournament-lifecycle";
 import {
@@ -65,6 +72,7 @@ export default function HistoryPage() {
   const [historyYears, setHistoryYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [spreadsheetAvailable, setSpreadsheetAvailable] = useState(false);
+  const [createBracketAvailable, setCreateBracketAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingSeason, setLoadingSeason] = useState(false);
   const [error, setError] = useState("");
@@ -225,6 +233,7 @@ export default function HistoryPage() {
       setSpreadsheetAvailable(
         lifecycle.phase === "live" || lifecycle.phase === "final",
       );
+      setCreateBracketAvailable(lifecycle.phase === "picks_open");
 
       if (years.length > 0) {
         await loadSeason(years[0]);
@@ -319,7 +328,7 @@ export default function HistoryPage() {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <a href="#top" aria-label="Zerona March Madness home">
+        <Link href="/march-madness" aria-label="Zerona March Madness home">
           <Image
             src="/zmm-logo.png"
             alt="Zerona March Madness"
@@ -327,7 +336,7 @@ export default function HistoryPage() {
             height={483}
             priority
           />
-        </a>
+        </Link>
         <TournamentViewSwitcher
           activeView={null}
           spreadsheetAvailable={spreadsheetAvailable}
@@ -347,22 +356,32 @@ export default function HistoryPage() {
             Revisit final results and see how every family bracket finished.
           </p>
         </div>
-        {historyYears.length > 0 && (
-          <label className={styles.historyYearPicker}>
-            <span>Season</span>
-            <select
-              value={selectedYear ?? ""}
-              onChange={(event) => void chooseYear(Number(event.target.value))}
-              disabled={loadingSeason}
-            >
-              {historyYears.map((year) => (
-                <option value={year} key={year}>
-                  {year} Tournament
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+        <div className={styles.historyControls}>
+          {createBracketAvailable && (
+            <Link className={styles.historyAction} href="/bracket">
+              <ArrowLeft size={17} aria-hidden="true" />
+              Back to create bracket
+            </Link>
+          )}
+          {historyYears.length > 0 && (
+            <label className={styles.historyYearPicker}>
+              <span>Season</span>
+              <select
+                value={selectedYear ?? ""}
+                onChange={(event) =>
+                  void chooseYear(Number(event.target.value))
+                }
+                disabled={loadingSeason}
+              >
+                {historyYears.map((year) => (
+                  <option value={year} key={year}>
+                    {year} Tournament
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
       </section>
 
       {historyYears.length === 0 ? (

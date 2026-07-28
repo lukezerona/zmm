@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CloudRain, LoaderCircle, RefreshCw, Trophy } from "lucide-react";
@@ -584,7 +585,7 @@ export default function SpreadsheetPage() {
   return (
     <main className={styles.page}>
       <header className={headerStyles.header}>
-        <a href="#top" aria-label="Zerona March Madness home">
+        <Link href="/march-madness" aria-label="Zerona March Madness home">
           <Image
             src="/zmm-logo.png"
             alt="Zerona March Madness"
@@ -592,7 +593,7 @@ export default function SpreadsheetPage() {
             height={483}
             priority
           />
-        </a>
+        </Link>
         <TournamentViewSwitcher activeView="spreadsheet" />
         <AccountMenu
           profile={profile}
