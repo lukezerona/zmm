@@ -357,14 +357,14 @@
     position: absolute;
     inset: 0 auto auto 0;
     width: 10.6in;
-    height: 8.1in;
+    height: 8in;
     max-width: none;
     max-height: none;
   }
 
   :global(#zmm-print-root[data-print-device="phone"]) .sheet {
     width: 10.6in;
-    height: 8.1in;
+    height: 8in;
   }
 
   :global(#zmm-print-root[data-print-device="phone"]) .firstRoundTeam {
