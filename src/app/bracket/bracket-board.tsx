@@ -585,7 +585,7 @@ function MobileBracketBoard({
             inputMode="numeric"
             value={tiebreaker}
             onChange={(event) => onTiebreakerChange(event.target.value)}
-            placeholder="142"
+            placeholder="0"
             disabled={readOnly}
             aria-invalid={showMissing && tiebreaker === "" ? true : undefined}
           />
@@ -1042,7 +1042,7 @@ export function BracketBoard({
                     onChange={(event) =>
                       onTiebreakerChange(event.target.value)
                     }
-                    placeholder="142"
+                    placeholder="0"
                     disabled={readOnly}
                     aria-invalid={
                       showMissing && tiebreaker === "" ? true : undefined
