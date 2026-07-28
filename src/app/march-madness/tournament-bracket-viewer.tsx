@@ -4,7 +4,11 @@ import { useMemo, useState } from "react";
 import { Printer } from "lucide-react";
 import { deriveBracket } from "../bracket/bracket-utils";
 import { TournamentModel } from "../bracket/bracket-types";
-import { PrintableBlankBracket } from "../bracket/printable-bracket";
+import {
+  PrintBracketDialog,
+  PrintBracketMode,
+} from "../bracket/print-bracket-dialog";
+import { PrintableBracket } from "../bracket/printable-bracket";
 import {
   LeaderboardEntry,
   PoolBracket,
@@ -45,6 +49,8 @@ export function TournamentBracketViewer({
     });
   }, [brackets, leaderboardRows]);
   const [selectedValue, setSelectedValue] = useState(MASTER_VALUE);
+  const [showPrintOptions, setShowPrintOptions] = useState(false);
+  const [printMode, setPrintMode] = useState<PrintBracketMode>("blank");
   const selectedBracket = orderedBrackets.find(
     (bracket) => bracket.id === selectedValue,
   );
@@ -55,12 +61,28 @@ export function TournamentBracketViewer({
     () => buildActualResults(model, games).actualPicks,
     [games, model],
   );
+  const masterPrintableBracket = useMemo(
+    () => deriveBracket(model, actualPicks),
+    [actualPicks, model],
+  );
   const selectedBracketName =
     selectedValue === MASTER_VALUE
       ? "Master tournament results"
       : `${selectedBracket?.display_name ?? "Unknown player"}${
           selectedBracket?.user_id === currentUserId ? " (You)" : ""
         }`;
+  const printableBracket =
+    selectedValue === MASTER_VALUE
+      ? masterPrintableBracket
+      : playerBracket;
+
+  function printBracket(mode: PrintBracketMode) {
+    setPrintMode(mode);
+    setShowPrintOptions(false);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => window.print());
+    });
+  }
 
   return (
     <div className={styles.bracketViewer}>
@@ -95,7 +117,7 @@ export function TournamentBracketViewer({
           <button
             type="button"
             className={styles.printBracketButton}
-            onClick={() => window.print()}
+            onClick={() => setShowPrintOptions(true)}
           >
             <Printer size={17} aria-hidden="true" />
             Print bracket
@@ -103,7 +125,19 @@ export function TournamentBracketViewer({
         </div>
       </div>
 
-      <PrintableBlankBracket model={model} />
+      <PrintableBracket
+        model={model}
+        bracket={printableBracket}
+        variant={printMode}
+        displayName={selectedBracketName}
+        tiebreaker={selectedBracket?.tiebreaker_total}
+      />
+
+      <PrintBracketDialog
+        open={showPrintOptions}
+        onClose={() => setShowPrintOptions(false)}
+        onSelect={printBracket}
+      />
 
       {selectedValue === MASTER_VALUE ? (
         <TournamentBracketCanvas

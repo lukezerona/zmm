@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import {
   BracketEntry,
   BracketMatchup,
+  DerivedBracket,
   Region,
   TournamentModel,
 } from "./bracket-types";
@@ -48,6 +49,7 @@ const ROUND_POSITIONS = {
 
 type PrintSide = "left" | "right";
 type RegionPosition = "top" | "bottom";
+type PrintVariant = "blank" | "current";
 
 function subscribeToClient() {
   return () => {};
@@ -84,18 +86,55 @@ function FirstRoundMatchup({
   );
 }
 
+function FilledRoundMatchup({
+  matchup,
+  style,
+}: {
+  matchup: BracketMatchup;
+  style: CSSProperties;
+}) {
+  return (
+    <div
+      className={`${styles.blankMatchup} ${styles.filledMatchup}`}
+      style={style}
+    >
+      {matchup.options.map((entry, index) => {
+        const team = teamLabel(entry);
+        return (
+          <div key={`${matchup.id}-${index}`}>
+            <strong>{team.seed}</strong>
+            <span>{team.name}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function RegionBracketPrint({
   region,
   matchups,
+  bracket,
+  variant,
   side,
   position,
 }: {
   region: Region;
   matchups: BracketMatchup[];
+  bracket: DerivedBracket | null;
+  variant: PrintVariant;
   side: PrintSide;
   position: RegionPosition;
 }) {
   const roundPositions = ROUND_POSITIONS[side];
+  const currentRounds = bracket?.regions[region];
+  const laterRounds = currentRounds
+    ? [
+        currentRounds.roundOf32,
+        currentRounds.sweet16,
+        currentRounds.elite8,
+      ]
+    : [];
 
   return (
     <section
@@ -122,6 +161,23 @@ function RegionBracketPrint({
       {roundPositions.slice(1).flatMap((round, roundIndex) =>
         Array.from({ length: round.count }, (_, index) => {
           const y = centerFor(index, round.count);
+          const currentMatchup =
+            variant === "current" ? laterRounds[roundIndex]?.[index] : null;
+
+          if (currentMatchup) {
+            return (
+              <FilledRoundMatchup
+                matchup={currentMatchup}
+                key={`${region}-${roundIndex}-${index}`}
+                style={{
+                  left: `${round.left}%`,
+                  top: `${y}%`,
+                  width: `${round.width}%`,
+                }}
+              />
+            );
+          }
+
           return (
             <div
               className={styles.blankMatchup}
@@ -150,32 +206,81 @@ function RegionBracketPrint({
   );
 }
 
-function BlankFinals() {
+function FinalsMatchup({
+  matchup,
+  className,
+}: {
+  matchup?: BracketMatchup;
+  className: string;
+}) {
+  return (
+    <div className={className}>
+      {matchup
+        ? matchup.options.map((entry, index) => {
+            const team = teamLabel(entry);
+            return (
+              <span key={`${matchup.id}-${index}`}>
+                <strong>{team.seed}</strong>
+                {team.name}
+              </span>
+            );
+          })
+        : [0, 1].map((index) => <span key={index} />)}
+    </div>
+  );
+}
+
+function PrintableFinals({
+  bracket,
+  variant,
+}: {
+  bracket: DerivedBracket | null;
+  variant: PrintVariant;
+}) {
+  const currentBracket = variant === "current" ? bracket : null;
+  const champion = currentBracket?.champion
+    ? teamLabel(currentBracket.champion)
+    : null;
+
   return (
     <section className={styles.finals}>
-      <div className={styles.finalFourMatchup}>
-        <span />
-        <span />
-      </div>
+      <FinalsMatchup
+        matchup={currentBracket?.finalFour[0]}
+        className={styles.finalFourMatchup}
+      />
       <div className={styles.championshipArea}>
         <div className={styles.championSlot}>
           <strong>Champion</strong>
-          <span />
+          <span>
+            {champion ? `${champion.seed} ${champion.name}` : ""}
+          </span>
         </div>
-        <div className={styles.championshipMatchup}>
-          <span />
-          <span />
-        </div>
+        <FinalsMatchup
+          matchup={currentBracket?.championship}
+          className={styles.championshipMatchup}
+        />
       </div>
-      <div className={styles.finalFourMatchup}>
-        <span />
-        <span />
-      </div>
+      <FinalsMatchup
+        matchup={currentBracket?.finalFour[1]}
+        className={styles.finalFourMatchup}
+      />
     </section>
   );
 }
 
-export function PrintableBlankBracket({ model }: { model: TournamentModel }) {
+export function PrintableBracket({
+  model,
+  bracket,
+  variant,
+  displayName,
+  tiebreaker,
+}: {
+  model: TournamentModel;
+  bracket: DerivedBracket | null;
+  variant: PrintVariant;
+  displayName?: string;
+  tiebreaker?: string | number | null;
+}) {
   const canUseDocument = useSyncExternalStore(
     subscribeToClient,
     () => true,
@@ -202,24 +307,32 @@ export function PrintableBlankBracket({ model }: { model: TournamentModel }) {
           <RegionBracketPrint
             region={model.regionLayout.topLeft}
             matchups={model.firstRoundByRegion[model.regionLayout.topLeft]}
+            bracket={bracket}
+            variant={variant}
             side="left"
             position="top"
           />
           <RegionBracketPrint
             region={model.regionLayout.topRight}
             matchups={model.firstRoundByRegion[model.regionLayout.topRight]}
+            bracket={bracket}
+            variant={variant}
             side="right"
             position="top"
           />
           <RegionBracketPrint
             region={model.regionLayout.bottomLeft}
             matchups={model.firstRoundByRegion[model.regionLayout.bottomLeft]}
+            bracket={bracket}
+            variant={variant}
             side="left"
             position="bottom"
           />
           <RegionBracketPrint
             region={model.regionLayout.bottomRight}
             matchups={model.firstRoundByRegion[model.regionLayout.bottomRight]}
+            bracket={bracket}
+            variant={variant}
             side="right"
             position="bottom"
           />
@@ -230,14 +343,16 @@ export function PrintableBlankBracket({ model }: { model: TournamentModel }) {
             <small>{model.seasonYear} Family Bracket</small>
           </div>
 
-          <BlankFinals />
+          <PrintableFinals bracket={bracket} variant={variant} />
         </div>
 
         <footer className={styles.footer}>
           <span>Name</span>
-          <i />
+          <i>{variant === "current" ? displayName : ""}</i>
           <span>Total points</span>
-          <i className={styles.pointsLine} />
+          <i className={styles.pointsLine}>
+            {variant === "current" ? tiebreaker : ""}
+          </i>
         </footer>
       </article>
     </div>,

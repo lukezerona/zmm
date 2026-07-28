@@ -1,0 +1,153 @@
+.backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 5, 9, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.dialog {
+  position: relative;
+  width: min(100%, 470px);
+  padding: 26px;
+  border: 1px solid #20516b;
+  border-radius: 18px;
+  color: #f4f9fc;
+  background:
+    radial-gradient(circle at 50% 0, rgba(30, 164, 226, 0.13), transparent 34%),
+    #07141d;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+}
+
+.closeButton {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #24495d;
+  border-radius: 999px;
+  color: #8da9b8;
+  background: #091a24;
+  cursor: pointer;
+}
+
+.closeButton:hover,
+.closeButton:focus-visible {
+  color: white;
+  border-color: #3caee8;
+}
+
+.headingIcon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 15px;
+  border: 1px solid #276681;
+  border-radius: 13px;
+  color: #4cc4fb;
+  background: rgba(23, 132, 188, 0.14);
+}
+
+.dialog h2 {
+  font-size: 25px;
+  letter-spacing: -0.035em;
+}
+
+.dialog > p {
+  margin-top: 7px;
+  color: #89a3b2;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.options {
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.options > button {
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #1e465b;
+  border-radius: 12px;
+  color: #b7ccd7;
+  background: #081923;
+  text-align: left;
+  cursor: pointer;
+}
+
+.options > button:hover,
+.options > button:focus-visible {
+  color: white;
+  border-color: #32b7f6;
+  background: rgba(19, 111, 158, 0.2);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(50, 183, 246, 0.12);
+}
+
+.options > button > svg {
+  color: #48c3fb;
+}
+
+.options span,
+.options strong,
+.options small {
+  display: block;
+}
+
+.options strong {
+  font-size: 14px;
+}
+
+.options small {
+  margin-top: 4px;
+  color: #7593a4;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.cancelButton {
+  width: 100%;
+  height: 40px;
+  margin-top: 12px;
+  border: 0;
+  color: #7895a5;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cancelButton:hover,
+.cancelButton:focus-visible {
+  color: white;
+}
+
+@media (max-width: 520px) {
+  .dialog {
+    padding: 22px 17px 17px;
+  }
+
+  .options > button {
+    min-height: 68px;
+  }
+}
+
+@media print {
+  .backdrop {
+    display: none !important;
+  }
+}

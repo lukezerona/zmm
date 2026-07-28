@@ -24,7 +24,11 @@ import {
 } from "@/lib/tournament-lifecycle";
 import { getTournamentStartingPath } from "@/lib/tournament-preference";
 import { BracketBoard } from "./bracket-board";
-import { PrintableBlankBracket } from "./printable-bracket";
+import {
+  PrintBracketDialog,
+  PrintBracketMode,
+} from "./print-bracket-dialog";
+import { PrintableBracket } from "./printable-bracket";
 import {
   buildTournamentModel,
   deriveBracket,
@@ -113,6 +117,8 @@ export default function BracketPage() {
   const [showMissingPicks, setShowMissingPicks] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [showPrintOptions, setShowPrintOptions] = useState(false);
+  const [printMode, setPrintMode] = useState<PrintBracketMode>("blank");
 
   useEffect(() => {
     let active = true;
@@ -656,6 +662,14 @@ export default function BracketPage() {
     router.refresh();
   }
 
+  function printBracket(mode: PrintBracketMode) {
+    setPrintMode(mode);
+    setShowPrintOptions(false);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => window.print());
+    });
+  }
+
   if (loading) {
     return (
       <main className={styles.loading}>
@@ -876,7 +890,7 @@ export default function BracketPage() {
             <button
               type="button"
               className={styles.printButton}
-              onClick={() => window.print()}
+              onClick={() => setShowPrintOptions(true)}
               aria-label="Print bracket"
             >
               <Printer size={16} aria-hidden="true" />
@@ -940,7 +954,7 @@ export default function BracketPage() {
           <button
             type="button"
             className={styles.printButton}
-            onClick={() => window.print()}
+            onClick={() => setShowPrintOptions(true)}
           >
             <Printer size={18} aria-hidden="true" />
             Print bracket
@@ -1024,7 +1038,19 @@ export default function BracketPage() {
         showMissing={showMissingPicks}
       />
 
-      <PrintableBlankBracket model={model} />
+      <PrintableBracket
+        model={model}
+        bracket={bracket}
+        variant={printMode}
+        displayName={displayName}
+        tiebreaker={tiebreaker}
+      />
+
+      <PrintBracketDialog
+        open={showPrintOptions}
+        onClose={() => setShowPrintOptions(false)}
+        onSelect={printBracket}
+      />
 
       {isWarning && (
         <p

@@ -121,8 +121,32 @@
   transform: translateY(-50%);
 }
 
-.blankMatchup span {
+.blankMatchup > span {
   border-bottom: 0.8px solid #29343c;
+}
+
+.filledMatchup > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: end;
+  gap: 2px;
+  padding: 0 2px 1px;
+  border-bottom: 0.8px solid #29343c;
+  line-height: 1;
+}
+
+.filledMatchup strong {
+  font-size: 5.2pt;
+  font-variant-numeric: tabular-nums;
+}
+
+.filledMatchup span {
+  overflow: hidden;
+  font-size: 5.6pt;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .regionName {
@@ -223,6 +247,24 @@
   border-bottom: 0.9px solid #29343c;
 }
 
+.finalFourMatchup > span,
+.championshipMatchup > span {
+  min-width: 0;
+  overflow: hidden;
+  padding: 1px 2px;
+  font-size: 5.3pt;
+  font-weight: 700;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finalFourMatchup > span strong,
+.championshipMatchup > span strong {
+  margin-right: 2px;
+  font-size: 5pt;
+}
+
 .championshipArea {
   position: relative;
   display: grid;
@@ -246,7 +288,14 @@
 
 .championSlot span {
   width: 84%;
-  height: 8px;
+  min-height: 10px;
+  overflow: hidden;
+  font-size: 5.5pt;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .footer {
@@ -263,7 +312,12 @@
 
 .footer i {
   height: 10px;
+  overflow: hidden;
   border-bottom: 1px solid #111820;
+  font-style: normal;
+  line-height: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .footer .pointsLine {
