@@ -103,6 +103,7 @@ function matchupIndex(bracket: DerivedBracket) {
 export default function SpreadsheetPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
+  const [isCommissioner, setIsCommissioner] = useState(false);
   const [profile, setProfile] = useState<PoolProfile | null>(null);
   const [profiles, setProfiles] = useState<PoolProfile[]>([]);
   const [brackets, setBrackets] = useState<PoolBracket[]>([]);
@@ -231,6 +232,9 @@ export default function SpreadsheetPage() {
 
       if (!mountedRef.current) return false;
       setUserId(userData.user.id);
+      setIsCommissioner(
+        userData.user.app_metadata?.role === "commissioner",
+      );
       setProfile(currentProfile);
       setProfiles(loadedProfiles);
       setBrackets(loadedBrackets);
@@ -590,7 +594,11 @@ export default function SpreadsheetPage() {
           />
         </a>
         <TournamentViewSwitcher activeView="spreadsheet" />
-        <AccountMenu profile={profile} onSignOut={signOut} />
+        <AccountMenu
+          profile={profile}
+          isCommissioner={isCommissioner}
+          onSignOut={signOut}
+        />
       </header>
 
       <section

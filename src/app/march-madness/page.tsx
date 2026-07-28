@@ -68,6 +68,7 @@ function pickMap(value: unknown): PickMap {
 export default function MarchMadnessPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
+  const [isCommissioner, setIsCommissioner] = useState(false);
   const [profile, setProfile] = useState<PoolProfile | null>(null);
   const [profiles, setProfiles] = useState<PoolProfile[]>([]);
   const [brackets, setBrackets] = useState<PoolBracket[]>([]);
@@ -198,6 +199,9 @@ export default function MarchMadnessPage() {
 
         if (!mountedRef.current) return false;
         setUserId(userData.user.id);
+        setIsCommissioner(
+          userData.user.app_metadata?.role === "commissioner",
+        );
         setProfile(currentProfile);
         setProfiles(loadedProfiles);
         setBrackets(loadedBrackets);
@@ -531,7 +535,11 @@ export default function MarchMadnessPage() {
           />
         </a>
         <TournamentViewSwitcher activeView="brackets" />
-        <AccountMenu profile={profile} onSignOut={signOut} />
+        <AccountMenu
+          profile={profile}
+          isCommissioner={isCommissioner}
+          onSignOut={signOut}
+        />
       </header>
 
       <section className={styles.hero} id="top">

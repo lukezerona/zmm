@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown, LogOut } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, LogOut, ShieldCheck } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   getTournamentStartingScreen,
@@ -12,9 +13,11 @@ import styles from "./march-madness.module.css";
 
 export function AccountMenu({
   profile,
+  isCommissioner,
   onSignOut,
 }: {
   profile: PoolProfile;
+  isCommissioner?: boolean;
   onSignOut: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
@@ -106,6 +109,17 @@ export function AccountMenu({
               </span>
             </label>
           </fieldset>
+
+          {isCommissioner && (
+            <Link
+              className={styles.commissionerLink}
+              href="/commissioner"
+              onClick={() => setOpen(false)}
+            >
+              <ShieldCheck size={16} aria-hidden="true" />
+              Commissioner
+            </Link>
+          )}
 
           <button
             className={styles.accountSignOut}

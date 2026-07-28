@@ -13,6 +13,7 @@ import {
   Plus,
   Printer,
   Save,
+  ShieldCheck,
   Trash2,
   Trophy,
   X,
@@ -87,6 +88,7 @@ export default function BracketPage() {
   const router = useRouter();
   const allowUnsavedExitRef = useRef(false);
   const [userId, setUserId] = useState("");
+  const [isCommissioner, setIsCommissioner] = useState(false);
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [displayNameDraft, setDisplayNameDraft] = useState("");
@@ -289,6 +291,9 @@ export default function BracketPage() {
           deadlineTimestamp <= Date.now();
 
         setUserId(userData.user.id);
+        setIsCommissioner(
+          userData.user.app_metadata?.role === "commissioner",
+        );
         setUsername(profile.username);
         setSavedBrackets(entries);
         setActiveBracketId(saved.id);
@@ -702,6 +707,20 @@ export default function BracketPage() {
     });
   }
 
+  function openCommissioner() {
+    if (
+      dirty &&
+      !window.confirm(
+        "This bracket has unsaved changes. Leave without saving?",
+      )
+    ) {
+      return;
+    }
+
+    allowUnsavedExitRef.current = true;
+    router.push("/commissioner");
+  }
+
   if (loading) {
     return (
       <main className={styles.loading}>
@@ -734,9 +753,16 @@ export default function BracketPage() {
           height={483}
           priority
         />
-        <button type="button" onClick={signOut}>
-          <LogOut size={17} /> Sign out
-        </button>
+        <div className={styles.headerActions}>
+          {isCommissioner && (
+            <button type="button" onClick={openCommissioner}>
+              <ShieldCheck size={17} /> Commissioner
+            </button>
+          )}
+          <button type="button" onClick={signOut}>
+            <LogOut size={17} /> Sign out
+          </button>
+        </div>
       </header>
 
       <section className={styles.hero}>
