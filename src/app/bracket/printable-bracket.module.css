@@ -367,6 +367,20 @@
     height: 8in;
   }
 
+  :global(#zmm-print-root[data-print-device="phone"]) .footer {
+    height: 0.24in;
+    grid-template-columns: auto minmax(1.6in, 1fr) auto 0.6in;
+    align-items: center;
+    gap: 5px;
+    padding: 0 2px;
+    font-size: 5.8pt;
+  }
+
+  :global(#zmm-print-root[data-print-device="phone"]) .footer i {
+    height: 8px;
+    line-height: 8px;
+  }
+
   :global(#zmm-print-root[data-print-device="phone"]) .firstRoundTeam {
     grid-template-columns: 20px minmax(0, 1fr);
     padding-inline: 1px;
