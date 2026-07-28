@@ -58,7 +58,7 @@
   color: #ffffff !important;
 }
 
-.header button,
+.headerActions > button,
 .loading button {
   display: inline-flex;
   align-items: center;
@@ -71,7 +71,7 @@
   cursor: pointer;
 }
 
-.header button:hover,
+.headerActions > button:hover,
 .loading button:hover {
   color: white;
   border-color: #2c6688;
@@ -274,15 +274,6 @@
   color: #a8c0ce;
   background: #0a1a24;
   cursor: pointer;
-}
-
-.signedInAs {
-  display: block;
-  color: #8ba8b8;
-  font-size: 14px;
-  font-weight: 720;
-  line-height: 1.4;
-  letter-spacing: 0.01em;
 }
 
 .bracketToolbar {
@@ -1054,13 +1045,6 @@
     font-size: 11px;
   }
 
-  .identityCard .signedInAs {
-    overflow: hidden;
-    font-size: 12px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .identityCard form {
     grid-template-columns: minmax(0, 1fr) 30px 30px;
     gap: 5px;
@@ -1605,7 +1589,7 @@
     padding-inline: 13px;
   }
 
-  .header button {
+  .headerActions > button {
     padding: 9px 11px;
     font-size: 11px;
   }

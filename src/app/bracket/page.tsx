@@ -9,7 +9,6 @@ import {
   Copy,
   LayoutDashboard,
   LoaderCircle,
-  LogOut,
   Pencil,
   Plus,
   Printer,
@@ -25,6 +24,7 @@ import {
   getTournamentLifecycle,
 } from "@/lib/tournament-lifecycle";
 import { getTournamentStartingPath } from "@/lib/tournament-preference";
+import { AccountMenu } from "../march-madness/account-menu";
 import { BracketBoard } from "./bracket-board";
 import {
   PrintBracketDialog,
@@ -785,9 +785,10 @@ export default function BracketPage() {
             <LayoutDashboard size={17} aria-hidden="true" />
             <span>Tournament Central</span>
           </button>
-          <button type="button" onClick={signOut}>
-            <LogOut size={17} /> Sign out
-          </button>
+          <AccountMenu
+            profile={{ user_id: userId, username }}
+            onSignOut={signOut}
+          />
         </div>
       </header>
 
@@ -941,10 +942,6 @@ export default function BracketPage() {
               </button>
             </form>
           )}
-
-          <small className={styles.signedInAs}>
-            Signed in as @{username}
-          </small>
         </div>
 
         <div
