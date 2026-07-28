@@ -554,10 +554,11 @@ export function buildMasterGameIndex(
           .map((teamId) => teamPaths.get(teamId)?.region)
           .filter(Boolean),
       );
-      if (regions.has("east") && regions.has("south")) {
-        index.set("final-four-0", game);
-      } else if (regions.has("west") && regions.has("midwest")) {
-        index.set("final-four-1", game);
+      const matchupIndex = model.finalFourPairings.findIndex((pairing) =>
+        pairing.every((region) => regions.has(region)),
+      );
+      if (matchupIndex >= 0) {
+        index.set(`final-four-${matchupIndex}`, game);
       }
       continue;
     }
