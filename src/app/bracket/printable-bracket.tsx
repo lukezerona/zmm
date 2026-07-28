@@ -299,6 +299,10 @@ export function PrintableBracket({
 
   const roundDates = model.roundDates;
   const printDevice = isPhonePrintSource() ? "phone" : "desktop";
+  const printedAt = new Intl.DateTimeFormat(undefined, {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date());
 
   return createPortal(
     <div id="zmm-print-root" data-print-device={printDevice}>
@@ -362,6 +366,10 @@ export function PrintableBracket({
           <i className={styles.pointsLine}>
             {variant === "current" ? tiebreaker : ""}
           </i>
+          <div className={styles.desktopPrintMeta}>
+            <span>{printedAt}</span>
+            <span>Zerona March Madness · {window.location.host}</span>
+          </div>
         </footer>
       </article>
     </div>,
