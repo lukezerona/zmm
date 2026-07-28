@@ -758,6 +758,11 @@ export default function BracketPage() {
           priority
         />
         <div className={styles.headerActions}>
+          {isCommissioner && (
+            <button type="button" onClick={openCommissioner}>
+              <ShieldCheck size={17} /> Commissioner
+            </button>
+          )}
           <button
             type="button"
             className={styles.tournamentCentralButton}
@@ -772,11 +777,6 @@ export default function BracketPage() {
             <LayoutDashboard size={17} aria-hidden="true" />
             <span>Tournament Central</span>
           </button>
-          {isCommissioner && (
-            <button type="button" onClick={openCommissioner}>
-              <ShieldCheck size={17} /> Commissioner
-            </button>
-          )}
           <button type="button" onClick={signOut}>
             <LogOut size={17} /> Sign out
           </button>
