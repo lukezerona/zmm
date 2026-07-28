@@ -208,24 +208,26 @@ export default function LoginPage() {
               />
             </div>
 
-            <div className={styles.labelRow}>
-              <label htmlFor="password">Password</label>
+            <div className={styles.passwordField}>
+              <div className={styles.labelRow}>
+                <label htmlFor="password">Password</label>
+              </div>
+              <div className={`${styles.inputWrap} ${styles.passwordInputWrap}`}>
+                <LockKeyhole size={18} aria-hidden="true" />
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+              </div>
               <button type="button" className={styles.forgotButton} onClick={() => { setForgotOpen(true); setResetSent(false); setResetUsername(username); }}>
                 Forgot password?
               </button>
-            </div>
-            <div className={styles.inputWrap}>
-              <LockKeyhole size={18} aria-hidden="true" />
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
               <button type="button" className={styles.eyeButton} onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Hide password" : "Show password"}>
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>

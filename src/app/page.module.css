@@ -17,11 +17,13 @@
 .formIntro h2 { font-size: 31px; letter-spacing: -.035em; margin: 0; }
 .form { display: flex; flex-direction: column; }
 .form label, .resetForm label { color: #c7d2db; font-size: 12px; font-weight: 700; margin-bottom: 9px; }
-.labelRow { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+.passwordField { position: relative; margin-top: 20px; }
+.labelRow { display: flex; justify-content: space-between; align-items: center; }
 .labelRow label { margin: 0; }
-.forgotButton { border: 0; background: none; color: #36b8ff; font: inherit; font-size: 12px; cursor: pointer; }
+.forgotButton { position: absolute; top: 0; right: 0; border: 0; background: none; color: #36b8ff; font: inherit; font-size: 12px; cursor: pointer; }
 .forgotButton:hover { color: #8ad8ff; }
 .inputWrap { display: flex; align-items: center; gap: 11px; height: 50px; padding: 0 14px; background: #07121b; border: 1px solid #1b3343; border-radius: 10px; transition: border-color .2s, box-shadow .2s; }
+.passwordInputWrap { margin-top: 9px; padding-right: 44px; }
 .inputWrap:focus-within { border-color: #178fd0; box-shadow: 0 0 0 3px rgba(23,143,208,.13); }
 .inputWrap svg { flex: 0 0 auto; color: #5f7f93; }
 .inputWrap input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: #f4f8fb; font: inherit; font-size: 14px; }
@@ -29,7 +31,7 @@
 .inputWrap input:-webkit-autofill,
 .inputWrap input:-webkit-autofill:hover,
 .inputWrap input:-webkit-autofill:focus { -webkit-text-fill-color: #f4f8fb; caret-color: #f4f8fb; -webkit-box-shadow: 0 0 0 1000px #07121b inset; box-shadow: 0 0 0 1000px #07121b inset; transition: background-color 9999s ease-out 0s; }
-.eyeButton { display: grid; place-items: center; border: 0; background: none; cursor: pointer; }
+.eyeButton { position: absolute; right: 14px; bottom: 16px; display: grid; place-items: center; border: 0; background: none; cursor: pointer; }
 .eyeButton:hover svg { color: #c3d8e6; }
 .submitButton { height: 52px; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 24px; border: 0; border-radius: 10px; background: linear-gradient(110deg,#087dc3,#15a7f4); color: white; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 28px rgba(0,133,212,.22); transition: transform .2s, filter .2s; }
 .submitButton:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.08); }
