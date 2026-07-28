@@ -1117,30 +1117,6 @@
   width: 13.5%;
 }
 
-.preTournamentLeaderboardTable .placeColumn {
-  width: 10%;
-}
-
-.preTournamentLeaderboardTable .nameColumn {
-  width: 25%;
-}
-
-.preTournamentLeaderboardTable .pointsColumn {
-  width: 12%;
-}
-
-.preTournamentLeaderboardTable .possibleColumn {
-  width: 17%;
-}
-
-.preTournamentLeaderboardTable .correctColumn {
-  width: 18%;
-}
-
-.preTournamentLeaderboardTable .moneyColumn {
-  width: 18%;
-}
-
 .compactLeaderboardTable th,
 .compactLeaderboardTable td {
   overflow: hidden;
@@ -1242,6 +1218,13 @@
 
 .tableChampionCell .championPick svg {
   flex: 0 0 auto;
+}
+
+.privatePickPlaceholder {
+  color: #678290;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .compactLeaderboardTable .correctCount {
