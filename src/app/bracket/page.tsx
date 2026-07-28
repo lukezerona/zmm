@@ -107,6 +107,7 @@ export default function BracketPage() {
   const [tiebreaker, setTiebreaker] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveSucceeded, setSaveSucceeded] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [locked, setLocked] = useState(false);
   const [showMissingPicks, setShowMissingPicks] = useState(false);
@@ -312,6 +313,7 @@ export default function BracketPage() {
 
       setLocked(true);
       setDirty(false);
+      setSaveSucceeded(false);
       setMessage(
         "Entries are locked because the Round of 64 has started. Opening Tournament Central…",
       );
@@ -353,6 +355,7 @@ export default function BracketPage() {
     setShowAddBracket(false);
     setShowMissingPicks(false);
     setDirty(false);
+    setSaveSucceeded(false);
     setMessage("");
   }
 
@@ -379,6 +382,7 @@ export default function BracketPage() {
       sanitizePicks(model, { ...current, [matchupId]: entryId }),
     );
     setDirty(true);
+    setSaveSucceeded(false);
     setMessage("");
   }
 
@@ -391,6 +395,7 @@ export default function BracketPage() {
       return sanitizePicks(model, nextPicks);
     });
     setDirty(true);
+    setSaveSucceeded(false);
     setMessage("");
   }
 
@@ -582,6 +587,7 @@ export default function BracketPage() {
     const remainingPicks = TOTAL_PICKS - completedPicks;
     setShowMissingPicks(remainingPicks > 0 || total === null);
     setSaving(true);
+    setSaveSucceeded(false);
     setMessage("");
     const savedAt = new Date().toISOString();
     const { data: updatedBracket, error: saveError } = await client
@@ -605,6 +611,7 @@ export default function BracketPage() {
       ) {
         setLocked(true);
         setDirty(false);
+        setSaveSucceeded(false);
         setMessage(
           "Entries are locked because the Round of 64 has started. Your saved picks were not changed.",
         );
@@ -627,6 +634,7 @@ export default function BracketPage() {
       ),
     );
     setDirty(false);
+    setSaveSucceeded(true);
     if (remainingPicks === 0 && total !== null) {
       setShowMissingPicks(false);
       setMessage("Bracket saved—your champion and tiebreaker are set.");
@@ -872,6 +880,9 @@ export default function BracketPage() {
             </button>
             <button
               type="button"
+              className={
+                saveSucceeded ? styles.saveSuccessButton : undefined
+              }
               onClick={saveBracket}
               disabled={locked || saving || !dirty}
               aria-label={
@@ -879,23 +890,25 @@ export default function BracketPage() {
                   ? "Entries locked"
                   : saving
                     ? "Saving bracket"
-                    : dirty
-                      ? "Save bracket"
-                      : "Bracket saved"
+                    : saveSucceeded
+                      ? "Bracket saved"
+                      : "Save bracket"
               }
             >
               {saving ? (
                 <LoaderCircle className={styles.spinner} size={16} />
+              ) : saveSucceeded ? (
+                <Check size={18} strokeWidth={3} aria-hidden="true" />
               ) : (
-                <Save size={16} />
+                <Save size={16} aria-hidden="true" />
               )}
               {locked
                 ? "Locked"
                 : saving
                   ? "Saving"
-                  : dirty
-                    ? "Save"
-                    : "Saved"}
+                  : saveSucceeded
+                    ? null
+                    : "Save"}
             </button>
           </div>
         </div>
@@ -928,11 +941,35 @@ export default function BracketPage() {
           </button>
           <button
             type="button"
+            className={
+              saveSucceeded ? styles.saveSuccessButton : undefined
+            }
             onClick={saveBracket}
             disabled={locked || saving || !dirty}
+            aria-label={
+              locked
+                ? "Entries locked"
+                : saving
+                  ? "Saving bracket"
+                  : saveSucceeded
+                    ? "Bracket saved"
+                    : "Save bracket"
+            }
           >
-            {saving ? <LoaderCircle className={styles.spinner} size={18} /> : <Save size={18} />}
-            {locked ? "Entries locked" : saving ? "Saving…" : dirty ? "Save bracket" : "Saved"}
+            {saving ? (
+              <LoaderCircle className={styles.spinner} size={18} />
+            ) : saveSucceeded ? (
+              <Check size={20} strokeWidth={3} aria-hidden="true" />
+            ) : (
+              <Save size={18} aria-hidden="true" />
+            )}
+            {locked
+              ? "Entries locked"
+              : saving
+                ? "Saving…"
+                : saveSucceeded
+                  ? null
+                  : "Save bracket"}
           </button>
         </div>
       </section>
@@ -973,6 +1010,7 @@ export default function BracketPage() {
           if (locked) return;
           setTiebreaker(value);
           setDirty(true);
+          setSaveSucceeded(false);
           setMessage("");
         }}
         readOnly={locked}
@@ -997,11 +1035,35 @@ export default function BracketPage() {
         </div>
         <button
           type="button"
+          className={
+            saveSucceeded ? styles.saveSuccessButton : undefined
+          }
           onClick={saveBracket}
           disabled={locked || saving || !dirty}
+          aria-label={
+            locked
+              ? "Entries locked"
+              : saving
+                ? "Saving bracket"
+                : saveSucceeded
+                  ? "Bracket saved"
+                  : "Save bracket"
+          }
         >
-          {saving ? <LoaderCircle className={styles.spinner} size={18} /> : <Save size={18} />}
-          {locked ? "Entries locked" : saving ? "Saving…" : dirty ? "Save bracket" : "Saved"}
+          {saving ? (
+            <LoaderCircle className={styles.spinner} size={18} />
+          ) : saveSucceeded ? (
+            <Check size={20} strokeWidth={3} aria-hidden="true" />
+          ) : (
+            <Save size={18} aria-hidden="true" />
+          )}
+          {locked
+            ? "Entries locked"
+            : saving
+              ? "Saving…"
+              : saveSucceeded
+                ? null
+                : "Save bracket"}
         </button>
       </footer>
     </main>

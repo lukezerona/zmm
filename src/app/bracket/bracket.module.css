@@ -325,6 +325,17 @@
   cursor: default;
 }
 
+.toolbarActions > button.saveSuccessButton:disabled,
+.saveFooter > button.saveSuccessButton:disabled {
+  border-color: #39d98a;
+  color: #ffffff;
+  background: #138a50;
+  box-shadow:
+    0 0 0 1px rgba(57, 217, 138, 0.16),
+    0 6px 18px rgba(5, 84, 46, 0.3);
+  opacity: 1;
+}
+
 .toolbarActions .printButton {
   border-color: #245d7a;
   color: #a8ddf5;
