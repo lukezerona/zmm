@@ -4,15 +4,19 @@ import styles from "./march-madness.module.css";
 export function TournamentViewSwitcher({
   activeView,
   spreadsheetAvailable = true,
+  bracketsHref = "/march-madness",
+  spreadsheetHref = "/spreadsheet",
 }: {
   activeView: "brackets" | "spreadsheet" | null;
   spreadsheetAvailable?: boolean;
+  bracketsHref?: string;
+  spreadsheetHref?: string;
 }) {
   return (
     <nav className={styles.viewSwitcher} aria-label="Tournament views">
       <Link
         className={activeView === "brackets" ? styles.activeView : undefined}
-        href="/march-madness"
+        href={bracketsHref}
         aria-current={activeView === "brackets" ? "page" : undefined}
       >
         <span className={styles.desktopViewLabel}>Brackets</span>
@@ -23,7 +27,7 @@ export function TournamentViewSwitcher({
           className={
             activeView === "spreadsheet" ? styles.activeView : undefined
           }
-          href="/spreadsheet"
+          href={spreadsheetHref}
           aria-current={activeView === "spreadsheet" ? "page" : undefined}
         >
           <span className={styles.desktopViewLabel}>Spreadsheet</span>

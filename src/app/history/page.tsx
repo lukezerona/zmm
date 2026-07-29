@@ -71,7 +71,6 @@ export default function HistoryPage() {
   const [model, setModel] = useState<TournamentModel | null>(null);
   const [historyYears, setHistoryYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [spreadsheetAvailable, setSpreadsheetAvailable] = useState(false);
   const [createBracketAvailable, setCreateBracketAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingSeason, setLoadingSeason] = useState(false);
@@ -230,13 +229,16 @@ export default function HistoryPage() {
       setProfile(currentProfile);
       setProfiles(loadedProfiles);
       setHistoryYears(years);
-      setSpreadsheetAvailable(
-        lifecycle.phase === "live" || lifecycle.phase === "final",
-      );
       setCreateBracketAvailable(lifecycle.phase === "picks_open");
 
       if (years.length > 0) {
-        await loadSeason(years[0]);
+        const requestedYear = Number(
+          new URLSearchParams(window.location.search).get("season"),
+        );
+        const initialYear = years.includes(requestedYear)
+          ? requestedYear
+          : years[0];
+        await loadSeason(initialYear);
       }
     } catch (loadError) {
       console.error("[history] Could not load tournament history", loadError);
@@ -292,7 +294,10 @@ export default function HistoryPage() {
 
   async function chooseYear(year: number) {
     setLoadingSeason(true);
-    await loadSeason(year);
+    const loaded = await loadSeason(year);
+    if (loaded) {
+      router.replace(`/history?season=${year}`, { scroll: false });
+    }
     if (mountedRef.current) setLoadingSeason(false);
   }
 
@@ -338,8 +343,16 @@ export default function HistoryPage() {
           />
         </Link>
         <TournamentViewSwitcher
-          activeView={null}
-          spreadsheetAvailable={spreadsheetAvailable}
+          activeView="brackets"
+          spreadsheetAvailable={selectedYear !== null}
+          bracketsHref={
+            selectedYear === null ? "/history" : `/history?season=${selectedYear}`
+          }
+          spreadsheetHref={
+            selectedYear === null
+              ? "/spreadsheet"
+              : `/spreadsheet?season=${selectedYear}`
+          }
         />
         <AccountMenu
           profile={profile}

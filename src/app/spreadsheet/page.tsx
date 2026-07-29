@@ -75,6 +75,14 @@ function pickMap(value: unknown): PickMap {
   );
 }
 
+function requestedHistorySeasonYear() {
+  if (typeof window === "undefined") return null;
+  const value = Number(
+    new URLSearchParams(window.location.search).get("season"),
+  );
+  return Number.isInteger(value) && value > 0 ? value : null;
+}
+
 function entryIndex(model: TournamentModel) {
   const entries = new Map<string, BracketEntry>();
   for (const region of REGIONS) {
@@ -120,12 +128,16 @@ export default function SpreadsheetPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [historySeasonYear, setHistorySeasonYear] = useState<number | null>(
+    null,
+  );
   const [rainManEnabled, setRainManEnabled] = useState(false);
   const [rainManSelections, setRainManSelections] = useState<PickMap>({});
   const [rainManTiebreaker, setRainManTiebreaker] = useState("");
   const mountedRef = useRef(true);
   const refreshTimerRef = useRef<number | null>(null);
   const seasonYearRef = useRef<number | null>(null);
+  const historySeasonYearRef = useRef<number | null>(null);
 
   const loadSpreadsheet = useCallback(async () => {
     const client = supabase;
@@ -140,33 +152,67 @@ export default function SpreadsheetPage() {
       return false;
     }
 
-    let lifecycle;
-    try {
-      lifecycle = await getTournamentLifecycle(client);
-    } catch (lifecycleError) {
-      console.error(
-        "[spreadsheet] Could not load tournament lifecycle",
-        lifecycleError,
-      );
-      if (mountedRef.current) {
-        setError("The family spreadsheet is temporarily unavailable.");
+    const requestedSeasonYear = requestedHistorySeasonYear();
+    let activeSeasonYear: number;
+
+    if (requestedSeasonYear !== null) {
+      const { data: completedSeason, error: completedSeasonError } =
+        await client
+          .from("espn_games")
+          .select("season_year")
+          .eq("season_year", requestedSeasonYear)
+          .eq("round_code", "CHAMPIONSHIP")
+          .eq("completed", true)
+          .maybeSingle();
+
+      if (completedSeasonError || !completedSeason) {
+        console.error("[spreadsheet] Historical season is unavailable", {
+          seasonYear: requestedSeasonYear,
+          error: completedSeasonError?.message,
+        });
+        if (mountedRef.current) {
+          setError(
+            "That season is not available in the tournament archive yet.",
+          );
+        }
+        return false;
       }
-      return false;
-    }
 
-    if (lifecycle.phase === "picks_open") {
-      router.replace("/bracket");
-      return true;
-    }
-
-    if (lifecycle.seasonYear === null || !lifecycle.fieldReady) {
-      if (mountedRef.current) {
-        setError("The tournament bracket is not ready yet.");
+      activeSeasonYear = requestedSeasonYear;
+      historySeasonYearRef.current = requestedSeasonYear;
+      if (mountedRef.current) setHistorySeasonYear(requestedSeasonYear);
+    } else {
+      let lifecycle;
+      try {
+        lifecycle = await getTournamentLifecycle(client);
+      } catch (lifecycleError) {
+        console.error(
+          "[spreadsheet] Could not load tournament lifecycle",
+          lifecycleError,
+        );
+        if (mountedRef.current) {
+          setError("The family spreadsheet is temporarily unavailable.");
+        }
+        return false;
       }
-      return false;
+
+      if (lifecycle.phase === "picks_open") {
+        router.replace("/bracket");
+        return true;
+      }
+
+      if (lifecycle.seasonYear === null || !lifecycle.fieldReady) {
+        if (mountedRef.current) {
+          setError("The tournament bracket is not ready yet.");
+        }
+        return false;
+      }
+
+      activeSeasonYear = lifecycle.seasonYear;
+      historySeasonYearRef.current = null;
+      if (mountedRef.current) setHistorySeasonYear(null);
     }
 
-    const activeSeasonYear = lifecycle.seasonYear;
     seasonYearRef.current = activeSeasonYear;
 
     const [profilesResult, bracketsResult, gamesResult, pairingResult] =
@@ -236,6 +282,17 @@ export default function SpreadsheetPage() {
           picks: sanitizePicks(tournament, pickMap(bracket.picks)),
         }),
       );
+      const knownProfiles = new Map(
+        loadedProfiles.map((candidate) => [candidate.user_id, candidate]),
+      );
+      for (const bracket of loadedBrackets) {
+        if (!knownProfiles.has(bracket.user_id)) {
+          knownProfiles.set(bracket.user_id, {
+            user_id: bracket.user_id,
+            username: "archived",
+          });
+        }
+      }
 
       if (!mountedRef.current) return false;
       setUserId(userData.user.id);
@@ -243,7 +300,7 @@ export default function SpreadsheetPage() {
         userData.user.app_metadata?.role === "commissioner",
       );
       setProfile(currentProfile);
-      setProfiles(loadedProfiles);
+      setProfiles([...knownProfiles.values()]);
       setBrackets(loadedBrackets);
       setGames(loadedGames);
       setModel(tournament);
@@ -263,41 +320,45 @@ export default function SpreadsheetPage() {
     const client = supabase;
     if (!client) return false;
 
-    let lifecycle;
-    try {
-      lifecycle = await getTournamentLifecycle(client);
-    } catch (lifecycleError) {
-      console.error(
-        "[spreadsheet] Could not refresh tournament lifecycle",
-        lifecycleError,
-      );
-      return false;
-    }
+    let activeSeasonYear = historySeasonYearRef.current;
+    if (activeSeasonYear === null) {
+      let lifecycle;
+      try {
+        lifecycle = await getTournamentLifecycle(client);
+      } catch (lifecycleError) {
+        console.error(
+          "[spreadsheet] Could not refresh tournament lifecycle",
+          lifecycleError,
+        );
+        return false;
+      }
 
-    if (lifecycle.phase === "picks_open") {
-      router.replace("/bracket");
-      return true;
-    }
+      if (lifecycle.phase === "picks_open") {
+        router.replace("/bracket");
+        return true;
+      }
 
-    if (
-      lifecycle.seasonYear === null ||
-      lifecycle.seasonYear !== seasonYearRef.current
-    ) {
-      return loadSpreadsheet();
+      if (
+        lifecycle.seasonYear === null ||
+        lifecycle.seasonYear !== seasonYearRef.current
+      ) {
+        return loadSpreadsheet();
+      }
+      activeSeasonYear = lifecycle.seasonYear;
     }
 
     const [gamesResult, pairingResult] = await Promise.all([
       client
         .from("espn_games")
         .select(ESPN_GAME_SELECT)
-        .eq("season_year", lifecycle.seasonYear)
+        .eq("season_year", activeSeasonYear)
         .in("round_code", TOURNAMENT_ROUND_CODES),
       client
         .from("tournament_region_pairings")
         .select(
           "season_year, left_top_region, left_bottom_region, right_top_region, right_bottom_region",
         )
-        .eq("season_year", lifecycle.seasonYear)
+        .eq("season_year", activeSeasonYear)
         .maybeSingle(),
     ]);
 
@@ -313,7 +374,7 @@ export default function SpreadsheetPage() {
       const loadedGames = gamesResult.data as TournamentGame[];
       const tournament = buildTournamentModel(
         loadedGames as EspnGameRow[],
-        lifecycle.seasonYear,
+        activeSeasonYear,
         pairingResult.data as TournamentRegionPairingRow,
       );
       if (!mountedRef.current) return false;
@@ -600,7 +661,19 @@ export default function SpreadsheetPage() {
             priority
           />
         </Link>
-        <TournamentViewSwitcher activeView="spreadsheet" />
+        <TournamentViewSwitcher
+          activeView="spreadsheet"
+          bracketsHref={
+            historySeasonYear === null
+              ? "/march-madness"
+              : `/history?season=${historySeasonYear}`
+          }
+          spreadsheetHref={
+            historySeasonYear === null
+              ? "/spreadsheet"
+              : `/spreadsheet?season=${historySeasonYear}`
+          }
+        />
         <div className={headerStyles.headerUserActions}>
           {isCommissioner && (
             <Link
@@ -631,8 +704,16 @@ export default function SpreadsheetPage() {
       >
         <div className={styles.sheetToolbar}>
           <div className={styles.sheetHeading}>
-            <span>{leaderboard.rows.length} PARTICIPANTS</span>
-            <h2>Family Spreadsheet</h2>
+            <span>
+              {historySeasonYear === null
+                ? `${leaderboard.rows.length} PARTICIPANTS`
+                : `${historySeasonYear} ARCHIVE · ${leaderboard.rows.length} PARTICIPANTS`}
+            </span>
+            <h2>
+              {historySeasonYear === null
+                ? "Family Spreadsheet"
+                : `${historySeasonYear} Family Spreadsheet`}
+            </h2>
           </div>
           <div className={styles.toolbarRight}>
             <button
@@ -658,7 +739,13 @@ export default function SpreadsheetPage() {
               <span><i className={styles.pendingKey} />Pending</span>
             </div>
             <div className={styles.refreshStatus} aria-live="polite">
-              <strong>{refreshing ? "Updating…" : "Live updates connected"}</strong>
+              <strong>
+                {refreshing
+                  ? "Updating…"
+                  : historySeasonYear === null
+                    ? "Live updates connected"
+                    : "Archived results"}
+              </strong>
               {lastUpdated && (
                 <span>
                   Updated{" "}
