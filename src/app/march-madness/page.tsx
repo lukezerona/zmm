@@ -727,6 +727,7 @@ export default function MarchMadnessPage() {
               {label}
             </button>
           ))}
+          <Link href="/history">History</Link>
         </nav>
       )}
 

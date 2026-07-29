@@ -2150,7 +2150,7 @@
     z-index: 39;
     top: 68px;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4px;
     padding: 8px 12px;
     border-bottom: 1px solid rgba(62, 153, 198, 0.22);
@@ -2158,11 +2158,16 @@
     backdrop-filter: blur(16px);
   }
 
-  .mobileTournamentTabs button {
+  .mobileTournamentTabs button,
+  .mobileTournamentTabs a {
     height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid transparent;
     border-radius: 9px;
     color: #718b9a;
+    text-decoration: none;
     background: transparent;
     font: inherit;
     font-size: 11px;
