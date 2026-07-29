@@ -758,8 +758,10 @@ thead .stickyCell {
     font-size: 9px;
   }
 
-  .participant .mobileTiebreakStat {
+  .participant .mobileParticipantStats .mobileTiebreakStat {
     grid-column: 1 / -1;
+    justify-content: flex-start;
+    gap: 5px;
   }
 
   .mobileRainManTiebreaker {
