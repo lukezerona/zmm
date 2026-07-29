@@ -780,6 +780,7 @@ export default function MarchMadnessPage() {
               <div className={styles.leaderboardActions}>
                 <button
                   type="button"
+                  className={styles.leaderboardRefreshButton}
                   onClick={() => void requestRefresh("dashboard")}
                   disabled={refreshing}
                   aria-label="Refresh tournament data"
@@ -788,7 +789,7 @@ export default function MarchMadnessPage() {
                     className={refreshing ? styles.spinner : ""}
                     size={15}
                   />
-                  Refresh
+                  <span>Refresh</span>
                 </button>
                 <button
                   type="button"
