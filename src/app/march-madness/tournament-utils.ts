@@ -289,6 +289,10 @@ export function allocatePrizePayouts(
     }
 
     if (!championshipComplete) {
+      if (b.possiblePointsRemaining !== a.possiblePointsRemaining) {
+        return b.possiblePointsRemaining - a.possiblePointsRemaining;
+      }
+
       const createdAtDifference =
         Date.parse(a.createdAt) - Date.parse(b.createdAt);
       if (Number.isFinite(createdAtDifference) && createdAtDifference !== 0) {
