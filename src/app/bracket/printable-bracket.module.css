@@ -149,6 +149,18 @@
   white-space: nowrap;
 }
 
+.incorrectPick {
+  color: #596168;
+  text-decoration: line-through;
+  text-decoration-color: #111820;
+  text-decoration-thickness: 1px;
+}
+
+.incorrectPick > strong,
+.incorrectPick > span {
+  text-decoration: inherit;
+}
+
 .regionName {
   position: absolute;
   z-index: 2;

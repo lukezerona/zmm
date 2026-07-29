@@ -77,6 +77,19 @@ export function TournamentBracketViewer({
     selectedValue === MASTER_VALUE
       ? masterPrintableBracket
       : playerBracket;
+  const incorrectPickMatchups = useMemo(() => {
+    if (!selectedBracket) return new Set<string>();
+
+    return new Set(
+      Object.entries(actualPicks)
+        .filter(
+          ([matchupId, actualWinnerId]) =>
+            selectedBracket.picks[matchupId] !== undefined &&
+            selectedBracket.picks[matchupId] !== actualWinnerId,
+        )
+        .map(([matchupId]) => matchupId),
+    );
+  }, [actualPicks, selectedBracket]);
 
   function printBracket(mode: PrintBracketMode) {
     setPrintMode(mode);
@@ -141,6 +154,7 @@ export function TournamentBracketViewer({
         variant={printMode}
         displayName={selectedBracketName}
         tiebreaker={selectedBracket?.tiebreaker_total}
+        incorrectPickMatchups={incorrectPickMatchups}
       />
 
       <PrintBracketDialog

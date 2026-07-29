@@ -50,6 +50,7 @@ const ROUND_POSITIONS = {
 type PrintSide = "left" | "right";
 type RegionPosition = "top" | "bottom";
 type PrintVariant = "blank" | "current";
+const EMPTY_INCORRECT_PICKS: ReadonlySet<string> = new Set();
 
 function subscribeToClient() {
   return () => {};
@@ -96,9 +97,13 @@ function FirstRoundMatchup({
 
 function FilledRoundMatchup({
   matchup,
+  sourceMatchups,
+  incorrectPickMatchups,
   style,
 }: {
   matchup: BracketMatchup;
+  sourceMatchups: readonly BracketMatchup[];
+  incorrectPickMatchups: ReadonlySet<string>;
   style: CSSProperties;
 }) {
   return (
@@ -108,8 +113,15 @@ function FilledRoundMatchup({
     >
       {matchup.options.map((entry, index) => {
         const team = teamLabel(entry);
+        const sourceMatchup = sourceMatchups[index];
+        const incorrect =
+          sourceMatchup !== undefined &&
+          incorrectPickMatchups.has(sourceMatchup.id);
         return (
-          <div key={`${matchup.id}-${index}`}>
+          <div
+            className={incorrect ? styles.incorrectPick : undefined}
+            key={`${matchup.id}-${index}`}
+          >
             <strong>{team.seed}</strong>
             <span>{team.name}</span>
           </div>
@@ -124,6 +136,7 @@ function RegionBracketPrint({
   matchups,
   bracket,
   variant,
+  incorrectPickMatchups,
   side,
   position,
 }: {
@@ -131,6 +144,7 @@ function RegionBracketPrint({
   matchups: BracketMatchup[];
   bracket: DerivedBracket | null;
   variant: PrintVariant;
+  incorrectPickMatchups: ReadonlySet<string>;
   side: PrintSide;
   position: RegionPosition;
 }) {
@@ -141,6 +155,13 @@ function RegionBracketPrint({
         currentRounds.roundOf32,
         currentRounds.sweet16,
         currentRounds.elite8,
+      ]
+    : [];
+  const sourceRounds = currentRounds
+    ? [
+        currentRounds.roundOf64,
+        currentRounds.roundOf32,
+        currentRounds.sweet16,
       ]
     : [];
 
@@ -176,6 +197,11 @@ function RegionBracketPrint({
             return (
               <FilledRoundMatchup
                 matchup={currentMatchup}
+                sourceMatchups={
+                  sourceRounds[roundIndex]?.slice(index * 2, index * 2 + 2) ??
+                  []
+                }
+                incorrectPickMatchups={incorrectPickMatchups}
                 key={`${region}-${roundIndex}-${index}`}
                 style={{
                   left: `${round.left}%`,
@@ -216,9 +242,13 @@ function RegionBracketPrint({
 
 function FinalsMatchup({
   matchup,
+  sourceMatchups,
+  incorrectPickMatchups,
   className,
 }: {
   matchup?: BracketMatchup;
+  sourceMatchups?: readonly BracketMatchup[];
+  incorrectPickMatchups: ReadonlySet<string>;
   className: string;
 }) {
   return (
@@ -226,8 +256,15 @@ function FinalsMatchup({
       {matchup
         ? matchup.options.map((entry, index) => {
             const team = teamLabel(entry);
+            const sourceMatchup = sourceMatchups?.[index];
+            const incorrect =
+              sourceMatchup !== undefined &&
+              incorrectPickMatchups.has(sourceMatchup.id);
             return (
-              <span key={`${matchup.id}-${index}`}>
+              <span
+                className={incorrect ? styles.incorrectPick : undefined}
+                key={`${matchup.id}-${index}`}
+              >
                 <strong>{team.seed}</strong>
                 {team.name}
               </span>
@@ -239,13 +276,22 @@ function FinalsMatchup({
 }
 
 function PrintableFinals({
+  model,
   bracket,
   variant,
+  incorrectPickMatchups,
 }: {
+  model: TournamentModel;
   bracket: DerivedBracket | null;
   variant: PrintVariant;
+  incorrectPickMatchups: ReadonlySet<string>;
 }) {
   const currentBracket = variant === "current" ? bracket : null;
+  const finalFourSources = currentBracket
+    ? model.finalFourPairings.map((pairing) =>
+        pairing.map((region) => currentBracket.regions[region].elite8[0]),
+      )
+    : [];
   const champion = currentBracket?.champion
     ? teamLabel(currentBracket.champion)
     : null;
@@ -254,22 +300,35 @@ function PrintableFinals({
     <section className={styles.finals}>
       <FinalsMatchup
         matchup={currentBracket?.finalFour[0]}
+        sourceMatchups={finalFourSources[0]}
+        incorrectPickMatchups={incorrectPickMatchups}
         className={styles.finalFourMatchup}
       />
       <div className={styles.championshipArea}>
         <div className={styles.championSlot}>
           <strong>Champion</strong>
-          <span>
+          <span
+            className={
+              currentBracket &&
+              incorrectPickMatchups.has(currentBracket.championship.id)
+                ? styles.incorrectPick
+                : undefined
+            }
+          >
             {champion ? `${champion.seed} ${champion.name}` : ""}
           </span>
         </div>
         <FinalsMatchup
           matchup={currentBracket?.championship}
+          sourceMatchups={currentBracket?.finalFour}
+          incorrectPickMatchups={incorrectPickMatchups}
           className={styles.championshipMatchup}
         />
       </div>
       <FinalsMatchup
         matchup={currentBracket?.finalFour[1]}
+        sourceMatchups={finalFourSources[1]}
+        incorrectPickMatchups={incorrectPickMatchups}
         className={styles.finalFourMatchup}
       />
     </section>
@@ -282,12 +341,14 @@ export function PrintableBracket({
   variant,
   displayName,
   tiebreaker,
+  incorrectPickMatchups = EMPTY_INCORRECT_PICKS,
 }: {
   model: TournamentModel;
   bracket: DerivedBracket | null;
   variant: PrintVariant;
   displayName?: string;
   tiebreaker?: string | number | null;
+  incorrectPickMatchups?: ReadonlySet<string>;
 }) {
   const canUseDocument = useSyncExternalStore(
     subscribeToClient,
@@ -322,6 +383,7 @@ export function PrintableBracket({
             matchups={model.firstRoundByRegion[model.regionLayout.topLeft]}
             bracket={bracket}
             variant={variant}
+            incorrectPickMatchups={incorrectPickMatchups}
             side="left"
             position="top"
           />
@@ -330,6 +392,7 @@ export function PrintableBracket({
             matchups={model.firstRoundByRegion[model.regionLayout.topRight]}
             bracket={bracket}
             variant={variant}
+            incorrectPickMatchups={incorrectPickMatchups}
             side="right"
             position="top"
           />
@@ -338,6 +401,7 @@ export function PrintableBracket({
             matchups={model.firstRoundByRegion[model.regionLayout.bottomLeft]}
             bracket={bracket}
             variant={variant}
+            incorrectPickMatchups={incorrectPickMatchups}
             side="left"
             position="bottom"
           />
@@ -346,6 +410,7 @@ export function PrintableBracket({
             matchups={model.firstRoundByRegion[model.regionLayout.bottomRight]}
             bracket={bracket}
             variant={variant}
+            incorrectPickMatchups={incorrectPickMatchups}
             side="right"
             position="bottom"
           />
@@ -356,7 +421,12 @@ export function PrintableBracket({
             <small>{model.seasonYear} Family Bracket</small>
           </div>
 
-          <PrintableFinals bracket={bracket} variant={variant} />
+          <PrintableFinals
+            model={model}
+            bracket={bracket}
+            variant={variant}
+            incorrectPickMatchups={incorrectPickMatchups}
+          />
         </div>
 
         <footer className={styles.footer}>
