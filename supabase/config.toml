@@ -9,3 +9,9 @@ entrypoint = "./functions/sync-espn-games/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/sync-espn-games/*.html" ]
+
+[functions.send-bracket-reminders]
+enabled = true
+verify_jwt = false
+import_map = "./functions/send-bracket-reminders/deno.json"
+entrypoint = "./functions/send-bracket-reminders/index.ts"

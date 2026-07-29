@@ -1,0 +1,2 @@
+create index bracket_reminder_deliveries_user_id_idx
+on public.bracket_reminder_deliveries (user_id);
