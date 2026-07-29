@@ -496,8 +496,7 @@ thead .stickyCell {
   white-space: nowrap;
 }
 
-.mobileParticipantStats,
-.mobileScrollHint {
+.mobileParticipantStats {
   display: none;
 }
 
@@ -648,18 +647,6 @@ thead .stickyCell {
 
   .refreshButton {
     width: 100%;
-  }
-
-  .mobileScrollHint {
-    display: block;
-    margin: 0;
-    padding: 9px 12px;
-    border-bottom: 1px solid rgba(54, 141, 187, 0.18);
-    color: #6e91a3;
-    background: rgba(5, 19, 28, 0.96);
-    font-size: 10px;
-    font-weight: 750;
-    text-align: center;
   }
 
   .tableViewport {

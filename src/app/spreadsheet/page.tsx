@@ -894,10 +894,6 @@ export default function SpreadsheetPage() {
           </div>
         </div>
 
-        <p className={styles.mobileScrollHint}>
-          Swipe picks left and right. Participant details stay pinned.
-        </p>
-
         <div className={styles.tableViewport}>
           <table className={styles.table}>
             <colgroup>
