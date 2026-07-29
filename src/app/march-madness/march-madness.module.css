@@ -2498,14 +2498,100 @@
   .mobileLeaderboardList {
     display: flex;
     flex-direction: column;
-    gap: 9px;
+    gap: 6px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
   .mobileLeaderboardList .leaderboardEntry {
-    padding: 12px;
+    display: grid;
+    grid-template-columns: minmax(88px, 1.35fr) minmax(0, 3fr);
+    column-gap: 10px;
+    padding: 9px 10px 8px;
+  }
+
+  .mobileLeaderboardList .leaderboardEntryHeading {
+    grid-column: 1 / -1;
+  }
+
+  .mobileLeaderboardList .compactChampion {
+    min-width: 0;
+    display: block;
+    margin-top: 7px;
+    padding: 6px 0 0;
+    border-block: 1px solid transparent;
+    border-top-color: rgba(47, 111, 146, 0.14);
+  }
+
+  .mobileLeaderboardList .compactChampion > span {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 9px;
+  }
+
+  .mobileLeaderboardList .championCell {
+    gap: 4px;
+  }
+
+  .mobileLeaderboardList .championPick {
+    max-width: 100%;
+    gap: 4px;
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobileLeaderboardList .championPick svg {
+    width: 12px;
+    height: 12px;
+    flex: 0 0 auto;
+  }
+
+  .mobileLeaderboardList .championWonLabel,
+  .mobileLeaderboardList .eliminatedLabel {
+    flex: 0 0 auto;
+    gap: 0;
+    font-size: 0;
+  }
+
+  .mobileLeaderboardList .championWonLabel svg,
+  .mobileLeaderboardList .eliminatedLabel svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .mobileLeaderboardList .leaderboardMetrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: start;
+    gap: 4px;
+    margin-top: 7px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(47, 111, 146, 0.14);
+  }
+
+  .mobileLeaderboardList .leaderboardMetrics > div {
+    display: block;
+    text-align: center;
+  }
+
+  .mobileLeaderboardList .leaderboardMetrics dt {
+    overflow: hidden;
+    font-size: 9px;
+    letter-spacing: 0.02em;
+    text-overflow: ellipsis;
+  }
+
+  .mobileLeaderboardList .leaderboardMetrics dd {
+    margin-top: 3px;
+    font-size: 13px;
+    line-height: 1.05;
+    text-align: center;
+  }
+
+  .mobileLeaderboardList .prize {
+    font-size: 13px !important;
   }
 
   .leaderboardPrintBar {
