@@ -30,6 +30,7 @@ import {
   TournamentGame,
 } from "../march-madness/tournament-types";
 import { buildLeaderboard } from "../march-madness/tournament-utils";
+import { useMobileTournamentViewport } from "../march-madness/use-mobile-tournament-viewport";
 import { TournamentViewSwitcher } from "../march-madness/view-switcher";
 import styles from "../march-madness/march-madness.module.css";
 
@@ -50,6 +51,7 @@ type ChampionshipSeason = {
   season_year: number;
   completed: boolean;
 };
+type MobileHistoryView = "bracket" | "leaderboard";
 
 function pickMap(value: unknown): PickMap {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
@@ -62,6 +64,7 @@ function pickMap(value: unknown): PickMap {
 
 export default function HistoryPage() {
   const router = useRouter();
+  const isMobileTournamentViewport = useMobileTournamentViewport();
   const mountedRef = useRef(true);
   const [userId, setUserId] = useState("");
   const [isCommissioner, setIsCommissioner] = useState(false);
@@ -76,6 +79,8 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [loadingSeason, setLoadingSeason] = useState(false);
   const [error, setError] = useState("");
+  const [mobileHistoryView, setMobileHistoryView] =
+    useState<MobileHistoryView>("bracket");
 
   const loadSeason = useCallback(async (seasonYear: number) => {
     const client = supabase;
@@ -302,6 +307,15 @@ export default function HistoryPage() {
     if (mountedRef.current) setLoadingSeason(false);
   }
 
+  function showMobileHistoryView(view: MobileHistoryView) {
+    setMobileHistoryView(view);
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById("history-results")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
   if (loading) {
     return (
       <main className={styles.loading}>
@@ -362,6 +376,36 @@ export default function HistoryPage() {
           onSignOut={signOut}
         />
       </header>
+
+      {isMobileTournamentViewport && historyYears.length > 0 && (
+        <nav
+          className={`${styles.mobileTournamentTabs} ${styles.mobileHistoryTabs}`}
+          aria-label="Tournament history sections"
+        >
+          {(
+            [
+              ["bracket", "Bracket"],
+              ["leaderboard", "Leaderboard"],
+            ] as const
+          ).map(([view, label]) => (
+            <button
+              type="button"
+              key={view}
+              className={
+                mobileHistoryView === view
+                  ? styles.mobileTournamentTabActive
+                  : ""
+              }
+              onClick={() => showMobileHistoryView(view)}
+              aria-current={
+                mobileHistoryView === view ? "page" : undefined
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+      )}
 
       <section className={styles.historyHero} id="top">
         <div>
@@ -448,7 +492,12 @@ export default function HistoryPage() {
           </section>
 
           <section
-            className={styles.tournamentWorkspace}
+            id="history-results"
+            className={`${styles.tournamentWorkspace} ${
+              mobileHistoryView === "bracket"
+                ? styles.mobileBracketActive
+                : styles.mobileLeaderboardActive
+            }`}
             aria-label={`${selectedYear} brackets and final standings`}
           >
             <div className={styles.bracketPane}>

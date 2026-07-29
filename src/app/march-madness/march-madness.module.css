@@ -2186,9 +2186,17 @@
     box-shadow: 0 5px 16px rgba(0, 111, 169, 0.2);
   }
 
+  .mobileTournamentTabs.mobileHistoryTabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .page > .hero,
   .page > .summaryGrid {
     display: none;
+  }
+
+  .page > .historySummary {
+    display: grid;
   }
 
   .tournamentWorkspace {
@@ -2883,6 +2891,10 @@
 
   .summaryGrid {
     grid-template-columns: 1fr;
+  }
+
+  .page > .historySummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .lobbyHero h1,
