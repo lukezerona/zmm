@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import {
   CloudRain,
   LoaderCircle,
+  Printer,
   RefreshCw,
   ShieldCheck,
   Trophy,
@@ -49,6 +50,7 @@ import {
 } from "../march-madness/tournament-bracket-canvas";
 import { TournamentViewSwitcher } from "../march-madness/view-switcher";
 import { buildSpreadsheetPickGroups } from "./spreadsheet-order";
+import { PrintableSpreadsheet } from "./printable-spreadsheet";
 import styles from "./spreadsheet.module.css";
 
 const POLL_INTERVAL_MS = 30_000;
@@ -134,6 +136,7 @@ export default function SpreadsheetPage() {
   const [rainManEnabled, setRainManEnabled] = useState(false);
   const [rainManSelections, setRainManSelections] = useState<PickMap>({});
   const [rainManTiebreaker, setRainManTiebreaker] = useState("");
+  const [printingSpreadsheet, setPrintingSpreadsheet] = useState(false);
   const mountedRef = useRef(true);
   const refreshTimerRef = useRef<number | null>(null);
   const seasonYearRef = useRef<number | null>(null);
@@ -597,6 +600,25 @@ export default function SpreadsheetPage() {
     setRainManTiebreaker("");
   }
 
+  function printSpreadsheet() {
+    const printClass = "zmm-printing-spreadsheet";
+    let cleanupTimer = 0;
+    const cleanup = () => {
+      window.clearTimeout(cleanupTimer);
+      document.body.classList.remove(printClass);
+      window.removeEventListener("afterprint", cleanup);
+      setPrintingSpreadsheet(false);
+    };
+
+    setPrintingSpreadsheet(true);
+    document.body.classList.add(printClass);
+    window.addEventListener("afterprint", cleanup, { once: true });
+    cleanupTimer = window.setTimeout(cleanup, 60_000);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => window.print());
+    });
+  }
+
   function chooseRainManWinner(matchupId: string, entryId: string) {
     if (
       !model ||
@@ -716,6 +738,14 @@ export default function SpreadsheetPage() {
             </h2>
           </div>
           <div className={styles.toolbarRight}>
+            <button
+              className={styles.printButton}
+              type="button"
+              onClick={printSpreadsheet}
+            >
+              <Printer size={14} aria-hidden="true" />
+              Print spreadsheet
+            </button>
             <button
               className={`${styles.rainManButton} ${
                 rainManActive ? styles.rainManActive : ""
@@ -1089,6 +1119,26 @@ export default function SpreadsheetPage() {
             </tbody>
           </table>
         </div>
+        {printingSpreadsheet && (
+          <PrintableSpreadsheet
+            seasonYear={model.seasonYear}
+            isArchive={historySeasonYear !== null}
+            groups={groups}
+            rows={leaderboard.rows}
+            bracketById={bracketById}
+            entries={entries}
+            gameByMatchup={gameByMatchup}
+            actualPicks={officialOutcome.actualPicks}
+            displayedOutcomePicks={projectedPicks}
+            rainManActive={rainManActive}
+            masterScore={masterScore}
+            masterTiebreaker={
+              rainManActive
+                ? rainManTiebreaker
+                : officialLeaderboard.championshipTotal
+            }
+          />
+        )}
       </section>
     </main>
   );

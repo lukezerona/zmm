@@ -54,6 +54,11 @@
   gap: 12px;
 }
 
+.toolbarRight {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .legend {
   color: #708b9a;
   font-size: 10px;
@@ -98,7 +103,8 @@
   font-size: 10px;
 }
 
-.refreshButton {
+.refreshButton,
+.printButton {
   height: 36px;
   display: inline-flex;
   align-items: center;
@@ -113,6 +119,16 @@
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
+}
+
+.printButton {
+  border-color: #245d7a;
+  color: #a9d9ed;
+}
+
+.printButton:hover {
+  border-color: #43c8ff;
+  color: #ffffff;
 }
 
 .refreshButton:disabled {
@@ -552,7 +568,7 @@ thead .stickyCell {
 
   .toolbarRight {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
   }
 
   .legend {
