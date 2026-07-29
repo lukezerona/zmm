@@ -39,6 +39,11 @@ export type TournamentEntry = {
   updated_at: string;
 };
 
+export type BracketPaymentStatus = {
+  bracket_id: string;
+  is_paid: boolean;
+};
+
 export type LeaderboardEntry = {
   bracketId: string;
   ownerUserId: string;

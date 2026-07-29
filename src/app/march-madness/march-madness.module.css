@@ -1223,6 +1223,25 @@
   overflow-wrap: anywhere;
 }
 
+.playerTableIdentity .paymentDueName {
+  color: #ffd166;
+}
+
+.paymentDueBadge {
+  display: inline-flex;
+  margin: 3px 0 0;
+  padding: 2px 5px;
+  border: 1px solid rgba(255, 195, 76, 0.36);
+  border-radius: 999px;
+  color: #ffd166;
+  background: rgba(125, 82, 10, 0.22);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
 .playerTableIdentity .youBadge {
   margin-left: 4px;
   padding: 2px 4px;

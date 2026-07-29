@@ -31,6 +31,7 @@ import { Leaderboard } from "./leaderboard";
 import { TournamentBracketViewer } from "./tournament-bracket-viewer";
 import { TournamentViewSwitcher } from "./view-switcher";
 import {
+  BracketPaymentStatus,
   PoolBracket,
   PoolProfile,
   TournamentEntry,
@@ -83,6 +84,9 @@ export default function MarchMadnessPage() {
   const [profiles, setProfiles] = useState<PoolProfile[]>([]);
   const [brackets, setBrackets] = useState<PoolBracket[]>([]);
   const [entries, setEntries] = useState<TournamentEntry[]>([]);
+  const [paymentStatuses, setPaymentStatuses] = useState<
+    BracketPaymentStatus[]
+  >([]);
   const [games, setGames] = useState<TournamentGame[]>([]);
   const [model, setModel] = useState<TournamentModel | null>(null);
   const [lifecycle, setLifecycle] = useState<TournamentLifecycle | null>(null);
@@ -143,6 +147,7 @@ export default function MarchMadnessPage() {
         profilesResult,
         entriesResult,
         bracketsResult,
+        paymentStatusesResult,
         gamesResult,
         pairingResult,
       ] = await Promise.all([
@@ -165,6 +170,9 @@ export default function MarchMadnessPage() {
           )
           .eq("season_year", activeSeasonYear),
         client
+          .from("bracket_payments")
+          .select("bracket_id, is_paid"),
+        client
           .from("espn_games")
           .select(ESPN_GAME_SELECT)
           .eq("season_year", activeSeasonYear)
@@ -182,6 +190,7 @@ export default function MarchMadnessPage() {
         profilesResult.error ||
         entriesResult.error ||
         bracketsResult.error ||
+        paymentStatusesResult.error ||
         gamesResult.error ||
         pairingResult.error ||
         !pairingResult.data
@@ -190,6 +199,7 @@ export default function MarchMadnessPage() {
           profiles: profilesResult.error?.message,
           entries: entriesResult.error?.message,
           brackets: bracketsResult.error?.message,
+          paymentStatuses: paymentStatusesResult.error?.message,
           games: gamesResult.error?.message,
           pairing: pairingResult.error?.message,
         });
@@ -235,6 +245,9 @@ export default function MarchMadnessPage() {
             : [],
         );
         setBrackets(loadedBrackets);
+        setPaymentStatuses(
+          paymentStatusesResult.data as BracketPaymentStatus[],
+        );
         setGames(loadedGames);
         setModel(tournament);
         setLifecycle(lifecycle);
@@ -537,6 +550,16 @@ export default function MarchMadnessPage() {
     preTournamentMode,
     profiles,
   ]);
+  const paymentStatusByBracket = useMemo(
+    () =>
+      new Map(
+        paymentStatuses.map((status) => [
+          status.bracket_id,
+          status.is_paid,
+        ]),
+      ),
+    [paymentStatuses],
+  );
   const tournamentGames = displayedGames.filter(
     (game) => game.round_number !== null && game.round_number >= 1,
   );
@@ -725,6 +748,7 @@ export default function MarchMadnessPage() {
             rows={leaderboard.rows}
             currentUserId={userId}
             hidePrivatePicks={preTournamentMode}
+            paymentStatusByBracket={paymentStatusByBracket}
           />
           <p className={styles.payoutNote}>
           $10 buy-in · First place 60% · Second place 30% · Third place 10%.

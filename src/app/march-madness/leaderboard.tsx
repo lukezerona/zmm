@@ -17,10 +17,12 @@ export function Leaderboard({
   rows,
   currentUserId,
   hidePrivatePicks = false,
+  paymentStatusByBracket,
 }: {
   rows: LeaderboardEntry[];
   currentUserId: string;
   hidePrivatePicks?: boolean;
+  paymentStatusByBracket?: ReadonlyMap<string, boolean>;
 }) {
   return (
     <div className={styles.leaderboardTableViewport}>
@@ -50,6 +52,9 @@ export function Leaderboard({
         <tbody>
           {rows.map((entry) => {
             const isCurrentPlayer = entry.ownerUserId === currentUserId;
+            const paymentDue =
+              paymentStatusByBracket !== undefined &&
+              paymentStatusByBracket.get(entry.bracketId) !== true;
 
             return (
               <tr
@@ -68,10 +73,13 @@ export function Leaderboard({
                   </span>
                 </td>
                 <td className={styles.playerTableIdentity}>
-                  <strong>
+                  <strong className={paymentDue ? styles.paymentDueName : ""}>
                     {entry.displayName}
                     {isCurrentPlayer && (
                       <span className={styles.youBadge}>You</span>
+                    )}
+                    {paymentDue && (
+                      <span className={styles.paymentDueBadge}>Payment due</span>
                     )}
                   </strong>
                   <span className={styles.username}>@{entry.username}</span>
