@@ -2583,6 +2583,12 @@
     text-overflow: ellipsis;
   }
 
+  .mobileLeaderboardList .mobileMaxPointsLabel {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+  }
+
   .mobileLeaderboardList .leaderboardMetrics dd {
     margin-top: 3px;
     font-size: 13px;

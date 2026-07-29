@@ -283,7 +283,10 @@ export function Leaderboard({
 
               <dl className={styles.leaderboardMetrics}>
                 <div>
-                  <dt>Max points</dt>
+                  <dt className={styles.mobileMaxPointsLabel}>
+                    <span>Max</span>
+                    <span>points</span>
+                  </dt>
                   <dd>{entry.points + entry.possiblePointsRemaining}</dd>
                 </div>
                 <div>
