@@ -564,7 +564,7 @@ const handler = {
       const { data: existing, error: deliveryReadError } = await ctx
         .supabaseAdmin
         .from("bracket_reminder_deliveries")
-        .select("id, sent_at, attempt_count")
+        .select("id, idempotency_key, sent_at, attempt_count")
         .eq("season_year", config.season_year)
         .eq("user_id", userId)
         .eq("reminder_stage", reminder.stage)
@@ -598,12 +598,12 @@ const handler = {
           .from("bracket_reminder_deliveries")
           .update(deliveryRecord)
           .eq("id", existing.id)
-          .select("id")
+          .select("id, idempotency_key")
           .single()
         : await ctx.supabaseAdmin
           .from("bracket_reminder_deliveries")
           .insert(deliveryRecord)
-          .select("id")
+          .select("id, idempotency_key")
           .single();
       if (deliveryWriteError || !delivery) {
         failures.push({
@@ -624,8 +624,7 @@ const handler = {
           email: recipientEmail,
           username,
           content,
-          idempotencyKey:
-            `zmm-bracket-reminder-${config.season_year}-${userId}-${reminder.stage}`,
+          idempotencyKey: delivery.idempotency_key,
           stage: reminder.stage,
         });
         const { error: successError } = await ctx.supabaseAdmin
