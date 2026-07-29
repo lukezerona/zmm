@@ -586,11 +586,20 @@ export default function MarchMadnessPage() {
   const tournamentGames = displayedGames.filter(
     (game) => game.round_number !== null && game.round_number >= 1,
   );
-  const finalGames = tournamentGames.filter((game) => game.completed).length;
-  const liveGames = tournamentGames.filter(
-    (game) => game.status_state === "in" && !game.completed,
-  ).length;
-  const upcomingGames = tournamentGames.length - finalGames - liveGames;
+  const allTournamentGames = games.filter(
+    (game) => game.round_number !== null && game.round_number >= 1,
+  );
+  const finalGames = preTournamentMode
+    ? 0
+    : tournamentGames.filter((game) => game.completed).length;
+  const liveGames = preTournamentMode
+    ? 0
+    : tournamentGames.filter(
+        (game) => game.status_state === "in" && !game.completed,
+      ).length;
+  const upcomingGames = preTournamentMode
+    ? allTournamentGames.length
+    : tournamentGames.length - finalGames - liveGames;
   const liveStatusLabel: Record<LiveUpdateStatus, string> = {
     connecting: "Connecting live updates\u2026",
     connected: "Live updates connected",
