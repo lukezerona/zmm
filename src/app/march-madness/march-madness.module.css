@@ -348,6 +348,14 @@
   font-style: normal;
 }
 
+.heroActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .historyAction {
   min-height: 42px;
   display: inline-flex;
@@ -1868,6 +1876,12 @@
     grid-template-columns: 1fr;
     align-items: stretch;
     padding-top: 46px;
+  }
+
+  .heroActions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .historyAction {

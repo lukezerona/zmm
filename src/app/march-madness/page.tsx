@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   CircleDollarSign,
   Clock3,
   History,
@@ -660,10 +661,18 @@ export default function MarchMadnessPage() {
             Welcome back, <em>@{profile.username}</em>.
           </h1>
         </div>
-        <Link className={styles.historyAction} href="/history">
-          <History size={17} aria-hidden="true" />
-          Previous years
-        </Link>
+        <div className={styles.heroActions}>
+          {preTournamentMode && (
+            <Link className={styles.historyAction} href="/bracket">
+              <ArrowLeft size={17} aria-hidden="true" />
+              Back to create bracket
+            </Link>
+          )}
+          <Link className={styles.historyAction} href="/history">
+            <History size={17} aria-hidden="true" />
+            Previous years
+          </Link>
+        </div>
       </section>
 
       <section className={styles.summaryGrid} aria-label="Tournament summary">
