@@ -35,13 +35,13 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York",
 });
 
-type MasterView = {
+export type MasterView = {
   type: "master";
   games: TournamentGame[];
   fieldOnly?: boolean;
 };
 
-type PlayerView = {
+export type PlayerView = {
   type: "player";
   bracket: DerivedBracket;
   picks: PickMap;
@@ -49,7 +49,7 @@ type PlayerView = {
   tiebreaker: number | null;
 };
 
-type BracketView = MasterView | PlayerView;
+export type BracketView = MasterView | PlayerView;
 
 type TournamentBracketCanvasProps = {
   model: TournamentModel;
@@ -64,7 +64,7 @@ function gameStatus(game: TournamentGame) {
   return DATE_FORMATTER.format(new Date(game.starts_at));
 }
 
-function masterMatchups(region: Region, model: TournamentModel) {
+export function masterMatchups(region: Region, model: TournamentModel) {
   return {
     roundOf64: model.firstRoundByRegion[region],
     roundOf32: Array.from({ length: 4 }, (_, matchupIndex) => ({
@@ -262,7 +262,7 @@ export function MasterGameCard({
   );
 }
 
-function PlayerPickCard({
+export function PlayerPickCard({
   matchup,
   pickedId,
   actualWinnerId,

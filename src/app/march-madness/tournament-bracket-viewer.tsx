@@ -14,8 +14,13 @@ import {
   PoolBracket,
   TournamentGame,
 } from "./tournament-types";
-import { TournamentBracketCanvas } from "./tournament-bracket-canvas";
+import {
+  BracketView,
+  TournamentBracketCanvas,
+} from "./tournament-bracket-canvas";
+import { MobileTournamentBracket } from "./mobile-tournament-bracket";
 import { buildActualResults } from "./tournament-utils";
+import { useMobileTournamentViewport } from "./use-mobile-tournament-viewport";
 import styles from "./march-madness.module.css";
 
 const MASTER_VALUE = "master";
@@ -35,6 +40,7 @@ export function TournamentBracketViewer({
   leaderboardRows: LeaderboardEntry[];
   masterOnly?: boolean;
 }) {
+  const isMobileTournamentViewport = useMobileTournamentViewport();
   const orderedBrackets = useMemo(() => {
     const rankByBracket = new Map(
       leaderboardRows.map((entry, index) => [entry.bracketId, index]),
@@ -90,6 +96,18 @@ export function TournamentBracketViewer({
         .map(([matchupId]) => matchupId),
     );
   }, [actualPicks, selectedBracket]);
+  const displayedView: BracketView | null =
+    selectedValue === MASTER_VALUE
+      ? { type: "master", games, fieldOnly: masterOnly }
+      : selectedBracket && playerBracket
+        ? {
+            type: "player",
+            bracket: playerBracket,
+            picks: selectedBracket.picks,
+            actualPicks,
+            tiebreaker: selectedBracket.tiebreaker_total,
+          }
+        : null;
 
   function printBracket(mode: PrintBracketMode) {
     setPrintMode(mode);
@@ -163,22 +181,12 @@ export function TournamentBracketViewer({
         onSelect={printBracket}
       />
 
-      {selectedValue === MASTER_VALUE ? (
-        <TournamentBracketCanvas
-          model={model}
-          view={{ type: "master", games, fieldOnly: masterOnly }}
-        />
-      ) : selectedBracket && playerBracket ? (
-        <TournamentBracketCanvas
-          model={model}
-          view={{
-            type: "player",
-            bracket: playerBracket,
-            picks: selectedBracket.picks,
-            actualPicks,
-            tiebreaker: selectedBracket.tiebreaker_total,
-          }}
-        />
+      {displayedView ? (
+        isMobileTournamentViewport ? (
+          <MobileTournamentBracket model={model} view={displayedView} />
+        ) : (
+          <TournamentBracketCanvas model={model} view={displayedView} />
+        )
       ) : (
         <p className={styles.emptyState}>This bracket is not available.</p>
       )}

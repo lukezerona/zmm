@@ -31,6 +31,7 @@ import {
 import { buildTournamentModel, sanitizePicks } from "../bracket/bracket-utils";
 import { AccountMenu } from "./account-menu";
 import { Leaderboard } from "./leaderboard";
+import { MobileTournamentOverview } from "./mobile-tournament-overview";
 import { TournamentBracketViewer } from "./tournament-bracket-viewer";
 import { TournamentViewSwitcher } from "./view-switcher";
 import {
@@ -44,6 +45,7 @@ import {
   buildLeaderboard,
   buildPreTournamentLeaderboard,
 } from "./tournament-utils";
+import { useMobileTournamentViewport } from "./use-mobile-tournament-viewport";
 import styles from "./march-madness.module.css";
 
 const LIVE_REFRESH_DEBOUNCE_MS = 1_000;
@@ -64,6 +66,7 @@ const TOURNAMENT_ROUND_CODES = [
 type RawBracket = Omit<PoolBracket, "picks"> & { picks: unknown };
 type RefreshKind = "dashboard" | "games";
 type RefreshRequest = { kind: RefreshKind; initial: boolean };
+type MobileTournamentView = "games" | "leaderboard" | "bracket";
 type LiveUpdateStatus =
   | "connecting"
   | "connected"
@@ -82,6 +85,7 @@ function pickMap(value: unknown): PickMap {
 
 export default function MarchMadnessPage() {
   const router = useRouter();
+  const isMobileTournamentViewport = useMobileTournamentViewport();
   const [userId, setUserId] = useState("");
   const [isCommissioner, setIsCommissioner] = useState(false);
   const [profile, setProfile] = useState<PoolProfile | null>(null);
@@ -99,6 +103,8 @@ export default function MarchMadnessPage() {
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [leaderboardCollapsed, setLeaderboardCollapsed] = useState(false);
+  const [mobileTournamentView, setMobileTournamentView] =
+    useState<MobileTournamentView>("games");
   const [liveUpdateStatus, setLiveUpdateStatus] =
     useState<LiveUpdateStatus>("connecting");
   const refreshInFlightRef = useRef(false);
@@ -619,6 +625,13 @@ export default function MarchMadnessPage() {
     router.refresh();
   }
 
+  function showMobileTournamentView(view: MobileTournamentView) {
+    setMobileTournamentView(view);
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
   if (loading) {
     return (
       <main className={styles.loading}>
@@ -686,6 +699,37 @@ export default function MarchMadnessPage() {
         </div>
       </header>
 
+      {isMobileTournamentViewport && (
+        <nav
+          className={styles.mobileTournamentTabs}
+          aria-label="Tournament Central sections"
+        >
+          {(
+            [
+              ["games", "Games"],
+              ["leaderboard", "Leaderboard"],
+              ["bracket", "Bracket"],
+            ] as const
+          ).map(([view, label]) => (
+            <button
+              type="button"
+              key={view}
+              className={
+                mobileTournamentView === view
+                  ? styles.mobileTournamentTabActive
+                  : ""
+              }
+              onClick={() => showMobileTournamentView(view)}
+              aria-current={
+                mobileTournamentView === view ? "page" : undefined
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+      )}
+
       <section className={styles.hero} id="top">
         <div>
           <h1>
@@ -732,9 +776,34 @@ export default function MarchMadnessPage() {
       <section
         className={`${styles.tournamentWorkspace} ${
           leaderboardCollapsed ? styles.tournamentWorkspaceCollapsed : ""
+        } ${
+          mobileTournamentView === "games"
+            ? styles.mobileGamesActive
+            : mobileTournamentView === "leaderboard"
+              ? styles.mobileLeaderboardActive
+              : styles.mobileBracketActive
         }`}
         aria-label="Tournament brackets and family standings"
       >
+        {isMobileTournamentViewport && (
+          <div className={styles.mobileGamesPane} id="mobile-games">
+            <MobileTournamentOverview
+              model={model}
+              games={displayedGames}
+              leaderboardRows={leaderboard.rows}
+              currentUserId={userId}
+              paymentStatusByBracket={paymentStatusByBracket}
+              lastUpdated={lastUpdated}
+              liveStatusLabel={liveStatusLabel[liveUpdateStatus]}
+              liveUpdateStatus={liveUpdateStatus}
+              refreshing={refreshing}
+              onRefresh={() => void requestRefresh("dashboard")}
+              onViewLeaderboard={() =>
+                showMobileTournamentView("leaderboard")
+              }
+            />
+          </div>
+        )}
         <div className={styles.bracketPane} id="brackets">
           {leaderboardCollapsed && (
             <div className={styles.showLeaderboardBar}>
@@ -759,8 +828,12 @@ export default function MarchMadnessPage() {
           />
         </div>
 
-        {!leaderboardCollapsed && (
-        <aside className={styles.leaderboardPane} id="leaderboard">
+        <aside
+          className={`${styles.leaderboardPane} ${
+            leaderboardCollapsed ? styles.leaderboardPaneCollapsed : ""
+          }`}
+          id="leaderboard"
+        >
           <div className={styles.leaderboardSidebarHeading}>
             <div>
               <span>FAMILY STANDINGS</span>
@@ -824,10 +897,9 @@ export default function MarchMadnessPage() {
           $10 buy-in · First place 60% · Second place 30% · Third place 10%.
           {leaderboard.championshipComplete
             ? " Final ties are ordered by championship tiebreaker distance."
-            : " Current ties split the combined payouts for their occupied places and are ordered by bracket creation time."}
+            : " Current ties split the combined payouts for their occupied places and are ordered by possible points remaining, then bracket creation time."}
           </p>
         </aside>
-        )}
       </section>
     </main>
   );

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { PrintableLeaderboard } from "./printable-leaderboard";
 import { LeaderboardEntry } from "./tournament-types";
+import { useMobileTournamentViewport } from "./use-mobile-tournament-viewport";
 import styles from "./march-madness.module.css";
 
 const MONEY_FORMATTER = new Intl.NumberFormat("en-US", {
@@ -36,6 +37,7 @@ export function Leaderboard({
   hidePrivatePicks?: boolean;
   paymentStatusByBracket?: ReadonlyMap<string, boolean>;
 }) {
+  const isMobileTournamentViewport = useMobileTournamentViewport();
   const hasPaymentDue =
     paymentStatusByBracket !== undefined &&
     rows.some(
@@ -74,6 +76,7 @@ export function Leaderboard({
           Payment due
         </div>
       )}
+      {!isMobileTournamentViewport && (
       <div className={styles.leaderboardTableViewport}>
       <table className={styles.compactLeaderboardTable}>
         <colgroup>
@@ -199,6 +202,114 @@ export function Leaderboard({
         </tbody>
       </table>
       </div>
+      )}
+      {isMobileTournamentViewport && (
+      <ol className={styles.mobileLeaderboardList}>
+        {rows.map((entry) => {
+          const isCurrentPlayer = entry.ownerUserId === currentUserId;
+          const paymentDue =
+            paymentStatusByBracket !== undefined &&
+            paymentStatusByBracket.get(entry.bracketId) !== true;
+
+          return (
+            <li
+              key={entry.bracketId}
+              className={`${styles.leaderboardEntry} ${
+                isCurrentPlayer ? styles.currentPlayerEntry : ""
+              }`}
+            >
+              <div className={styles.leaderboardEntryHeading}>
+                <span
+                  className={`${styles.rank} ${
+                    entry.rank <= 3 ? styles.paidRank : ""
+                  }`}
+                  aria-label={`Place ${entry.rank}`}
+                >
+                  <RankIcon rank={entry.rank} />
+                  {entry.rank}
+                </span>
+                <div className={styles.playerIdentity}>
+                  <strong
+                    className={paymentDue ? styles.paymentDueName : ""}
+                  >
+                    {entry.displayName}
+                    {isCurrentPlayer && (
+                      <span className={styles.youBadge}>You</span>
+                    )}
+                  </strong>
+                  <span className={styles.username}>@{entry.username}</span>
+                </div>
+                <div className={styles.pointsSummary}>
+                  <span>Points</span>
+                  <strong>{entry.points}</strong>
+                </div>
+              </div>
+
+              <div className={styles.compactChampion}>
+                <span>Champion</span>
+                {hidePrivatePicks ? (
+                  <span className={styles.privatePickPlaceholder}>
+                    Hidden until entries lock
+                  </span>
+                ) : (
+                  <div className={styles.championCell}>
+                    <span
+                      className={`${styles.championPick} ${
+                        entry.championWon
+                          ? styles.winningChampionPick
+                          : entry.championEliminated
+                            ? styles.eliminatedChampionPick
+                            : ""
+                      }`}
+                    >
+                      <Trophy size={14} aria-hidden="true" />
+                      {entry.champion}
+                    </span>
+                    {entry.championWon && (
+                      <span className={styles.championWonLabel}>
+                        <BadgeCheck size={12} aria-hidden="true" />
+                        Champion
+                      </span>
+                    )}
+                    {!entry.championWon && entry.championEliminated && (
+                      <span className={styles.eliminatedLabel}>
+                        <CircleX size={12} aria-hidden="true" />
+                        Eliminated
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <dl className={styles.leaderboardMetrics}>
+                <div>
+                  <dt>Possible left</dt>
+                  <dd>{entry.possiblePointsRemaining}</dd>
+                </div>
+                <div>
+                  <dt>Tiebreaker</dt>
+                  <dd>
+                    {hidePrivatePicks ? "Hidden" : (entry.tiebreaker ?? "—")}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Correct</dt>
+                  <dd>{entry.correctPercentage.toFixed(1)}%</dd>
+                </div>
+                <div>
+                  <dt>Money</dt>
+                  <dd className={styles.prize}>
+                    {entry.prize > 0
+                      ? MONEY_FORMATTER.format(entry.prize)
+                      : "—"}
+                  </dd>
+                </div>
+              </dl>
+            </li>
+          );
+        })}
+      </ol>
+      )}
       <PrintableLeaderboard
         rows={rows}
         seasonYear={seasonYear}
