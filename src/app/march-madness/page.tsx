@@ -189,7 +189,7 @@ export default function MarchMadnessPage() {
         client
           .from("brackets")
           .select(
-            "id, user_id, season_year, display_name, is_primary, picks, tiebreaker_total, updated_at",
+            "id, user_id, season_year, display_name, is_primary, picks, tiebreaker_total, created_at, updated_at",
           )
           .eq("season_year", activeSeasonYear),
         client
@@ -823,7 +823,7 @@ export default function MarchMadnessPage() {
           $10 buy-in · First place 60% · Second place 30% · Third place 10%.
           {leaderboard.championshipComplete
             ? " Final ties are ordered by championship tiebreaker distance."
-            : " Current ties split the combined payouts for their occupied places."}
+            : " Current ties split the combined payouts for their occupied places and are ordered by bracket creation time."}
           </p>
         </aside>
         )}

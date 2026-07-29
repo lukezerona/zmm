@@ -287,6 +287,15 @@ export function allocatePrizePayouts(
         (b.tiebreakerDistance ?? Number.POSITIVE_INFINITY)
       );
     }
+
+    if (!championshipComplete) {
+      const createdAtDifference =
+        Date.parse(a.createdAt) - Date.parse(b.createdAt);
+      if (Number.isFinite(createdAtDifference) && createdAtDifference !== 0) {
+        return createdAtDifference;
+      }
+    }
+
     return a.displayName.localeCompare(b.displayName);
   });
 
@@ -347,6 +356,7 @@ export function buildPreTournamentLeaderboard(
       correctPercentage: 0,
       prize: 0,
       tiebreakerDistance: null,
+      createdAt: entry.joined_at,
     }),
   );
 
@@ -442,6 +452,7 @@ function buildLeaderboardForOutcome(
           results.length === 0 ? 0 : (correctPicks / results.length) * 100,
         prize: 0,
         tiebreakerDistance,
+        createdAt: bracket.created_at,
       };
     })
     .filter((row): row is LeaderboardEntry => row !== null);

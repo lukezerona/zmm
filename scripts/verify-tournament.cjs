@@ -43,7 +43,12 @@ const supabase = createClient(url, secret, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-function payoutRow(name, points, distance = null) {
+function payoutRow(
+  name,
+  points,
+  distance = null,
+  createdAt = "2026-03-01T12:00:00.000Z",
+) {
   return {
     bracketId: name,
     ownerUserId: name,
@@ -61,6 +66,7 @@ function payoutRow(name, points, distance = null) {
     correctPercentage: 0,
     prize: 0,
     tiebreakerDistance: distance,
+    createdAt,
   };
 }
 
@@ -102,6 +108,32 @@ function verifyPayoutRules() {
     50,
   );
   for (const row of fiveWayTie) assertMoney(row.prize, 10);
+
+  const creationOrderedTie = allocatePrizePayouts(
+    [
+      payoutRow("Alpha", 10, null, "2026-03-02T12:00:00.000Z"),
+      payoutRow("Zulu", 10, null, "2026-03-01T12:00:00.000Z"),
+    ],
+    false,
+    20,
+  );
+  assert.deepEqual(
+    creationOrderedTie.map((row) => row.displayName),
+    ["Zulu", "Alpha"],
+  );
+
+  const completedTournamentTie = allocatePrizePayouts(
+    [
+      payoutRow("Zulu", 10, 2, "2026-03-01T12:00:00.000Z"),
+      payoutRow("Alpha", 10, 2, "2026-03-02T12:00:00.000Z"),
+    ],
+    true,
+    20,
+  );
+  assert.deepEqual(
+    completedTournamentTie.map((row) => row.displayName),
+    ["Alpha", "Zulu"],
+  );
 }
 
 async function verifyDevelopmentPool() {
@@ -113,7 +145,7 @@ async function verifyDevelopmentPool() {
       supabase
         .from("brackets")
         .select(
-          "id, user_id, season_year, display_name, is_primary, picks, tiebreaker_total, updated_at",
+          "id, user_id, season_year, display_name, is_primary, picks, tiebreaker_total, created_at, updated_at",
         )
         .eq("season_year", SEASON_YEAR),
       supabase
@@ -202,9 +234,13 @@ async function verifyDevelopmentPool() {
 }
 
 verifyPayoutRules();
-verifyDevelopmentPool()
-  .then(() => console.log("Tournament scoring and practice data verified."))
-  .catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-  });
+if (process.argv.includes("--payouts-only")) {
+  console.log("Tournament payout and tie-ordering rules verified.");
+} else {
+  verifyDevelopmentPool()
+    .then(() => console.log("Tournament scoring and practice data verified."))
+    .catch((error) => {
+      console.error(error);
+      process.exitCode = 1;
+    });
+}

@@ -27,6 +27,7 @@ export type PoolBracket = {
   is_primary: boolean;
   picks: PickMap;
   tiebreaker_total: number | null;
+  created_at: string;
   updated_at: string;
 };
 
@@ -61,4 +62,5 @@ export type LeaderboardEntry = {
   correctPercentage: number;
   prize: number;
   tiebreakerDistance: number | null;
+  createdAt: string;
 };
