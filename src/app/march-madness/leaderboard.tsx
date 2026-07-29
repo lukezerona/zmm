@@ -24,8 +24,24 @@ export function Leaderboard({
   hidePrivatePicks?: boolean;
   paymentStatusByBracket?: ReadonlyMap<string, boolean>;
 }) {
+  const hasPaymentDue =
+    paymentStatusByBracket !== undefined &&
+    rows.some(
+      (entry) => paymentStatusByBracket.get(entry.bracketId) !== true,
+    );
+
   return (
-    <div className={styles.leaderboardTableViewport}>
+    <div className={styles.leaderboardBlock}>
+      {hasPaymentDue && (
+        <div
+          className={styles.paymentLegend}
+          aria-label="Yellow participant names indicate payment due"
+        >
+          <span aria-hidden="true" />
+          Payment due
+        </div>
+      )}
+      <div className={styles.leaderboardTableViewport}>
       <table className={styles.compactLeaderboardTable}>
         <colgroup>
           <col className={styles.placeColumn} />
@@ -77,9 +93,6 @@ export function Leaderboard({
                     {entry.displayName}
                     {isCurrentPlayer && (
                       <span className={styles.youBadge}>You</span>
-                    )}
-                    {paymentDue && (
-                      <span className={styles.paymentDueBadge}>Payment due</span>
                     )}
                   </strong>
                   <span className={styles.username}>@{entry.username}</span>
@@ -152,6 +165,7 @@ export function Leaderboard({
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

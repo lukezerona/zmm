@@ -1235,19 +1235,29 @@
   color: #ffd166;
 }
 
-.paymentDueBadge {
+.leaderboardBlock {
+  width: 100%;
+}
+
+.paymentLegend {
   display: inline-flex;
-  margin: 3px 0 0;
-  padding: 2px 5px;
-  border: 1px solid rgba(255, 195, 76, 0.36);
-  border-radius: 999px;
-  color: #ffd166;
-  background: rgba(125, 82, 10, 0.22);
-  font-size: 8px;
+  align-items: center;
+  gap: 7px;
+  margin: 0 2px 8px;
+  color: #9eb3bf;
+  font-size: 10px;
   font-weight: 900;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
   text-transform: uppercase;
+}
+
+.paymentLegend span {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 209, 102, 0.52);
+  border-radius: 3px;
+  background: #ffd166;
+  box-shadow: 0 0 10px rgba(255, 209, 102, 0.18);
 }
 
 .playerTableIdentity .youBadge {
