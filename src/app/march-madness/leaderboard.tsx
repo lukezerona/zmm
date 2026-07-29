@@ -287,7 +287,7 @@ export function Leaderboard({
                   <dd>{entry.points + entry.possiblePointsRemaining}</dd>
                 </div>
                 <div>
-                  <dt>Tiebreaker</dt>
+                  <dt>Tiebreak</dt>
                   <dd>
                     {hidePrivatePicks ? "Hidden" : (entry.tiebreaker ?? "—")}
                   </dd>
