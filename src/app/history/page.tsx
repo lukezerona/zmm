@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
+  House,
   LoaderCircle,
   Trophy,
   Users,
@@ -371,6 +372,10 @@ export default function HistoryPage() {
           </p>
         </div>
         <div className={styles.historyControls}>
+          <Link className={styles.historyAction} href="/march-madness">
+            <House size={17} aria-hidden="true" />
+            Current tournament
+          </Link>
           {createBracketAvailable && (
             <Link className={styles.historyAction} href="/bracket">
               <ArrowLeft size={17} aria-hidden="true" />
