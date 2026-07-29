@@ -1939,13 +1939,13 @@
 @media (max-width: 760px) {
   .header {
     height: 68px;
-    grid-template-columns: 76px minmax(0, 1fr) 72px;
+    grid-template-columns: 72px minmax(0, 1fr) 100px;
     gap: 8px;
     padding-inline: 13px;
   }
 
   .header img {
-    width: 76px;
+    width: 72px;
   }
 
   .viewSwitcher {
@@ -1963,8 +1963,14 @@
   }
 
   .accountTrigger {
-    max-width: 72px;
-    padding-inline: 9px;
+    width: 100px;
+    max-width: 100px;
+    gap: 4px;
+    padding: 0 7px 0 9px;
+  }
+
+  .accountTrigger span {
+    min-width: 7ch;
   }
 
   .headerCommissionerButton {
