@@ -10,6 +10,8 @@ import {
   Clock3,
   History,
   LoaderCircle,
+  PanelRightClose,
+  PanelRightOpen,
   Radio,
   RefreshCw,
   ShieldCheck,
@@ -46,6 +48,7 @@ import styles from "./march-madness.module.css";
 
 const LIVE_REFRESH_DEBOUNCE_MS = 1_000;
 const FALLBACK_POLL_MS = 30_000;
+const LEADERBOARD_COLLAPSED_KEY = "zmm:leaderboard-collapsed";
 const ESPN_GAME_SELECT =
   "espn_event_id, region, round_code, round_number, starts_at, broadcast, status_state, status_description, status_detail, completed, period, clock, home_team_id, home_team_name, home_team_seed, home_score, home_winner, away_team_id, away_team_name, away_team_seed, away_score, away_winner";
 const TOURNAMENT_ROUND_CODES = [
@@ -95,6 +98,7 @@ export default function MarchMadnessPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [leaderboardCollapsed, setLeaderboardCollapsed] = useState(false);
   const [liveUpdateStatus, setLiveUpdateStatus] =
     useState<LiveUpdateStatus>("connecting");
   const refreshInFlightRef = useRef(false);
@@ -102,6 +106,24 @@ export default function MarchMadnessPage() {
   const liveRefreshTimerRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
   const seasonYearRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const restorePreference = window.requestAnimationFrame(() => {
+      setLeaderboardCollapsed(
+        window.localStorage.getItem(LEADERBOARD_COLLAPSED_KEY) === "true",
+      );
+    });
+
+    return () => window.cancelAnimationFrame(restorePreference);
+  }, []);
+
+  function updateLeaderboardCollapsed(collapsed: boolean) {
+    setLeaderboardCollapsed(collapsed);
+    window.localStorage.setItem(
+      LEADERBOARD_COLLAPSED_KEY,
+      String(collapsed),
+    );
+  }
 
   const fetchDashboard = useCallback(
     async (showPageError: boolean) => {
@@ -699,10 +721,25 @@ export default function MarchMadnessPage() {
       </section>
 
       <section
-        className={styles.tournamentWorkspace}
+        className={`${styles.tournamentWorkspace} ${
+          leaderboardCollapsed ? styles.tournamentWorkspaceCollapsed : ""
+        }`}
         aria-label="Tournament brackets and family standings"
       >
         <div className={styles.bracketPane} id="brackets">
+          {leaderboardCollapsed && (
+            <div className={styles.showLeaderboardBar}>
+              <button
+                type="button"
+                onClick={() => updateLeaderboardCollapsed(false)}
+                aria-expanded="false"
+                aria-controls="leaderboard"
+              >
+                <PanelRightOpen size={16} aria-hidden="true" />
+                Show leaderboard
+              </button>
+            </div>
+          )}
           <TournamentBracketViewer
             model={model}
             games={displayedGames}
@@ -713,6 +750,7 @@ export default function MarchMadnessPage() {
           />
         </div>
 
+        {!leaderboardCollapsed && (
         <aside className={styles.leaderboardPane} id="leaderboard">
           <div className={styles.leaderboardSidebarHeading}>
             <div>
@@ -739,18 +777,30 @@ export default function MarchMadnessPage() {
                   </span>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => void requestRefresh("dashboard")}
-                disabled={refreshing}
-                aria-label="Refresh tournament data"
-              >
-                <RefreshCw
-                  className={refreshing ? styles.spinner : ""}
-                  size={15}
-                />
-                Refresh
-              </button>
+              <div className={styles.leaderboardActions}>
+                <button
+                  type="button"
+                  onClick={() => void requestRefresh("dashboard")}
+                  disabled={refreshing}
+                  aria-label="Refresh tournament data"
+                >
+                  <RefreshCw
+                    className={refreshing ? styles.spinner : ""}
+                    size={15}
+                  />
+                  Refresh
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateLeaderboardCollapsed(true)}
+                  aria-expanded="true"
+                  aria-controls="leaderboard"
+                  aria-label="Minimize leaderboard"
+                >
+                  <PanelRightClose size={15} aria-hidden="true" />
+                  Hide
+                </button>
+              </div>
             </div>
           </div>
           <Leaderboard
@@ -766,6 +816,7 @@ export default function MarchMadnessPage() {
             : " Current ties split the combined payouts for their occupied places."}
           </p>
         </aside>
+        )}
       </section>
     </main>
   );
