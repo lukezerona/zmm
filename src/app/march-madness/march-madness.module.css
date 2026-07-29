@@ -2094,6 +2094,11 @@
     padding-inline: 0 !important;
   }
 
+  .leaderboardRefreshButton > svg {
+    position: relative;
+    left: 1px;
+  }
+
   .leaderboardRefreshButton span {
     display: none;
   }
