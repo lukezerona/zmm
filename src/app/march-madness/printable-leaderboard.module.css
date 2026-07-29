@@ -191,7 +191,7 @@
 }
 
 @page {
-  size: letter landscape;
+  size: letter portrait;
   margin: 0.3in;
 }
 
