@@ -754,7 +754,8 @@
 .mobileTournamentTabs,
 .mobileGamesPane,
 .mobileLeaderboardList,
-.mobileTournamentBracket {
+.mobileTournamentBracket,
+.mobileBracketCreateLink {
   display: none;
 }
 
@@ -2232,6 +2233,22 @@
   .mobileLeaderboardActive .leaderboardPane,
   .mobileBracketActive .bracketPane {
     display: block;
+  }
+
+  .mobileBracketCreateLink {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(61, 187, 243, 0.34);
+    border-radius: 11px;
+    color: #dff6ff;
+    background: rgba(11, 78, 112, 0.42);
+    font-size: 12px;
+    font-weight: 900;
+    text-decoration: none;
   }
 
   .mobileLeaderboardActive .leaderboardPaneCollapsed {

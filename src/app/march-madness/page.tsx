@@ -806,6 +806,12 @@ export default function MarchMadnessPage() {
           </div>
         )}
         <div className={styles.bracketPane} id="brackets">
+          {preTournamentMode && (
+            <Link className={styles.mobileBracketCreateLink} href="/bracket">
+              <ArrowLeft size={16} aria-hidden="true" />
+              Back to create bracket
+            </Link>
+          )}
           {leaderboardCollapsed && (
             <div className={styles.showLeaderboardBar}>
               <button
