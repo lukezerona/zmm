@@ -59,6 +59,43 @@
   justify-content: flex-end;
 }
 
+.archiveYearPicker {
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 10px;
+  border: 1px solid #245d7a;
+  border-radius: 9px;
+  color: #79a4b8;
+  background: #071923;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.archiveYearPicker select {
+  align-self: stretch;
+  padding: 0 30px 0 10px;
+  border: 0;
+  border-left: 1px solid rgba(64, 157, 204, 0.24);
+  border-radius: 0 8px 8px 0;
+  outline: 0;
+  color: #e8f6fc;
+  background: #082331;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.archiveYearPicker select:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
 .legend {
   color: #708b9a;
   font-size: 10px;
@@ -459,6 +496,11 @@ thead .stickyCell {
   white-space: nowrap;
 }
 
+.mobileParticipantStats,
+.mobileScrollHint {
+  display: none;
+}
+
 .youBadge {
   flex: 0 0 auto;
   padding: 2px 5px;
@@ -564,18 +606,193 @@ thead .stickyCell {
   .sheetToolbar {
     align-items: flex-start;
     flex-direction: column;
+    gap: 12px;
+    padding: 14px;
   }
 
   .toolbarRight {
     width: 100%;
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    justify-content: stretch;
+  }
+
+  .archiveYearPicker {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .archiveYearPicker select {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .printButton,
+  .rainManButton {
+    width: 100%;
+    padding-inline: 8px;
   }
 
   .legend {
-    display: none;
+    grid-column: 1 / -1;
+    justify-content: center;
+    gap: 16px;
+    padding: 6px 0 2px;
+  }
+
+  .refreshStatus {
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .refreshButton {
+    width: 100%;
+  }
+
+  .mobileScrollHint {
+    display: block;
+    margin: 0;
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(54, 141, 187, 0.18);
+    color: #6e91a3;
+    background: rgba(5, 19, 28, 0.96);
+    font-size: 10px;
+    font-weight: 750;
+    text-align: center;
   }
 
   .tableViewport {
-    max-height: calc(100vh - 270px);
+    height: min(680px, calc(100dvh - 150px));
+    min-height: 500px;
+    max-height: none;
+    overscroll-behavior: contain;
+    scroll-snap-type: x proximity;
+  }
+
+  .table {
+    width: auto;
+    min-width: max-content;
+    font-size: 11px;
+  }
+
+  .rankColumn,
+  .pointsColumn,
+  .possibleColumn,
+  .tiebreakerColumn,
+  .rankCell,
+  .pointsCell,
+  .possibleCell,
+  .tiebreakerCell {
+    display: none;
+  }
+
+  .nameColumn,
+  .nameCell {
+    width: 158px;
+    min-width: 158px;
+    max-width: 158px;
+  }
+
+  .nameCell {
+    left: 0;
+    z-index: 10;
+    padding: 8px !important;
+    border-right: 2px solid rgba(68, 184, 238, 0.48) !important;
+    box-shadow: 4px 0 12px rgba(1, 8, 12, 0.42);
+  }
+
+  thead .nameCell {
+    z-index: 15 !important;
+    text-align: center !important;
+  }
+
+  .gameColumn,
+  .pickColumn {
+    width: 118px;
+    min-width: 118px;
+    max-width: 118px;
+  }
+
+  .pickColumn {
+    scroll-snap-align: start;
+  }
+
+  .table th,
+  .table td {
+    height: 76px;
+    padding: 7px 6px;
+  }
+
+  .table thead th {
+    height: 34px;
+    font-size: 9px;
+  }
+
+  .table thead tr:nth-child(2) th {
+    top: 34px;
+    height: 96px;
+  }
+
+  .participant strong {
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  .participant > span {
+    margin-top: 1px;
+    font-size: 9px;
+  }
+
+  .mobileParticipantStats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3px 5px;
+    margin-top: 6px;
+  }
+
+  .participant .mobileParticipantStats span {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 3px;
+    min-width: 0;
+    margin: 0;
+    overflow: visible;
+    color: #7898a8;
+    font-size: 8px;
+    line-height: 1.1;
+    text-overflow: clip;
+    white-space: nowrap;
+  }
+
+  .mobileParticipantStats b {
+    color: #eef9fd;
+    font-size: 9px;
+  }
+
+  .participant .mobileTiebreakStat {
+    grid-column: 1 / -1;
+  }
+
+  .mobileRainManTiebreaker {
+    width: 58px;
+    height: 23px;
+    font-size: 9px;
+  }
+
+  .pick {
+    padding-inline: 5px !important;
+    font-size: 9px;
+    line-height: 1.2;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .table tbody .currentUserRow .nameCell {
+    background: #0b3042 !important;
+    box-shadow:
+      inset 3px 0 #3fc6ff,
+      4px 0 12px rgba(1, 8, 12, 0.42);
   }
 }

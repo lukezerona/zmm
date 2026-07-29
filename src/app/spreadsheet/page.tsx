@@ -67,6 +67,9 @@ const TOURNAMENT_ROUND_CODES = [
 ];
 
 type RawBracket = Omit<PoolBracket, "picks"> & { picks: unknown };
+type ChampionshipSeason = {
+  season_year: number;
+};
 
 function pickMap(value: unknown): PickMap {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
@@ -133,6 +136,7 @@ export default function SpreadsheetPage() {
   const [historySeasonYear, setHistorySeasonYear] = useState<number | null>(
     null,
   );
+  const [historyYears, setHistoryYears] = useState<number[]>([]);
   const [rainManEnabled, setRainManEnabled] = useState(false);
   const [rainManSelections, setRainManSelections] = useState<PickMap>({});
   const [rainManTiebreaker, setRainManTiebreaker] = useState("");
@@ -142,7 +146,7 @@ export default function SpreadsheetPage() {
   const seasonYearRef = useRef<number | null>(null);
   const historySeasonYearRef = useRef<number | null>(null);
 
-  const loadSpreadsheet = useCallback(async () => {
+  const loadSpreadsheet = useCallback(async (seasonOverride?: number | null) => {
     const client = supabase;
     if (!client) {
       router.replace("/");
@@ -155,23 +159,62 @@ export default function SpreadsheetPage() {
       return false;
     }
 
-    const requestedSeasonYear = requestedHistorySeasonYear();
+    const requestedSeasonYear =
+      seasonOverride === undefined
+        ? requestedHistorySeasonYear()
+        : seasonOverride;
     let activeSeasonYear: number;
 
     if (requestedSeasonYear !== null) {
-      const { data: completedSeason, error: completedSeasonError } =
-        await client
-          .from("espn_games")
-          .select("season_year")
-          .eq("season_year", requestedSeasonYear)
-          .eq("round_code", "CHAMPIONSHIP")
-          .eq("completed", true)
-          .maybeSingle();
+      const archiveData = await (async () => {
+        try {
+          return await Promise.all([
+            getTournamentLifecycle(client),
+            client
+              .from("espn_games")
+              .select("season_year")
+              .eq("round_code", "CHAMPIONSHIP")
+              .eq("completed", true)
+              .order("season_year", { ascending: false }),
+          ]);
+        } catch (archiveError) {
+          console.error(
+            "[spreadsheet] Could not load tournament archive",
+            archiveError,
+          );
+          if (mountedRef.current) {
+            setError("The tournament archive is temporarily unavailable.");
+          }
+          return null;
+        }
+      })();
 
-      if (completedSeasonError || !completedSeason) {
+      if (!archiveData) return false;
+      const [archiveLifecycle, completedSeasonsResult] = archiveData;
+
+      if (completedSeasonsResult.error) {
+        console.error("[spreadsheet] Could not load archive seasons", {
+          error: completedSeasonsResult.error.message,
+        });
+        if (mountedRef.current) {
+          setError("The tournament archive is temporarily unavailable.");
+        }
+        return false;
+      }
+
+      const configuredSeasonYear =
+        archiveLifecycle.configuredSeasonYear ?? archiveLifecycle.seasonYear;
+      const archivedYears = [
+        ...new Set(
+          (completedSeasonsResult.data as ChampionshipSeason[])
+            .map((season) => season.season_year)
+            .filter((year) => year !== configuredSeasonYear),
+        ),
+      ].sort((a, b) => b - a);
+
+      if (!archivedYears.includes(requestedSeasonYear)) {
         console.error("[spreadsheet] Historical season is unavailable", {
           seasonYear: requestedSeasonYear,
-          error: completedSeasonError?.message,
         });
         if (mountedRef.current) {
           setError(
@@ -183,7 +226,10 @@ export default function SpreadsheetPage() {
 
       activeSeasonYear = requestedSeasonYear;
       historySeasonYearRef.current = requestedSeasonYear;
-      if (mountedRef.current) setHistorySeasonYear(requestedSeasonYear);
+      if (mountedRef.current) {
+        setHistorySeasonYear(requestedSeasonYear);
+        setHistoryYears(archivedYears);
+      }
     } else {
       let lifecycle;
       try {
@@ -213,7 +259,10 @@ export default function SpreadsheetPage() {
 
       activeSeasonYear = lifecycle.seasonYear;
       historySeasonYearRef.current = null;
-      if (mountedRef.current) setHistorySeasonYear(null);
+      if (mountedRef.current) {
+        setHistorySeasonYear(null);
+        setHistoryYears([]);
+      }
     }
 
     seasonYearRef.current = activeSeasonYear;
@@ -619,6 +668,23 @@ export default function SpreadsheetPage() {
     });
   }
 
+  async function chooseHistorySeason(year: number) {
+    if (year === historySeasonYear || refreshing) return;
+
+    setRefreshing(true);
+    setRainManEnabled(false);
+    setRainManSelections({});
+    setRainManTiebreaker("");
+    try {
+      const loaded = await loadSpreadsheet(year);
+      if (loaded) {
+        router.replace(`/spreadsheet?season=${year}`, { scroll: false });
+      }
+    } finally {
+      if (mountedRef.current) setRefreshing(false);
+    }
+  }
+
   function chooseRainManWinner(matchupId: string, entryId: string) {
     if (
       !model ||
@@ -702,7 +768,12 @@ export default function SpreadsheetPage() {
               className={headerStyles.headerCommissionerButton}
               href={{
                 pathname: "/commissioner",
-                query: { returnTo: "/spreadsheet" },
+                query: {
+                  returnTo:
+                    historySeasonYear === null
+                      ? "/spreadsheet"
+                      : `/spreadsheet?season=${historySeasonYear}`,
+                },
               }}
             >
               <ShieldCheck size={16} aria-hidden="true" />
@@ -712,7 +783,11 @@ export default function SpreadsheetPage() {
           <AccountMenu
             profile={profile}
             isCommissioner={isCommissioner}
-            commissionerReturnTo="/spreadsheet"
+            commissionerReturnTo={
+              historySeasonYear === null
+                ? "/spreadsheet"
+                : `/spreadsheet?season=${historySeasonYear}`
+            }
             commissionerShortcutVisible
             onSignOut={signOut}
           />
@@ -738,6 +813,24 @@ export default function SpreadsheetPage() {
             </h2>
           </div>
           <div className={styles.toolbarRight}>
+            {historySeasonYear !== null && historyYears.length > 0 && (
+              <label className={styles.archiveYearPicker}>
+                <span>Season</span>
+                <select
+                  value={historySeasonYear}
+                  onChange={(event) =>
+                    void chooseHistorySeason(Number(event.target.value))
+                  }
+                  disabled={refreshing}
+                >
+                  {historyYears.map((year) => (
+                    <option value={year} key={year}>
+                      {year} Tournament
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <button
               className={styles.printButton}
               type="button"
@@ -800,6 +893,10 @@ export default function SpreadsheetPage() {
             </button>
           </div>
         </div>
+
+        <p className={styles.mobileScrollHint}>
+          Swipe picks left and right. Participant details stay pinned.
+        </p>
 
         <div className={styles.tableViewport}>
           <table className={styles.table}>
@@ -920,6 +1017,37 @@ export default function SpreadsheetPage() {
                     <span>
                       {rainManActive ? "Rain Man scenario" : "Official results"}
                     </span>
+                    <div className={styles.mobileParticipantStats}>
+                      <span>
+                        Points <b>{masterScore.points}</b>
+                      </span>
+                      <span>
+                        Max{" "}
+                        <b>{masterScore.points + masterScore.pointsLeft}</b>
+                      </span>
+                      <span className={styles.mobileTiebreakStat}>
+                        Tiebreak{" "}
+                        {rainManActive ? (
+                          <input
+                            className={`${styles.rainManTiebreaker} ${styles.mobileRainManTiebreaker}`}
+                            type="number"
+                            min="0"
+                            step="1"
+                            inputMode="numeric"
+                            value={rainManTiebreaker}
+                            onChange={(event) =>
+                              setRainManTiebreaker(event.target.value)
+                            }
+                            placeholder="Total"
+                            aria-label="Projected championship total points"
+                          />
+                        ) : (
+                          <b>
+                            {officialLeaderboard.championshipTotal ?? "\u2014"}
+                          </b>
+                        )}
+                      </span>
+                    </div>
                   </div>
                 </th>
                 <td
@@ -1056,6 +1184,23 @@ export default function SpreadsheetPage() {
                           )}
                         </strong>
                         <span>@{row.username}</span>
+                        <div className={styles.mobileParticipantStats}>
+                          <span>
+                            Rank <b>#{row.rank}</b>
+                          </span>
+                          <span>
+                            Points <b>{row.points}</b>
+                          </span>
+                          <span>
+                            Max{" "}
+                            <b>
+                              {row.points + row.possiblePointsRemaining}
+                            </b>
+                          </span>
+                          <span>
+                            Tiebreak <b>{row.tiebreaker ?? "\u2014"}</b>
+                          </span>
+                        </div>
                       </div>
                     </th>
                     <td
