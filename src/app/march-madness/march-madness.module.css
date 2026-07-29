@@ -866,10 +866,24 @@
 }
 
 .desktopGameDayEmpty {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
   padding: 30px 18px;
   color: #7893a2;
   font-size: 13px;
   text-align: center;
+}
+
+.desktopGameDayEmpty strong {
+  color: #d8edf8;
+  font-size: 15px;
+}
+
+.desktopGameDayEmpty span {
+  color: #35c0ff;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .mobileTournamentTabs,

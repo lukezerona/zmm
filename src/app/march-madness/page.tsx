@@ -65,10 +65,12 @@ const TOURNAMENT_ROUND_CODES = [
   "FINAL_FOUR",
   "CHAMPIONSHIP",
 ];
-const GAME_DAY_KEY_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+const EASTERN_DATE_TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
   month: "2-digit",
   day: "2-digit",
+  hour: "2-digit",
+  hourCycle: "h23",
   timeZone: "America/New_York",
 });
 const GAME_DAY_LABEL_FORMATTER = new Intl.DateTimeFormat("en-US", {
@@ -98,46 +100,92 @@ function pickMap(value: unknown): PickMap {
   );
 }
 
+function easternDateParts(date: Date) {
+  const parts = Object.fromEntries(
+    EASTERN_DATE_TIME_FORMATTER.formatToParts(date).map((part) => [
+      part.type,
+      part.value,
+    ]),
+  );
+
+  return {
+    year: Number(parts.year),
+    month: Number(parts.month),
+    day: Number(parts.day),
+    hour: Number(parts.hour),
+  };
+}
+
+function dateKey(year: number, month: number, day: number) {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function easternCalendarDayKey(date: Date) {
+  const parts = easternDateParts(date);
+  return dateKey(parts.year, parts.month, parts.day);
+}
+
+function activeCarouselDayKey(now: Date) {
+  const parts = easternDateParts(now);
+  if (parts.hour >= 6) {
+    return dateKey(parts.year, parts.month, parts.day);
+  }
+
+  const previousDay = new Date(
+    Date.UTC(parts.year, parts.month - 1, parts.day - 1),
+  );
+  return dateKey(
+    previousDay.getUTCFullYear(),
+    previousDay.getUTCMonth() + 1,
+    previousDay.getUTCDate(),
+  );
+}
+
 function gameDayKey(game: TournamentGame) {
-  return GAME_DAY_KEY_FORMATTER.format(new Date(game.starts_at));
+  return easternCalendarDayKey(new Date(game.starts_at));
 }
 
 function gameStartTime(game: TournamentGame) {
   return new Date(game.starts_at).getTime();
 }
 
-function selectDesktopGameDay(games: TournamentGame[]) {
+function gameDayLabel(dayKey: string) {
+  return GAME_DAY_LABEL_FORMATTER.format(
+    new Date(`${dayKey}T12:00:00Z`),
+  );
+}
+
+function selectDesktopGameDay(
+  games: TournamentGame[],
+  now: Date | null,
+  previewFirstGameDay: boolean,
+) {
   const tournamentGames = games
     .filter(
       (game) => game.round_number !== null && game.round_number >= 1,
     )
     .sort((left, right) => gameStartTime(left) - gameStartTime(right));
-  const live = tournamentGames.filter(
-    (game) => game.status_state === "in" && !game.completed,
-  );
-  const upcoming = tournamentGames.filter(
-    (game) => !game.completed && game.status_state !== "in",
-  );
-  const final = tournamentGames.filter((game) => game.completed);
-  const anchorGame =
-    live[0] ?? upcoming[0] ?? final[final.length - 1];
-
-  if (!anchorGame) {
+  const firstGame = tournamentGames[0];
+  if (!firstGame || (!now && !previewFirstGameDay)) {
     return {
       label: "Tournament schedule",
       games: [] as TournamentGame[],
+      nextGameDayLabel: null as string | null,
     };
   }
 
-  const activeDayKey = gameDayKey(anchorGame);
+  const activeDayKey = previewFirstGameDay
+    ? gameDayKey(firstGame)
+    : activeCarouselDayKey(now as Date);
   const dayGames = tournamentGames.filter(
     (game) => gameDayKey(game) === activeDayKey,
   );
+  const nextGame = tournamentGames.find(
+    (game) => gameDayKey(game) > activeDayKey,
+  );
 
   return {
-    label: GAME_DAY_LABEL_FORMATTER.format(
-      new Date(anchorGame.starts_at),
-    ),
+    label: gameDayLabel(activeDayKey),
     games: [
       ...dayGames.filter(
         (game) => game.status_state === "in" && !game.completed,
@@ -147,6 +195,9 @@ function selectDesktopGameDay(games: TournamentGame[]) {
       ),
       ...dayGames.filter((game) => game.completed),
     ],
+    nextGameDayLabel: nextGame
+      ? gameDayLabel(gameDayKey(nextGame))
+      : null,
   };
 }
 
@@ -169,6 +220,7 @@ export default function MarchMadnessPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [gameDayNow, setGameDayNow] = useState<Date | null>(null);
   const [leaderboardCollapsed, setLeaderboardCollapsed] = useState(false);
   const [mobileTournamentView, setMobileTournamentView] =
     useState<MobileTournamentView>("games");
@@ -189,6 +241,21 @@ export default function MarchMadnessPage() {
     });
 
     return () => window.cancelAnimationFrame(restorePreference);
+  }, []);
+
+  useEffect(() => {
+    const initializeGameDayClock = window.requestAnimationFrame(() => {
+      setGameDayNow(new Date());
+    });
+    const updateGameDayClock = window.setInterval(
+      () => setGameDayNow(new Date()),
+      60_000,
+    );
+
+    return () => {
+      window.cancelAnimationFrame(initializeGameDayClock);
+      window.clearInterval(updateGameDayClock);
+    };
   }, []);
 
   function updateLeaderboardCollapsed(collapsed: boolean) {
@@ -658,8 +725,13 @@ export default function MarchMadnessPage() {
     [paymentStatuses],
   );
   const desktopGameDay = useMemo(
-    () => selectDesktopGameDay(displayedGames),
-    [displayedGames],
+    () =>
+      selectDesktopGameDay(
+        displayedGames,
+        gameDayNow,
+        preTournamentMode,
+      ),
+    [displayedGames, gameDayNow, preTournamentMode],
   );
   const desktopTeamOrder = useMemo(
     () =>
@@ -870,7 +942,12 @@ export default function MarchMadnessPage() {
           </div>
         ) : (
           <div className={styles.desktopGameDayEmpty}>
-            Games will appear here when the tournament schedule is available.
+            <strong>No games today.</strong>
+            {desktopGameDay.nextGameDayLabel && (
+              <span>
+                Next game day: {desktopGameDay.nextGameDayLabel}
+              </span>
+            )}
           </div>
         )}
       </section>
