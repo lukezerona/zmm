@@ -2199,6 +2199,24 @@
     display: grid;
   }
 
+  .page > .historySummary article {
+    grid-template-columns: 22px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    gap: 5px 6px;
+    padding: 13px 11px;
+  }
+
+  .page > .historySummary article strong {
+    grid-column: 1 / -1;
+    width: 100%;
+    overflow: visible;
+    line-height: 1.2;
+    text-align: center;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
   .tournamentWorkspace {
     display: block;
     padding-top: 16px;
