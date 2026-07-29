@@ -318,6 +318,7 @@
 .hero,
 .lobbyHero,
 .summaryGrid,
+.desktopGameDayCarousel,
 .lobbyWorkspace,
 .historyHero,
 .historyEmpty,
@@ -749,6 +750,126 @@
 
 .summaryGrid strong {
   font-size: 22px;
+}
+
+.desktopGameDayCarousel {
+  overflow: hidden;
+  border: 1px solid #153649;
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(11, 37, 52, 0.92), rgba(5, 17, 25, 0.96)),
+    #06121a;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
+}
+
+.desktopGameDayHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 15px 18px 13px;
+  border-bottom: 1px solid #153649;
+}
+
+.desktopGameDayHeading > div:first-child {
+  min-width: 0;
+}
+
+.desktopGameDayHeading span {
+  color: #35c0ff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+}
+
+.desktopGameDayHeading h2 {
+  margin-top: 3px;
+  font-size: clamp(18px, 1.7vw, 25px);
+  letter-spacing: -0.035em;
+}
+
+.desktopGameDayControls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.desktopGameDayControls > span {
+  margin-right: 5px;
+  color: #7793a3;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.desktopGameDayControls button {
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #1b455c;
+  border-radius: 10px;
+  color: #d8f2ff;
+  background: #071923;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.desktopGameDayControls button:hover {
+  border-color: #31baf7;
+  color: #31baf7;
+  transform: translateY(-1px);
+}
+
+.desktopGameDayTrack {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 14px 18px 17px;
+  scroll-behavior: smooth;
+  scroll-padding-inline: 18px;
+  scroll-snap-type: x mandatory;
+  scrollbar-color: #226283 transparent;
+  scrollbar-width: thin;
+}
+
+.desktopGameDayTrack > article {
+  flex: 0 0 clamp(240px, 20vw, 310px);
+  scroll-snap-align: start;
+}
+
+.desktopGameDayTrack .gameCard {
+  border-radius: 11px;
+  background: #061720;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+}
+
+.desktopGameDayTrack .gameMeta {
+  min-height: 34px;
+  padding-inline: 10px;
+  font-size: 11px;
+}
+
+.desktopGameDayTrack .scoreRow {
+  min-height: 40px;
+  grid-template-columns: 22px minmax(0, 1fr) 30px;
+  padding-inline: 9px;
+  font-size: 12px;
+}
+
+.desktopGameDayTrack .scoreRow strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktopGameDayEmpty {
+  padding: 30px 18px;
+  color: #7893a2;
+  font-size: 13px;
+  text-align: center;
 }
 
 .mobileTournamentTabs,
@@ -2198,7 +2319,8 @@
   }
 
   .page > .hero,
-  .page > .summaryGrid {
+  .page > .summaryGrid,
+  .page > .desktopGameDayCarousel {
     display: none;
   }
 
@@ -2918,6 +3040,7 @@
   .hero,
   .lobbyHero,
   .summaryGrid,
+  .desktopGameDayCarousel,
   .lobbyWorkspace,
   .historyHero,
   .historyEmpty,

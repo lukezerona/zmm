@@ -6,13 +6,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  CircleDollarSign,
-  Clock3,
+  ChevronLeft,
+  ChevronRight,
   History,
   LoaderCircle,
   PanelRightClose,
   PanelRightOpen,
-  Radio,
   RefreshCw,
   ShieldCheck,
   Trophy,
@@ -32,6 +31,10 @@ import { buildTournamentModel, sanitizePicks } from "../bracket/bracket-utils";
 import { AccountMenu } from "./account-menu";
 import { Leaderboard } from "./leaderboard";
 import { MobileTournamentOverview } from "./mobile-tournament-overview";
+import {
+  buildMasterTeamOrder,
+  MasterGameCard,
+} from "./tournament-bracket-canvas";
 import { TournamentBracketViewer } from "./tournament-bracket-viewer";
 import { TournamentViewSwitcher } from "./view-switcher";
 import {
@@ -62,6 +65,18 @@ const TOURNAMENT_ROUND_CODES = [
   "FINAL_FOUR",
   "CHAMPIONSHIP",
 ];
+const GAME_DAY_KEY_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  timeZone: "America/New_York",
+});
+const GAME_DAY_LABEL_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+  timeZone: "America/New_York",
+});
 
 type RawBracket = Omit<PoolBracket, "picks"> & { picks: unknown };
 type RefreshKind = "dashboard" | "games";
@@ -81,6 +96,58 @@ function pickMap(value: unknown): PickMap {
       (entry): entry is [string, string] => typeof entry[1] === "string",
     ),
   );
+}
+
+function gameDayKey(game: TournamentGame) {
+  return GAME_DAY_KEY_FORMATTER.format(new Date(game.starts_at));
+}
+
+function gameStartTime(game: TournamentGame) {
+  return new Date(game.starts_at).getTime();
+}
+
+function selectDesktopGameDay(games: TournamentGame[]) {
+  const tournamentGames = games
+    .filter(
+      (game) => game.round_number !== null && game.round_number >= 1,
+    )
+    .sort((left, right) => gameStartTime(left) - gameStartTime(right));
+  const live = tournamentGames.filter(
+    (game) => game.status_state === "in" && !game.completed,
+  );
+  const upcoming = tournamentGames.filter(
+    (game) => !game.completed && game.status_state !== "in",
+  );
+  const final = tournamentGames.filter((game) => game.completed);
+  const anchorGame =
+    live[0] ?? upcoming[0] ?? final[final.length - 1];
+
+  if (!anchorGame) {
+    return {
+      label: "Tournament schedule",
+      games: [] as TournamentGame[],
+    };
+  }
+
+  const activeDayKey = gameDayKey(anchorGame);
+  const dayGames = tournamentGames.filter(
+    (game) => gameDayKey(game) === activeDayKey,
+  );
+
+  return {
+    label: GAME_DAY_LABEL_FORMATTER.format(
+      new Date(anchorGame.starts_at),
+    ),
+    games: [
+      ...dayGames.filter(
+        (game) => game.status_state === "in" && !game.completed,
+      ),
+      ...dayGames.filter(
+        (game) => !game.completed && game.status_state !== "in",
+      ),
+      ...dayGames.filter((game) => game.completed),
+    ],
+  };
 }
 
 export default function MarchMadnessPage() {
@@ -110,6 +177,7 @@ export default function MarchMadnessPage() {
   const refreshInFlightRef = useRef(false);
   const pendingRefreshRef = useRef<RefreshRequest | null>(null);
   const liveRefreshTimerRef = useRef<number | null>(null);
+  const desktopGameCarouselRef = useRef<HTMLDivElement | null>(null);
   const mountedRef = useRef(true);
   const seasonYearRef = useRef<number | null>(null);
 
@@ -589,23 +657,17 @@ export default function MarchMadnessPage() {
       ),
     [paymentStatuses],
   );
-  const tournamentGames = displayedGames.filter(
-    (game) => game.round_number !== null && game.round_number >= 1,
+  const desktopGameDay = useMemo(
+    () => selectDesktopGameDay(displayedGames),
+    [displayedGames],
   );
-  const allTournamentGames = games.filter(
-    (game) => game.round_number !== null && game.round_number >= 1,
+  const desktopTeamOrder = useMemo(
+    () =>
+      model
+        ? buildMasterTeamOrder(model)
+        : new Map<string, number>(),
+    [model],
   );
-  const finalGames = preTournamentMode
-    ? 0
-    : tournamentGames.filter((game) => game.completed).length;
-  const liveGames = preTournamentMode
-    ? 0
-    : tournamentGames.filter(
-        (game) => game.status_state === "in" && !game.completed,
-      ).length;
-  const upcomingGames = preTournamentMode
-    ? allTournamentGames.length
-    : tournamentGames.length - finalGames - liveGames;
   const liveStatusLabel: Record<LiveUpdateStatus, string> = {
     connecting: "Connecting live updates\u2026",
     connected: "Live updates connected",
@@ -629,6 +691,16 @@ export default function MarchMadnessPage() {
     setMobileTournamentView(view);
     window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  function scrollDesktopGameCarousel(direction: -1 | 1) {
+    const carousel = desktopGameCarouselRef.current;
+    if (!carousel) return;
+
+    carousel.scrollBy({
+      left: direction * Math.max(carousel.clientWidth * 0.72, 320),
+      behavior: "smooth",
     });
   }
 
@@ -751,27 +823,56 @@ export default function MarchMadnessPage() {
         </div>
       </section>
 
-      <section className={styles.summaryGrid} aria-label="Tournament summary">
-        <article>
-          <Trophy size={19} />
-          <span>Games final</span>
-          <strong>{finalGames}</strong>
-        </article>
-        <article className={liveGames > 0 ? styles.liveSummary : ""}>
-          <Radio size={19} />
-          <span>Live now</span>
-          <strong>{liveGames}</strong>
-        </article>
-        <article>
-          <Clock3 size={19} />
-          <span>Upcoming</span>
-          <strong>{upcomingGames}</strong>
-        </article>
-        <article>
-          <CircleDollarSign size={19} />
-          <span>Prize pool</span>
-          <strong>${leaderboard.pot.toFixed(0)}</strong>
-        </article>
+      <section
+        className={styles.desktopGameDayCarousel}
+        aria-label={`Games for ${desktopGameDay.label}`}
+      >
+        <div className={styles.desktopGameDayHeading}>
+          <div>
+            <span>GAME DAY</span>
+            <h2>{desktopGameDay.label}</h2>
+          </div>
+          <div className={styles.desktopGameDayControls}>
+            <span>
+              {desktopGameDay.games.length}{" "}
+              {desktopGameDay.games.length === 1 ? "game" : "games"}
+            </span>
+            <button
+              type="button"
+              onClick={() => scrollDesktopGameCarousel(-1)}
+              aria-label="Show earlier games"
+            >
+              <ChevronLeft size={19} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollDesktopGameCarousel(1)}
+              aria-label="Show later games"
+            >
+              <ChevronRight size={19} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+        {desktopGameDay.games.length > 0 ? (
+          <div
+            className={styles.desktopGameDayTrack}
+            ref={desktopGameCarouselRef}
+          >
+            {desktopGameDay.games.map((game) => (
+              <MasterGameCard
+                key={game.espn_event_id}
+                matchupId={game.espn_event_id}
+                roundNumber={game.round_number ?? 1}
+                game={game}
+                teamOrder={desktopTeamOrder}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className={styles.desktopGameDayEmpty}>
+            Games will appear here when the tournament schedule is available.
+          </div>
+        )}
       </section>
 
       <section
