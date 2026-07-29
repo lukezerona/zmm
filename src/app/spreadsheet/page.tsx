@@ -843,7 +843,7 @@ export default function SpreadsheetPage() {
                   rowSpan={2}
                   scope="col"
                 >
-                  Max possible points
+                  Max points
                 </th>
                 <th
                   className={`${styles.stickyCell} ${styles.tiebreakerCell}`}

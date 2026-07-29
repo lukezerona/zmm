@@ -115,7 +115,7 @@ function StandingPreviewRow({
       <div className={styles.mobileStandingPoints}>
         <strong>{entry.points}</strong>
         <span>
-          {entry.points + entry.possiblePointsRemaining} max possible points
+          Max points {entry.points + entry.possiblePointsRemaining}
         </span>
       </div>
     </article>

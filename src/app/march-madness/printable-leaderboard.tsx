@@ -77,7 +77,7 @@ export function PrintableLeaderboard({
               <th scope="col">Place</th>
               <th scope="col">Participant</th>
               <th scope="col">Points</th>
-              <th scope="col">Max possible points</th>
+              <th scope="col">Max points</th>
               <th scope="col">Champion</th>
               <th scope="col">Tiebreaker</th>
               <th scope="col">Correct picks</th>

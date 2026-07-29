@@ -94,7 +94,7 @@ export function Leaderboard({
             <th scope="col" data-short="Place">Place</th>
             <th scope="col" data-short="Name">Name</th>
             <th scope="col" data-short="Pts">Points</th>
-            <th scope="col" data-short="Max">Max possible points</th>
+            <th scope="col" data-short="Max">Max points</th>
             <th scope="col" data-short="Champ">Champion</th>
             <th scope="col" data-short="TB">Break</th>
             <th scope="col" data-short="Pick %">Correct</th>
@@ -283,7 +283,7 @@ export function Leaderboard({
 
               <dl className={styles.leaderboardMetrics}>
                 <div>
-                  <dt>Max possible points</dt>
+                  <dt>Max points</dt>
                   <dd>{entry.points + entry.possiblePointsRemaining}</dd>
                 </div>
                 <div>

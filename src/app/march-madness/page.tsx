@@ -897,7 +897,7 @@ export default function MarchMadnessPage() {
           $10 buy-in · First place 60% · Second place 30% · Third place 10%.
           {leaderboard.championshipComplete
             ? " Final ties are ordered by championship tiebreaker distance."
-            : " Current ties split the combined payouts for their occupied places and are ordered by max possible points, then bracket creation time."}
+            : " Current ties split the combined payouts for their occupied places and are ordered by max points, then bracket creation time."}
           </p>
         </aside>
       </section>

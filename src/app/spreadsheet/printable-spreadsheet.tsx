@@ -260,7 +260,7 @@ export function PrintableSpreadsheet({
                   Points
                 </th>
                 <th rowSpan={3} scope="col">
-                  Max possible points
+                  Max points
                 </th>
                 <th rowSpan={3} scope="col">
                   TB
