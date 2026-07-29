@@ -1694,7 +1694,7 @@
   gap: 9px;
   align-self: start;
   justify-self: center;
-  transform: translateY(-16px);
+  transform: translateY(-25px);
 }
 
 .championshipSlot > .gameCard .scoreRow {
