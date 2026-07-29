@@ -816,6 +816,7 @@ export default function MarchMadnessPage() {
           <Leaderboard
             rows={leaderboard.rows}
             currentUserId={userId}
+            seasonYear={model.seasonYear}
             hidePrivatePicks={preTournamentMode}
             paymentStatusByBracket={paymentStatusByBracket}
           />

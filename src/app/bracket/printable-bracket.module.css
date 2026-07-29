@@ -362,7 +362,7 @@
     background: #ffffff !important;
   }
 
-  :global(body > :not(#zmm-print-root)) {
+  :global(body:not(.zmm-printing-leaderboard) > :not(#zmm-print-root)) {
     display: none !important;
   }
 

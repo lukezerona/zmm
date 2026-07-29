@@ -467,7 +467,11 @@ export default function HistoryPage() {
                   <h2>Leaderboard</h2>
                 </div>
               </div>
-              <Leaderboard rows={leaderboard.rows} currentUserId={userId} />
+              <Leaderboard
+                rows={leaderboard.rows}
+                currentUserId={userId}
+                seasonYear={selectedYear}
+              />
               <p className={styles.payoutNote}>
                 Final standings include championship tiebreaker rules.
               </p>

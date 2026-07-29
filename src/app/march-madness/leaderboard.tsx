@@ -1,4 +1,14 @@
-import { BadgeCheck, CircleX, Crown, Medal, Trophy } from "lucide-react";
+"use client";
+
+import {
+  BadgeCheck,
+  CircleX,
+  Crown,
+  Medal,
+  Printer,
+  Trophy,
+} from "lucide-react";
+import { PrintableLeaderboard } from "./printable-leaderboard";
 import { LeaderboardEntry } from "./tournament-types";
 import styles from "./march-madness.module.css";
 
@@ -16,11 +26,13 @@ function RankIcon({ rank }: { rank: number }) {
 export function Leaderboard({
   rows,
   currentUserId,
+  seasonYear,
   hidePrivatePicks = false,
   paymentStatusByBracket,
 }: {
   rows: LeaderboardEntry[];
   currentUserId: string;
+  seasonYear: number;
   hidePrivatePicks?: boolean;
   paymentStatusByBracket?: ReadonlyMap<string, boolean>;
 }) {
@@ -30,8 +42,29 @@ export function Leaderboard({
       (entry) => paymentStatusByBracket.get(entry.bracketId) !== true,
     );
 
+  function printLeaderboard() {
+    const printClass = "zmm-printing-leaderboard";
+    let cleanupTimer = 0;
+    const cleanup = () => {
+      window.clearTimeout(cleanupTimer);
+      document.body.classList.remove(printClass);
+      window.removeEventListener("afterprint", cleanup);
+    };
+
+    document.body.classList.add(printClass);
+    window.addEventListener("afterprint", cleanup, { once: true });
+    cleanupTimer = window.setTimeout(cleanup, 60_000);
+    window.requestAnimationFrame(() => window.print());
+  }
+
   return (
     <div className={styles.leaderboardBlock}>
+      <div className={styles.leaderboardPrintBar}>
+        <button type="button" onClick={printLeaderboard}>
+          <Printer size={15} aria-hidden="true" />
+          Print leaderboard
+        </button>
+      </div>
       {hasPaymentDue && (
         <div
           className={styles.paymentLegend}
@@ -166,6 +199,12 @@ export function Leaderboard({
         </tbody>
       </table>
       </div>
+      <PrintableLeaderboard
+        rows={rows}
+        seasonYear={seasonYear}
+        hidePrivatePicks={hidePrivatePicks}
+        paymentStatusByBracket={paymentStatusByBracket}
+      />
     </div>
   );
 }
