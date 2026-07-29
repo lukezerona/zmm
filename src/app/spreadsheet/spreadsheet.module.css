@@ -689,9 +689,9 @@ thead .stickyCell {
 
   .nameColumn,
   .nameCell {
-    width: 158px;
-    min-width: 158px;
-    max-width: 158px;
+    width: 136px;
+    min-width: 136px;
+    max-width: 136px;
   }
 
   .nameCell {
