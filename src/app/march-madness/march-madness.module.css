@@ -1694,6 +1694,31 @@
   gap: 9px;
   align-self: start;
   justify-self: center;
+  transform: translateY(-16px);
+}
+
+.championshipSlot > .gameCard .scoreRow {
+  min-height: 52px;
+  grid-template-columns: 22px minmax(0, 1fr) 28px;
+  padding-inline: 8px;
+}
+
+.championshipSlot > .gameCard .scoreRow strong {
+  font-size: 14px;
+}
+
+.championshipSlot > .gameCard .scoreRow b {
+  font-size: 16px;
+}
+
+.championshipSlot > .pickCard .pickRow {
+  min-height: 58px;
+  grid-template-columns: 30px minmax(0, 1fr) 20px;
+  padding-inline: 9px;
+}
+
+.championshipSlot > .pickCard .pickRow strong {
+  font-size: 14px;
 }
 
 .pickCard {
@@ -2040,6 +2065,7 @@
     grid-row: 2;
     width: min(100%, 360px);
     justify-self: center;
+    transform: none;
   }
 
   .leaderboardList {
