@@ -94,7 +94,7 @@ export function Leaderboard({
             <th scope="col" data-short="Place">Place</th>
             <th scope="col" data-short="Name">Name</th>
             <th scope="col" data-short="Pts">Points</th>
-            <th scope="col" data-short="Poss.">Possible left</th>
+            <th scope="col" data-short="Max">Max possible points</th>
             <th scope="col" data-short="Champ">Champion</th>
             <th scope="col" data-short="TB">Break</th>
             <th scope="col" data-short="Pick %">Correct</th>
@@ -134,7 +134,7 @@ export function Leaderboard({
                   <span className={styles.username}>@{entry.username}</span>
                 </td>
                 <td className={styles.tablePoints}>{entry.points}</td>
-                <td>{entry.possiblePointsRemaining}</td>
+                <td>{entry.points + entry.possiblePointsRemaining}</td>
                 <td>
                   {hidePrivatePicks ? (
                     <span
@@ -283,8 +283,8 @@ export function Leaderboard({
 
               <dl className={styles.leaderboardMetrics}>
                 <div>
-                  <dt>Possible left</dt>
-                  <dd>{entry.possiblePointsRemaining}</dd>
+                  <dt>Max possible points</dt>
+                  <dd>{entry.points + entry.possiblePointsRemaining}</dd>
                 </div>
                 <div>
                   <dt>Tiebreaker</dt>

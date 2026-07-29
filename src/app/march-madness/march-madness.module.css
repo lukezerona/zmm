@@ -2577,10 +2577,16 @@
   }
 
   .mobileLeaderboardList .leaderboardMetrics dt {
+    min-height: 19px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
     overflow: hidden;
     font-size: 9px;
+    line-height: 1.05;
     letter-spacing: 0.02em;
     text-overflow: ellipsis;
+    white-space: normal;
   }
 
   .mobileLeaderboardList .leaderboardMetrics dd {

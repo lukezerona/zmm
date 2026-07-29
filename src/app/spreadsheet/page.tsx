@@ -843,7 +843,7 @@ export default function SpreadsheetPage() {
                   rowSpan={2}
                   scope="col"
                 >
-                  Points left
+                  Max possible points
                 </th>
                 <th
                   className={`${styles.stickyCell} ${styles.tiebreakerCell}`}
@@ -930,7 +930,7 @@ export default function SpreadsheetPage() {
                 <td
                   className={`${styles.stickyCell} ${styles.possibleCell} ${styles.metric}`}
                 >
-                  {masterScore.pointsLeft}
+                  {masterScore.points + masterScore.pointsLeft}
                 </td>
                 <td
                   className={`${styles.stickyCell} ${styles.tiebreakerCell} ${styles.metric}`}
@@ -1066,7 +1066,7 @@ export default function SpreadsheetPage() {
                     <td
                       className={`${styles.stickyCell} ${styles.possibleCell} ${styles.metric}`}
                     >
-                      {row.possiblePointsRemaining}
+                      {row.points + row.possiblePointsRemaining}
                     </td>
                     <td
                       className={`${styles.stickyCell} ${styles.tiebreakerCell} ${styles.metric}`}

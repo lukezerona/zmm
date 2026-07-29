@@ -77,7 +77,7 @@ export function PrintableLeaderboard({
               <th scope="col">Place</th>
               <th scope="col">Participant</th>
               <th scope="col">Points</th>
-              <th scope="col">Possible left</th>
+              <th scope="col">Max possible points</th>
               <th scope="col">Champion</th>
               <th scope="col">Tiebreaker</th>
               <th scope="col">Correct picks</th>
@@ -101,7 +101,7 @@ export function PrintableLeaderboard({
                     <span>@{entry.username}</span>
                   </td>
                   <td className={styles.points}>{entry.points}</td>
-                  <td>{entry.possiblePointsRemaining}</td>
+                  <td>{entry.points + entry.possiblePointsRemaining}</td>
                   <td>
                     {hidePrivatePicks ? (
                       <span className={styles.hidden}>Hidden</span>

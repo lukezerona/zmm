@@ -260,7 +260,7 @@ export function PrintableSpreadsheet({
                   Points
                 </th>
                 <th rowSpan={3} scope="col">
-                  Left
+                  Max possible points
                 </th>
                 <th rowSpan={3} scope="col">
                   TB
@@ -329,7 +329,7 @@ export function PrintableSpreadsheet({
                   </span>
                 </th>
                 <td>{masterScore.points}</td>
-                <td>{masterScore.pointsLeft}</td>
+                <td>{masterScore.points + masterScore.pointsLeft}</td>
                 <td>
                   {masterTiebreaker === ""
                     ? "—"
@@ -355,7 +355,7 @@ export function PrintableSpreadsheet({
                     </th>
                     <td className={styles.metric}>{row.points}</td>
                     <td className={styles.metric}>
-                      {row.possiblePointsRemaining}
+                      {row.points + row.possiblePointsRemaining}
                     </td>
                     <td className={styles.metric}>
                       {row.tiebreaker ?? "—"}
