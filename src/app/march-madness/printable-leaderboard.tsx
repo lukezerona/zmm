@@ -19,11 +19,13 @@ export function PrintableLeaderboard({
   seasonYear,
   hidePrivatePicks,
   paymentStatusByBracket,
+  printDevice,
 }: {
   rows: LeaderboardEntry[];
   seasonYear: number;
   hidePrivatePicks: boolean;
   paymentStatusByBracket?: ReadonlyMap<string, boolean>;
+  printDevice: "desktop" | "phone";
 }) {
   const canUseDocument = useSyncExternalStore(
     subscribeToClient,
@@ -42,9 +44,15 @@ export function PrintableLeaderboard({
     rows.some(
       (entry) => paymentStatusByBracket.get(entry.bracketId) !== true,
     );
+  const printDensity =
+    rows.length <= 30 ? "roomy" : rows.length <= 42 ? "standard" : "compact";
 
   return createPortal(
-    <div id="zmm-leaderboard-print-root">
+    <div
+      id="zmm-leaderboard-print-root"
+      data-print-device={printDevice}
+      data-print-density={printDensity}
+    >
       <article className={styles.sheet}>
         <header className={styles.header}>
           <div className={styles.brand}>

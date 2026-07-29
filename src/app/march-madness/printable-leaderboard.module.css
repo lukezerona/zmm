@@ -221,4 +221,144 @@
     background: #ffffff;
     print-color-adjust: exact;
   }
+
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"]
+    )
+    .header {
+    padding-bottom: 7px;
+  }
+
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"]
+    )
+    .brand
+    strong {
+    font-size: 22pt;
+  }
+
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"]
+    )
+    .title
+    h1 {
+    font-size: 16pt;
+  }
+
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"]
+    )
+    .brand
+    span,
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"]
+    )
+    .printedAt
+    span,
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"]
+    )
+    .title
+    span {
+    font-size: 6.2pt;
+  }
+
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"]
+    )
+    .table {
+    margin-top: 7px;
+    font-size: 6.2pt;
+    line-height: 1.05;
+  }
+
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"]
+    )
+    .table
+    th {
+    font-size: 5.8pt;
+  }
+
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"]
+    )
+    .place,
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"]
+    )
+    .points {
+    font-size: 7.4pt;
+  }
+
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"]
+    )
+    .participant
+    span,
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"]
+    )
+    .correctCount {
+    font-size: 5.3pt;
+  }
+
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"]
+    )
+    .footer {
+    padding-top: 6px;
+    font-size: 5.6pt;
+  }
+
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"][data-print-density="roomy"]
+    )
+    .table {
+    font-size: 7pt;
+  }
+
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"][data-print-density="roomy"]
+    )
+    .table
+    th,
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"][data-print-density="roomy"]
+    )
+    .table
+    td {
+    padding: 4px 3px;
+  }
+
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"][data-print-density="standard"]
+    )
+    .table
+    th,
+  :global(
+      body.zmm-printing-leaderboard
+        #zmm-leaderboard-print-root[data-print-device="phone"][data-print-density="standard"]
+    )
+    .table
+    td {
+    padding: 2.5px 2px;
+  }
 }

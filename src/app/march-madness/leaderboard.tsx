@@ -318,6 +318,7 @@ export function Leaderboard({
         seasonYear={seasonYear}
         hidePrivatePicks={hidePrivatePicks}
         paymentStatusByBracket={paymentStatusByBracket}
+        printDevice={isMobileTournamentViewport ? "phone" : "desktop"}
       />
     </div>
   );
