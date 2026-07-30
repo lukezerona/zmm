@@ -65,6 +65,34 @@ export function getServerAuthClient() {
   return authClient;
 }
 
+export async function invokeSecretEdgeFunction<T>(
+  functionName: string,
+  body: Record<string, unknown>,
+) {
+  const supabaseUrl = getSupabaseUrl();
+  const secretKey = getSecretKey();
+
+  if (!supabaseUrl || !secretKey) {
+    throw new Error("Server authentication is not configured.");
+  }
+
+  const response = await fetch(
+    `${supabaseUrl.replace(/\/$/, "")}/functions/v1/${functionName}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: secretKey,
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal: AbortSignal.timeout(240_000),
+    },
+  );
+  const payload = (await response.json()) as T & { error?: string };
+  return { response, payload };
+}
+
 export async function resolveEmailForIdentifier(identifier: string) {
   const normalizedIdentifier = identifier.trim().toLowerCase();
 

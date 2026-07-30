@@ -12,13 +12,17 @@ import {
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
+  AlertTriangle,
   Check,
   CircleDollarSign,
+  Eye,
   LoaderCircle,
   LogOut,
+  MailCheck,
   RefreshCw,
   Save,
   Search,
+  Send,
   ShieldCheck,
   Users,
   WalletCards,
@@ -49,6 +53,35 @@ type PaymentDraft = {
 };
 
 type PaymentFilter = "all" | "paid" | "unpaid";
+
+type LaunchEmailPreview = {
+  subject: string;
+  textContent: string;
+  htmlContent: string;
+};
+
+type TournamentLaunchStatus = {
+  ready: boolean;
+  issues: string[];
+  seasonYear: number;
+  entryDeadline: string | null;
+  fieldReadyAt: string | null;
+  commissionerNotifiedAt: string | null;
+  approvedAt: string | null;
+  launchStartedAt: string | null;
+  launchCompletedAt: string | null;
+  recipientCount: number;
+  sentCount: number;
+  failedCount: number;
+  lastError: string | null;
+  fieldChangedAfterLaunchAt: string | null;
+  summary: {
+    gameCount: number;
+    regions: { region: string; games: number }[];
+    finalFourPairings: string[];
+  } | null;
+  familyPreview: LaunchEmailPreview | null;
+};
 
 type ReturnDestination = {
   href: string;
@@ -108,6 +141,12 @@ export default function CommissionerPage() {
   const [filter, setFilter] = useState<PaymentFilter>("all");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [launchStatus, setLaunchStatus] =
+    useState<TournamentLaunchStatus | null>(null);
+  const [launchLoading, setLaunchLoading] = useState(true);
+  const [launchSending, setLaunchSending] = useState(false);
+  const [launchMessage, setLaunchMessage] = useState("");
+  const [showLaunchPreview, setShowLaunchPreview] = useState(false);
   const returnDestination = useSyncExternalStore(
     subscribeToReturnDestination,
     getReturnDestination,
@@ -190,10 +229,57 @@ export default function CommissionerPage() {
     [accessToken, router],
   );
 
+  const loadLaunchStatus = useCallback(async () => {
+    setLaunchLoading(true);
+    setLaunchMessage("");
+
+    try {
+      const token = await accessToken();
+      if (!token) {
+        router.replace("/");
+        return;
+      }
+      const response = await fetch("/api/commissioner/launch", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      const payload = (await response.json()) as TournamentLaunchStatus & {
+        error?: string;
+      };
+      if (response.status === 401) {
+        router.replace("/");
+        return;
+      }
+      if (response.status === 403) {
+        setForbidden(true);
+        return;
+      }
+      if (!response.ok || typeof payload.ready !== "boolean") {
+        throw new Error(
+          payload.error || "Tournament email status could not be loaded.",
+        );
+      }
+      setLaunchStatus(payload);
+    } catch (loadError) {
+      setLaunchMessage(
+        loadError instanceof Error
+          ? loadError.message
+          : "Tournament email status could not be loaded.",
+      );
+    } finally {
+      setLaunchLoading(false);
+    }
+  }, [accessToken, router]);
+
   useEffect(() => {
-    const initialLoad = window.setTimeout(() => void loadPayments(), 0);
+    const initialLoad = window.setTimeout(() => {
+      void (async () => {
+        await loadPayments();
+        await loadLaunchStatus();
+      })();
+    }, 0);
     return () => window.clearTimeout(initialLoad);
-  }, [loadPayments]);
+  }, [loadLaunchStatus, loadPayments]);
 
   const summary = useMemo(() => {
     const paid = brackets.filter((bracket) => bracket.isPaid).length;
@@ -332,6 +418,65 @@ export default function CommissionerPage() {
     }
   }
 
+  async function refreshCommissionerTools() {
+    await loadPayments(true);
+    await loadLaunchStatus();
+  }
+
+  async function sendTournamentLaunchEmail() {
+    if (!launchStatus?.ready || launchStatus.launchCompletedAt) return;
+    const confirmed = window.confirm(
+      `Send the ${launchStatus.seasonYear} brackets-open email to ${launchStatus.recipientCount} ZMM account${
+        launchStatus.recipientCount === 1 ? "" : "s"
+      }? This announcement cannot be recalled.`,
+    );
+    if (!confirmed) return;
+
+    setLaunchSending(true);
+    setLaunchMessage("");
+    try {
+      const token = await accessToken();
+      if (!token) {
+        router.replace("/");
+        return;
+      }
+      const response = await fetch("/api/commissioner/launch", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = (await response.json()) as TournamentLaunchStatus & {
+        error?: string;
+      };
+      if (response.status === 401) {
+        router.replace("/");
+        return;
+      }
+      if (response.status === 403) {
+        setForbidden(true);
+        return;
+      }
+      if (!response.ok && response.status !== 207) {
+        throw new Error(
+          payload.error || "The brackets-open email could not be sent.",
+        );
+      }
+      setLaunchStatus(payload);
+      setLaunchMessage(
+        payload.failedCount > 0
+          ? `${payload.sentCount} sent; ${payload.failedCount} still need another attempt.`
+          : `Announcement sent to ${payload.sentCount} ZMM accounts.`,
+      );
+    } catch (sendError) {
+      setLaunchMessage(
+        sendError instanceof Error
+          ? sendError.message
+          : "The brackets-open email could not be sent.",
+      );
+    } finally {
+      setLaunchSending(false);
+    }
+  }
+
   async function signOut() {
     await supabase?.auth.signOut();
     router.replace("/");
@@ -390,8 +535,8 @@ export default function CommissionerPage() {
         </div>
         <button
           type="button"
-          onClick={() => void loadPayments(true)}
-          disabled={refreshing}
+          onClick={() => void refreshCommissionerTools()}
+          disabled={refreshing || launchLoading}
         >
           <RefreshCw
             className={refreshing ? styles.spinner : undefined}
@@ -400,6 +545,154 @@ export default function CommissionerPage() {
           />
           Refresh
         </button>
+      </section>
+
+      <section
+        className={styles.launchPanel}
+        id="tournament-launch"
+        aria-labelledby="tournament-launch-heading"
+      >
+        <div className={styles.launchHeading}>
+          <div>
+            <span>TOURNAMENT EMAIL</span>
+            <h2 id="tournament-launch-heading">
+              {launchStatus?.seasonYear ?? "Current"} bracket launch
+            </h2>
+          </div>
+          <div
+            className={`${styles.launchBadge} ${
+              launchStatus?.launchCompletedAt
+                ? styles.launchComplete
+                : launchStatus?.ready
+                ? styles.launchReady
+                : ""
+            }`}
+          >
+            <MailCheck size={17} aria-hidden="true" />
+            {launchLoading
+              ? "Checking"
+              : launchStatus?.launchCompletedAt
+              ? "Announcement sent"
+              : launchStatus?.commissionerNotifiedAt
+              ? "Waiting for your approval"
+              : launchStatus?.ready
+              ? "Field ready"
+              : "Waiting for final field"}
+          </div>
+        </div>
+
+        {launchLoading ? (
+          <div className={styles.launchLoading}>
+            <LoaderCircle
+              className={styles.spinner}
+              size={20}
+              aria-hidden="true"
+            />
+            Checking the tournament field and email status…
+          </div>
+        ) : launchStatus ? (
+          <>
+            <div className={styles.launchFacts}>
+              <div>
+                <span>First-round games</span>
+                <strong>{launchStatus.summary?.gameCount ?? "—"}</strong>
+              </div>
+              <div>
+                <span>Family recipients</span>
+                <strong>{launchStatus.recipientCount}</strong>
+              </div>
+              <div>
+                <span>Commissioner notified</span>
+                <strong>
+                  {launchStatus.commissionerNotifiedAt ? "Yes" : "Not yet"}
+                </strong>
+              </div>
+              <div>
+                <span>Delivered</span>
+                <strong>
+                  {launchStatus.sentCount}/{launchStatus.recipientCount}
+                </strong>
+              </div>
+            </div>
+
+            {!launchStatus.ready && launchStatus.issues.length > 0 && (
+              <div className={styles.launchIssues}>
+                <AlertTriangle size={18} aria-hidden="true" />
+                <div>
+                  <strong>The opening email is locked for now.</strong>
+                  <ul>
+                    {launchStatus.issues.map((issue) => (
+                      <li key={issue}>{issue}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {launchStatus.ready && !launchStatus.launchCompletedAt && (
+              <p className={styles.launchExplanation}>
+                ZMM emails you automatically after the field passes validation.
+                Review the bracket and the family message, then approve the
+                announcement here.
+              </p>
+            )}
+
+            {launchStatus.launchCompletedAt && (
+              <p className={styles.launchExplanation}>
+                The brackets-open announcement has been delivered. ZMM will not
+                send it to the same accounts again.
+              </p>
+            )}
+
+            {launchMessage && (
+              <p className={styles.launchMessage} role="status">
+                {launchMessage}
+              </p>
+            )}
+
+            <div className={styles.launchActions}>
+              <button
+                type="button"
+                onClick={() => setShowLaunchPreview(true)}
+                disabled={!launchStatus.familyPreview}
+              >
+                <Eye size={17} aria-hidden="true" />
+                Preview family email
+              </button>
+              <button
+                type="button"
+                className={styles.sendLaunchButton}
+                onClick={() => void sendTournamentLaunchEmail()}
+                disabled={
+                  launchSending ||
+                  !launchStatus.ready ||
+                  !launchStatus.commissionerNotifiedAt ||
+                  Boolean(launchStatus.launchCompletedAt) ||
+                  launchStatus.recipientCount === 0
+                }
+              >
+                {launchSending ? (
+                  <LoaderCircle
+                    className={styles.spinner}
+                    size={17}
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <Send size={17} aria-hidden="true" />
+                )}
+                {launchSending
+                  ? "Sending announcement"
+                  : launchStatus.failedCount > 0
+                  ? "Retry failed deliveries"
+                  : "Approve and send"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <p className={styles.launchMessage}>
+            {launchMessage || "Tournament email status is unavailable."}
+          </p>
+        )}
       </section>
 
       <section className={styles.summary} aria-label="Payment summary">
@@ -580,6 +873,43 @@ export default function CommissionerPage() {
         <option value="Check" />
         <option value="PayPal" />
       </datalist>
+
+      {showLaunchPreview && launchStatus?.familyPreview && (
+        <div
+          className={styles.previewBackdrop}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="launch-preview-title"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowLaunchPreview(false);
+            }
+          }}
+        >
+          <div className={styles.previewDialog}>
+            <div className={styles.previewHeader}>
+              <div>
+                <span>SUBJECT</span>
+                <strong id="launch-preview-title">
+                  {launchStatus.familyPreview.subject}
+                </strong>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLaunchPreview(false)}
+                aria-label="Close email preview"
+              >
+                ×
+              </button>
+            </div>
+            <iframe
+              title="Brackets-open family email preview"
+              srcDoc={launchStatus.familyPreview.htmlContent}
+              sandbox=""
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 }

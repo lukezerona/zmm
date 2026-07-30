@@ -99,6 +99,7 @@
 }
 
 .hero,
+.launchPanel,
 .summary,
 .workspace {
   position: relative;
@@ -131,6 +132,241 @@
 .hero p {
   margin: 0;
   color: #7794a4;
+}
+
+.launchPanel {
+  margin-bottom: 16px;
+  padding: 20px;
+  border: 1px solid #194a64;
+  border-radius: 15px;
+  background:
+    linear-gradient(135deg, rgba(12, 48, 67, 0.95), rgba(5, 21, 31, 0.96));
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.2);
+}
+
+.launchHeading,
+.launchActions,
+.previewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.launchHeading span,
+.previewHeader span {
+  color: #37bdf8;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+
+.launchHeading h2 {
+  margin: 5px 0 0;
+  font-size: clamp(21px, 2.4vw, 30px);
+}
+
+.launchBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px solid #325165;
+  border-radius: 999px;
+  color: #9cb2be;
+  font-size: 12px;
+  font-weight: 800;
+  background: #071720;
+}
+
+.launchReady {
+  border-color: #2b8065;
+  color: #8ce9c2;
+  background: #0a3529;
+}
+
+.launchComplete {
+  border-color: #198cb8;
+  color: #b7eaff;
+  background: #0b3447;
+}
+
+.launchLoading {
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: #7f9dac;
+}
+
+.launchFacts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.launchFacts > div {
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid #1a4358;
+  border-radius: 10px;
+  background: rgba(3, 16, 24, 0.72);
+}
+
+.launchFacts span {
+  display: block;
+  overflow: hidden;
+  color: #6f8f9f;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.launchFacts strong {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: #f2fbff;
+  font-size: 19px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.launchIssues {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-top: 15px;
+  padding: 14px;
+  border: 1px solid rgba(230, 164, 84, 0.4);
+  border-radius: 10px;
+  color: #ffd49f;
+  background: rgba(91, 52, 18, 0.23);
+}
+
+.launchIssues svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.launchIssues strong {
+  font-size: 14px;
+}
+
+.launchIssues ul {
+  margin: 7px 0 0;
+  padding-left: 18px;
+  color: #c8a77f;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.launchExplanation,
+.launchMessage {
+  margin: 14px 0 0;
+  color: #8ca7b5;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.launchMessage {
+  color: #b9ddeb;
+}
+
+.launchActions {
+  justify-content: flex-end;
+  margin-top: 17px;
+}
+
+.launchActions button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 13px;
+  border: 1px solid #28637e;
+  border-radius: 9px;
+  color: #bce8fb;
+  background: #0b3041;
+  cursor: pointer;
+}
+
+.launchActions .sendLaunchButton {
+  border-color: #1788b8;
+  color: #001018;
+  font-weight: 900;
+  background: #22b6f2;
+}
+
+.launchActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.previewBackdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 4, 7, 0.82);
+  backdrop-filter: blur(8px);
+}
+
+.previewDialog {
+  width: min(760px, 100%);
+  height: min(860px, calc(100vh - 40px));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid #24536b;
+  border-radius: 15px;
+  background: #06131b;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.55);
+}
+
+.previewHeader {
+  padding: 14px 16px;
+  border-bottom: 1px solid #1b4357;
+}
+
+.previewHeader > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.previewHeader strong {
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.previewHeader button {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border: 1px solid #24536b;
+  border-radius: 9px;
+  color: #b7d7e7;
+  font-size: 24px;
+  background: #0a2130;
+  cursor: pointer;
+}
+
+.previewDialog iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #02070b;
 }
 
 .summary {
@@ -490,6 +726,7 @@
   }
 
   .hero,
+  .launchPanel,
   .summary,
   .workspace {
     width: min(calc(100% - 24px), 1540px);
@@ -517,6 +754,41 @@
 
   .summary {
     gap: 7px;
+  }
+
+  .launchPanel {
+    padding: 15px;
+  }
+
+  .launchHeading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .launchFacts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .launchFacts strong {
+    font-size: 17px;
+  }
+
+  .launchActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .launchActions button {
+    width: 100%;
+  }
+
+  .previewBackdrop {
+    padding: 8px;
+  }
+
+  .previewDialog {
+    height: calc(100vh - 16px);
   }
 
   .summary > div {

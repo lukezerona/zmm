@@ -15,3 +15,9 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/send-bracket-reminders/deno.json"
 entrypoint = "./functions/send-bracket-reminders/index.ts"
+
+[functions.manage-tournament-launch]
+enabled = true
+verify_jwt = false
+import_map = "./functions/manage-tournament-launch/deno.json"
+entrypoint = "./functions/manage-tournament-launch/index.ts"
