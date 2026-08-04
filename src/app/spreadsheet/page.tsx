@@ -139,10 +139,6 @@ export default function SpreadsheetPage() {
     null,
   );
   const [historyYears, setHistoryYears] = useState<number[]>([]);
-  const [
-    currentTournamentSpreadsheetAvailable,
-    setCurrentTournamentSpreadsheetAvailable,
-  ] = useState(false);
   const [rainManEnabled, setRainManEnabled] = useState(false);
   const [rainManSelections, setRainManSelections] = useState<PickMap>({});
   const [rainManTiebreaker, setRainManTiebreaker] = useState("");
@@ -210,10 +206,6 @@ export default function SpreadsheetPage() {
 
       const configuredSeasonYear =
         archiveLifecycle.configuredSeasonYear ?? archiveLifecycle.seasonYear;
-      const currentSpreadsheetAvailable =
-        archiveLifecycle.fieldReady &&
-        (archiveLifecycle.phase === "live" ||
-          archiveLifecycle.phase === "final");
       const archivedYears = [
         ...new Set(
           (completedSeasonsResult.data as ChampionshipSeason[])
@@ -239,7 +231,6 @@ export default function SpreadsheetPage() {
       if (mountedRef.current) {
         setHistorySeasonYear(requestedSeasonYear);
         setHistoryYears(archivedYears);
-        setCurrentTournamentSpreadsheetAvailable(currentSpreadsheetAvailable);
       }
     } else {
       let lifecycle;
@@ -298,10 +289,6 @@ export default function SpreadsheetPage() {
       if (mountedRef.current) {
         setHistorySeasonYear(null);
         setHistoryYears(archivedYears);
-        setCurrentTournamentSpreadsheetAvailable(
-          lifecycle.fieldReady &&
-            (lifecycle.phase === "live" || lifecycle.phase === "final"),
-        );
       }
     }
 
@@ -435,21 +422,6 @@ export default function SpreadsheetPage() {
         return loadSpreadsheet();
       }
       activeSeasonYear = lifecycle.seasonYear;
-    } else {
-      try {
-        const lifecycle = await getTournamentLifecycle(client);
-        if (mountedRef.current) {
-          setCurrentTournamentSpreadsheetAvailable(
-            lifecycle.fieldReady &&
-              (lifecycle.phase === "live" || lifecycle.phase === "final"),
-          );
-        }
-      } catch (lifecycleError) {
-        console.error(
-          "[spreadsheet] Could not refresh current tournament availability",
-          lifecycleError,
-        );
-      }
     }
 
     const [gamesResult, pairingResult] = await Promise.all([
@@ -902,20 +874,14 @@ export default function SpreadsheetPage() {
               Print spreadsheet
             </button>
             {historySeasonYear !== null ? (
-              <button
+              <Link
                 className={styles.rainManButton}
-                type="button"
-                onClick={() => router.push("/spreadsheet")}
-                disabled={!currentTournamentSpreadsheetAvailable}
-                title={
-                  currentTournamentSpreadsheetAvailable
-                    ? "Open the current tournament spreadsheet."
-                    : "The current tournament spreadsheet becomes available once tournament play begins."
-                }
+                href="/march-madness"
+                title="Open the current tournament."
               >
                 <Trophy size={14} aria-hidden="true" />
                 Current Tournament
-              </button>
+              </Link>
             ) : (
               <button
                 className={`${styles.rainManButton} ${
