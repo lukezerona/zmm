@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CloudRain,
+  History,
   LoaderCircle,
   Printer,
   RefreshCw,
@@ -242,8 +243,24 @@ export default function SpreadsheetPage() {
       }
     } else {
       let lifecycle;
+      let completedSeasons: ChampionshipSeason[];
       try {
-        lifecycle = await getTournamentLifecycle(client);
+        const [loadedLifecycle, completedSeasonsResult] = await Promise.all([
+          getTournamentLifecycle(client),
+          client
+            .from("espn_games")
+            .select("season_year")
+            .eq("round_code", "CHAMPIONSHIP")
+            .eq("completed", true)
+            .order("season_year", { ascending: false }),
+        ]);
+
+        if (completedSeasonsResult.error) {
+          throw completedSeasonsResult.error;
+        }
+
+        lifecycle = loadedLifecycle;
+        completedSeasons = completedSeasonsResult.data as ChampionshipSeason[];
       } catch (lifecycleError) {
         console.error(
           "[spreadsheet] Could not load tournament lifecycle",
@@ -268,10 +285,19 @@ export default function SpreadsheetPage() {
       }
 
       activeSeasonYear = lifecycle.seasonYear;
+      const configuredSeasonYear =
+        lifecycle.configuredSeasonYear ?? lifecycle.seasonYear;
+      const archivedYears = [
+        ...new Set(
+          completedSeasons
+            .map((season) => season.season_year)
+            .filter((year) => year !== configuredSeasonYear),
+        ),
+      ].sort((a, b) => b - a);
       historySeasonYearRef.current = null;
       if (mountedRef.current) {
         setHistorySeasonYear(null);
-        setHistoryYears([]);
+        setHistoryYears(archivedYears);
         setCurrentTournamentSpreadsheetAvailable(
           lifecycle.fieldReady &&
             (lifecycle.phase === "live" || lifecycle.phase === "final"),
@@ -840,6 +866,15 @@ export default function SpreadsheetPage() {
             </h2>
           </div>
           <div className={styles.toolbarRight}>
+            {historySeasonYear === null && historyYears.length > 0 && (
+              <Link
+                className={styles.archiveButton}
+                href={`/spreadsheet?season=${historyYears[0]}`}
+              >
+                <History size={14} aria-hidden="true" />
+                Previous years
+              </Link>
+            )}
             {historySeasonYear !== null && historyYears.length > 0 && (
               <label className={styles.archiveYearPicker}>
                 <span>Season</span>

@@ -141,6 +141,7 @@
 }
 
 .refreshButton,
+.archiveButton,
 .printButton {
   height: 36px;
   display: inline-flex;
@@ -156,6 +157,17 @@
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
+}
+
+.archiveButton {
+  border-color: #245d7a;
+  color: #a9d9ed;
+  text-decoration: none;
+}
+
+.archiveButton:hover {
+  border-color: #43c8ff;
+  color: #ffffff;
 }
 
 .printButton {
@@ -633,6 +645,7 @@ thead .stickyCell {
   }
 
   .printButton,
+  .archiveButton,
   .rainManButton {
     width: 100%;
     padding-inline: 8px;
