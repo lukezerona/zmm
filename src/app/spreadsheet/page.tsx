@@ -504,9 +504,10 @@ export default function SpreadsheetPage() {
     async (fullRefresh = false) => {
       if (mountedRef.current) setRefreshing(true);
       try {
-        return fullRefresh
-          ? await loadSpreadsheet()
-          : await refreshGames();
+        if (fullRefresh || historySeasonYearRef.current !== null) {
+          return await loadSpreadsheet(historySeasonYearRef.current ?? undefined);
+        }
+        return await refreshGames();
       } finally {
         if (mountedRef.current) setRefreshing(false);
       }

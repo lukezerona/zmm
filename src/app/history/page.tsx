@@ -9,6 +9,7 @@ import {
   CalendarDays,
   House,
   LoaderCircle,
+  RefreshCw,
   Trophy,
   Users,
 } from "lucide-react";
@@ -46,6 +47,7 @@ const TOURNAMENT_ROUND_CODES = [
   "FINAL_FOUR",
   "CHAMPIONSHIP",
 ];
+const HISTORY_REFRESH_INTERVAL_MS = 60_000;
 
 type RawBracket = Omit<PoolBracket, "picks"> & { picks: unknown };
 type ChampionshipSeason = {
@@ -79,6 +81,7 @@ export default function HistoryPage() {
   const [createBracketAvailable, setCreateBracketAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingSeason, setLoadingSeason] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [mobileHistoryView, setMobileHistoryView] =
     useState<MobileHistoryView>("bracket");
@@ -255,14 +258,36 @@ export default function HistoryPage() {
     }
   }, [loadSeason, router]);
 
+  const refreshHistory = useCallback(async () => {
+    if (document.visibilityState !== "visible" || !navigator.onLine) return;
+
+    setRefreshing(true);
+    try {
+      await loadHistory();
+    } finally {
+      if (mountedRef.current) setRefreshing(false);
+    }
+  }, [loadHistory]);
+
   useEffect(() => {
     mountedRef.current = true;
     const timer = window.setTimeout(() => void loadHistory(), 0);
+    const pollTimer = window.setInterval(
+      () => void refreshHistory(),
+      HISTORY_REFRESH_INTERVAL_MS,
+    );
+    const refreshWhenActive = () => void refreshHistory();
+    window.addEventListener("focus", refreshWhenActive);
+    window.addEventListener("online", refreshWhenActive);
+
     return () => {
       mountedRef.current = false;
       window.clearTimeout(timer);
+      window.clearInterval(pollTimer);
+      window.removeEventListener("focus", refreshWhenActive);
+      window.removeEventListener("online", refreshWhenActive);
     };
-  }, [loadHistory]);
+  }, [loadHistory, refreshHistory]);
 
   const leaderboard = useMemo(
     () =>
@@ -420,6 +445,19 @@ export default function HistoryPage() {
             <House size={17} aria-hidden="true" />
             Current tournament
           </Link>
+          <button
+            className={styles.historyAction}
+            type="button"
+            onClick={() => void refreshHistory()}
+            disabled={refreshing || loadingSeason}
+          >
+            <RefreshCw
+              className={refreshing ? styles.spinner : undefined}
+              size={17}
+              aria-hidden="true"
+            />
+            {refreshing ? "Refreshing" : "Refresh history"}
+          </button>
           {createBracketAvailable && (
             <Link className={styles.historyAction} href="/bracket">
               <ArrowLeft size={17} aria-hidden="true" />

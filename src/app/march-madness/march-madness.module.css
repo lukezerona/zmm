@@ -378,7 +378,14 @@
   background: #071923;
   font-size: 12px;
   font-weight: 850;
+  font-family: inherit;
   text-decoration: none;
+  cursor: pointer;
+}
+
+.historyAction:disabled {
+  cursor: wait;
+  opacity: 0.72;
 }
 
 .historyAction:hover {
