@@ -869,7 +869,7 @@ export default function SpreadsheetPage() {
             {historySeasonYear === null && historyYears.length > 0 && (
               <Link
                 className={styles.archiveButton}
-                href={`/spreadsheet?season=${historyYears[0]}`}
+                href="/history"
               >
                 <History size={14} aria-hidden="true" />
                 Previous years
