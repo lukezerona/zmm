@@ -9,6 +9,7 @@ import {
   CalendarDays,
   House,
   LoaderCircle,
+  ShieldCheck,
   Trophy,
   Users,
 } from "lucide-react";
@@ -368,13 +369,37 @@ export default function HistoryPage() {
               : `/spreadsheet?season=${selectedYear}`
           }
         />
-        <AccountMenu
-          profile={profile}
-          isCommissioner={isCommissioner}
-          commissionerReturnTo="/history"
-          historyShortcutVisible={false}
-          onSignOut={signOut}
-        />
+        <div className={styles.headerUserActions}>
+          {isCommissioner && (
+            <Link
+              className={styles.headerCommissionerButton}
+              href={{
+                pathname: "/commissioner",
+                query: {
+                  returnTo:
+                    selectedYear === null
+                      ? "/history"
+                      : `/history?season=${selectedYear}`,
+                },
+              }}
+            >
+              <ShieldCheck size={16} aria-hidden="true" />
+              Commissioner
+            </Link>
+          )}
+          <AccountMenu
+            profile={profile}
+            isCommissioner={isCommissioner}
+            commissionerReturnTo={
+              selectedYear === null
+                ? "/history"
+                : `/history?season=${selectedYear}`
+            }
+            commissionerShortcutVisible
+            historyShortcutVisible={false}
+            onSignOut={signOut}
+          />
+        </div>
       </header>
 
       {isMobileTournamentViewport && historyYears.length > 0 && (
