@@ -372,6 +372,7 @@ export default function HistoryPage() {
           profile={profile}
           isCommissioner={isCommissioner}
           commissionerReturnTo="/history"
+          historyShortcutVisible={false}
           onSignOut={signOut}
         />
       </header>

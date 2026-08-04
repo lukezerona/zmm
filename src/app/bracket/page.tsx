@@ -7,6 +7,7 @@ import {
   Check,
   Clock3,
   Copy,
+  History,
   LayoutDashboard,
   LoaderCircle,
   Pencil,
@@ -738,6 +739,20 @@ export default function BracketPage() {
     router.push("/march-madness");
   }
 
+  function openHistory() {
+    if (
+      dirty &&
+      !window.confirm(
+        "This bracket has unsaved changes. Open tournament history and discard them?",
+      )
+    ) {
+      return;
+    }
+
+    allowUnsavedExitRef.current = true;
+    router.push("/history");
+  }
+
   if (loading) {
     return (
       <main className={styles.loading}>
@@ -778,6 +793,14 @@ export default function BracketPage() {
           )}
           <button
             type="button"
+            className={styles.historyButton}
+            onClick={openHistory}
+          >
+            <History size={17} aria-hidden="true" />
+            <span>History</span>
+          </button>
+          <button
+            type="button"
             className={styles.tournamentCentralButton}
             onClick={openTournamentCentral}
           >
@@ -786,6 +809,7 @@ export default function BracketPage() {
           </button>
           <AccountMenu
             profile={{ user_id: userId, username }}
+            onOpenHistory={openHistory}
             onSignOut={signOut}
           />
         </div>

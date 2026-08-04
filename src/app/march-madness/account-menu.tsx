@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, LogOut, ShieldCheck } from "lucide-react";
+import { ChevronDown, History, LogOut, ShieldCheck } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   getTournamentStartingScreen,
@@ -16,12 +16,16 @@ export function AccountMenu({
   isCommissioner,
   commissionerReturnTo = "/march-madness",
   commissionerShortcutVisible = false,
+  historyShortcutVisible = true,
+  onOpenHistory,
   onSignOut,
 }: {
   profile: PoolProfile;
   isCommissioner?: boolean;
   commissionerReturnTo?: string;
   commissionerShortcutVisible?: boolean;
+  historyShortcutVisible?: boolean;
+  onOpenHistory?: () => void;
   onSignOut: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
@@ -113,6 +117,22 @@ export function AccountMenu({
               </span>
             </label>
           </fieldset>
+
+          {historyShortcutVisible && (
+            <Link
+              className={styles.accountHistoryLink}
+              href="/history"
+              onClick={(event) => {
+                setOpen(false);
+                if (!onOpenHistory) return;
+                event.preventDefault();
+                onOpenHistory();
+              }}
+            >
+              <History size={16} aria-hidden="true" />
+              Tournament history
+            </Link>
+          )}
 
           {isCommissioner && (
             <Link

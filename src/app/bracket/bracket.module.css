@@ -53,6 +53,11 @@
   background: rgba(10, 91, 128, 0.22) !important;
 }
 
+.historyButton {
+  border-color: rgba(47, 174, 231, 0.3) !important;
+  color: #9ddffb !important;
+}
+
 .tournamentCentralButton:hover {
   border-color: rgba(73, 201, 255, 0.72) !important;
   color: #ffffff !important;
@@ -1603,6 +1608,10 @@
 
   .tournamentCentralButton span {
     display: none;
+  }
+
+  .historyButton {
+    display: none !important;
   }
 
   .identityCard {
