@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { isCommissionerUser } from "@/lib/commissioner";
 import {
   CREATION_TEST_SEASON_YEAR,
   getTournamentLifecycle,
@@ -295,9 +296,7 @@ export default function BracketPage() {
           deadlineTimestamp <= Date.now();
 
         setUserId(userData.user.id);
-        setIsCommissioner(
-          userData.user.app_metadata?.role === "commissioner",
-        );
+        setIsCommissioner(isCommissionerUser(userData.user));
         setUsername(profile.username);
         setSavedBrackets(entries);
         setActiveBracketId(saved.id);

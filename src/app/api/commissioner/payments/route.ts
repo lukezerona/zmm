@@ -4,6 +4,7 @@ import {
   getSupabaseAdmin,
   isServerAuthConfigured,
 } from "@/lib/supabase-server";
+import { isCommissionerUser } from "@/lib/commissioner";
 
 export const runtime = "nodejs";
 
@@ -73,7 +74,7 @@ async function authorizeCommissioner(
     };
   }
 
-  if (data.user.app_metadata?.role !== "commissioner") {
+  if (!isCommissionerUser(data.user)) {
     return {
       response: jsonError("Commissioner access is required.", 403),
     };

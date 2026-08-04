@@ -4,6 +4,7 @@ import {
   invokeSecretEdgeFunction,
   isServerAuthConfigured,
 } from "@/lib/supabase-server";
+import { isCommissionerUser } from "@/lib/commissioner";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -42,7 +43,7 @@ async function authorizeCommissioner(
   if (error || !data.user) {
     return { response: jsonError("Please sign in again.", 401) };
   }
-  if (data.user.app_metadata?.role !== "commissioner") {
+  if (!isCommissionerUser(data.user)) {
     return {
       response: jsonError("Commissioner access is required.", 403),
     };

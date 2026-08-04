@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { isCommissionerUser } from "@/lib/commissioner";
 import { getTournamentLifecycle } from "@/lib/tournament-lifecycle";
 import {
   EspnGameRow,
@@ -229,9 +230,7 @@ export default function HistoryPage() {
 
       if (!mountedRef.current) return;
       setUserId(userData.user.id);
-      setIsCommissioner(
-        userData.user.app_metadata?.role === "commissioner",
-      );
+      setIsCommissioner(isCommissionerUser(userData.user));
       setProfile(currentProfile);
       setProfiles(loadedProfiles);
       setHistoryYears(years);

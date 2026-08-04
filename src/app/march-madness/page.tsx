@@ -17,6 +17,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { isCommissionerUser } from "@/lib/commissioner";
 import {
   getTournamentLifecycle,
   TournamentLifecycle,
@@ -398,9 +399,7 @@ export default function MarchMadnessPage() {
 
         if (!mountedRef.current) return false;
         setUserId(userData.user.id);
-        setIsCommissioner(
-          userData.user.app_metadata?.role === "commissioner",
-        );
+        setIsCommissioner(isCommissionerUser(userData.user));
         setProfile(currentProfile);
         setProfiles(loadedProfiles);
         setEntries(
